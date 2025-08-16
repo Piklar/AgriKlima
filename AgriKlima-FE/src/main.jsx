@@ -4,15 +4,17 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { AuthProvider } from './context/AuthContext'; // <-- Import AuthProvider
 
-// Import your global stylesheet
-import './index.css'; 
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider> {/* <-- Wrap your App with AuthProvider */}
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
