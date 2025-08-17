@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Box, Typography, TextField, Button, Divider, Link as MuiLink, Grid, InputAdornment } from '@mui/material';
+import { useAuth } from '../context/AuthContext';
 
 // Import Icons and Logo
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -11,6 +12,7 @@ import googleLogo from '../assets/images/google-logo.png';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth(); // <-- Get the login function from context
 
   // Common styles for input fields and buttons to match the design
   const inputStyles = {
@@ -26,6 +28,16 @@ const LoginPage = () => {
     textTransform: 'none',
     fontSize: '16px',
     fontWeight: '600'
+  };
+
+  // Handle login form submit
+  const handleLogin = (e) => {
+    e.preventDefault(); // Prevent form from submitting and reloading the page
+    // We don't need to check password yet, just call the mock login
+    console.log("Simulating login...");
+    login();
+    // Redirect the user to their dashboard or a protected page
+    navigate('/dashboard');
   };
 
   return (
@@ -59,7 +71,8 @@ const LoginPage = () => {
         <Grid container alignItems="center" spacing={4}>
           {/* Left Side: Email/Password Form */}
           <Grid item xs={12} md={5}>
-            <Box component="form" noValidate autoComplete="off">
+            {/* Add the onSubmit handler to the form Box */}
+            <Box component="form" noValidate autoComplete="off" onSubmit={handleLogin}>
               <TextField
                 fullWidth
                 placeholder="Email Address or Phone Number"
@@ -88,7 +101,7 @@ const LoginPage = () => {
                 }}
               />
               <Button
-                type="submit"
+                type="submit" // <-- Ensure button type is "submit"
                 fullWidth
                 variant="contained"
                 sx={{ 
