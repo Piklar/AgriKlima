@@ -1,6 +1,6 @@
 // src/pages/DashboardPage.jsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -12,9 +12,18 @@ import {
   Card, 
   CardContent, 
   Paper, 
-  LinearProgress 
+  LinearProgress, 
+  List, 
+  ListItem, 
+  ListItemIcon, 
+  Checkbox, 
+  ListItemText, 
+  Divider
 } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+// --- Component Import ---
+import AddTaskOverlay from '../components/AddTaskOverlay'; // <-- Import the new overlay
 
 // --- ICONS ---
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
@@ -22,6 +31,7 @@ import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
 import GrassOutlinedIcon from '@mui/icons-material/GrassOutlined';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
+import AddIcon from '@mui/icons-material/Add';
 
 // --- Mock Data for the Chart ---
 const weeklyHarvestData = [
@@ -56,6 +66,29 @@ const InfoCard = ({ title, value, icon, unit, children }) => (
 const DashboardPage = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+
+  // --- NEW STATE FOR TASKS ---
+  const [tasks, setTasks] = useState([
+      { id: 1, text: 'Prepare fertilizer for the onion field', completed: false, date: '2025-08-17', time: '09:00' },
+      { id: 2, text: 'Calibrate water sprinklers', completed: true, date: '2025-08-16', time: '14:00' },
+  ]);
+  const [isTaskOverlayOpen, setIsTaskOverlayOpen] = useState(false);
+
+  // --- NEW HANDLER FUNCTIONS ---
+  const handleOpenTaskOverlay = () => setIsTaskOverlayOpen(true);
+  const handleCloseTaskOverlay = () => setIsTaskOverlayOpen(false);
+
+  const handleAddTask = (newTask) => {
+      setTasks(prevTasks => [newTask, ...prevTasks]); // Add new task to the top of the list
+  };
+
+  const handleToggleTask = (taskId) => {
+      setTasks(prevTasks =>
+          prevTasks.map(task =>
+              task.id === taskId ? { ...task, completed: !task.completed } : task
+          )
+      );
+  };
 
   const handleLogout = () => {
     logout();
@@ -145,22 +178,42 @@ const DashboardPage = () => {
             </Paper>
           </Grid>
 
-          {/* Recent Activity List */}
+          {/* --- UPDATED TASK LIST --- */}
           <Grid item xs={12} lg={4}>
-             <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: 3, height: '400px' }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Farmer's To-Do List</Typography>
-                <Box>
-                    {/* Placeholder for activity items */}
-                    <Typography sx={{ mb: 1 }}>• Prepare fertilizer for the onion field.</Typography>
-                    <Typography sx={{ mb: 1 }}>• Calibrate water sprinklers.</Typography>
-                    <Typography sx={{ mb: 1 }}>• Order new batch of seeds.</Typography>
-                    <Typography sx={{ mb: 1 }}>• Schedule tractor maintenance.</Typography>
+             <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: 3, height: '400px', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>My Tasks</Typography>
+                    <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={handleOpenTaskOverlay} sx={{ bgcolor: 'var(--primary-green)', borderRadius: '20px', textTransform: 'none', '&:hover': { bgcolor: 'var(--light-green)' } }}>
+                        New Task
+                    </Button>
                 </Box>
+                <Divider />
+                <List sx={{ overflowY: 'auto', flexGrow: 1, mt: 1 }}>
+                    {tasks.map(task => (
+                        <ListItem key={task.id} disablePadding>
+                            <ListItemIcon>
+                                <Checkbox
+                                    edge="start"
+                                    checked={task.completed}
+                                    onChange={() => handleToggleTask(task.id)}
+                                />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary={task.text}
+                                secondary={task.date && `${task.date} ${task.time || ''}`}
+                                sx={{ textDecoration: task.completed ? 'line-through' : 'none', color: task.completed ? 'text.disabled' : 'inherit' }}
+                            />
+                        </ListItem>
+                    ))}
+                </List>
              </Paper>
           </Grid>
         </Grid>
 
       </Container>
+      
+      {/* --- RENDER THE OVERLAY --- */}
+      <AddTaskOverlay open={isTaskOverlayOpen} onClose={handleCloseTaskOverlay} onAddTask={handleAddTask} />
     </Box>
   );
 };
