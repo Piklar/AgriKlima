@@ -7,7 +7,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import logo from '../assets/logo.png'; // Your logo in the assets folder
-import googleLogo from '../assets/images/google-logo.png'; // A small google logo icon
+import googleLogo from '../assets/images/google-logo.png';
 
 const LoginPage = () => {
   const navigate = useNavigate();

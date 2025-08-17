@@ -2,9 +2,9 @@ import React from 'react';
 import { Button, Container, Grid, Typography, Box } from '@mui/material';
 
 // Import your images
-import heroBg from '../assets/images/hero-background.jpg';
-import videoBg from '../assets/images/video-background.jpg';
-import aboutImg1 from '../assets/images/about-image-1.jpg';
+import heroBg from '../assets/images/about-image-1.jpg';
+import videoBg from '../assets/images/about-image-2.jpg';
+import heroImg1 from '../assets/images/hero-background.jpg';
 import aboutImg2 from '../assets/images/about-image-2.jpg';
 import visionImg from '../assets/images/mission-vision.jpg';
 import logo from '../assets/logo.png';
@@ -15,7 +15,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 const HomePage = () => {
   // Styles
   const heroStyles = {
-    backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${heroBg})`,
+    backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0, 0, 0, 0.5)), url(${heroBg})`,
     height: '90vh',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
