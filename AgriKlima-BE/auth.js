@@ -14,13 +14,12 @@ const secret = process.env.JWT_SECRET || "AgriKlimaFallbackSecret";
  */
 module.exports.createAccessToken = (user) => {
 	// The data that will be part of the token's payload
-	const data = {
-		id: user._id,
-		email: user.email,
-		isAdmin: user.isAdmin
-	};
-	// Signs the payload with the secret key to generate the token
-	return jwt.sign(data, secret, {});		
+const data = {
+        _id: user._id, // fixed!
+        email: user.email,
+        isAdmin: user.isAdmin
+    };
+    return jwt.sign(data, secret, {});
 };
 
 /**

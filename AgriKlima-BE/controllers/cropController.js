@@ -27,3 +27,27 @@ module.exports.getCropById = (req, res) => {
         })
         .catch(err => res.status(500).send({ error: "Failed to fetch crop", details: err.message }));
 };
+
+// --- UPDATE CROP ---
+module.exports.updateCrop = (req, res) => {
+    Crop.findByIdAndUpdate(
+        req.params.cropId,
+        { ...req.body },
+        { new: true, runValidators: true }
+    )
+    .then(crop => {
+        if (!crop) return res.status(404).send({ error: "Crop not found" });
+        return res.status(200).send(crop);
+    })
+    .catch(err => res.status(500).send({ error: "Failed to update crop", details: err.message }));
+};
+
+// --- DELETE CROP ---
+module.exports.deleteCrop = (req, res) => {
+    Crop.findByIdAndDelete(req.params.cropId)
+    .then(crop => {
+        if (!crop) return res.status(404).send({ error: "Crop not found" });
+        return res.status(200).send({ message: "Crop deleted successfully", crop });
+    })
+    .catch(err => res.status(500).send({ error: "Failed to delete crop", details: err.message }));
+};

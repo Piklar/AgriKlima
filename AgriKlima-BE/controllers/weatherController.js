@@ -43,3 +43,13 @@ module.exports.updateWeatherByLocation = (req, res) => {
         .then(data => res.status(200).send({ message: "Weather data updated successfully", data: data }))
         .catch(err => res.status(500).send({ error: "Failed to update weather data", details: err.message }));
 };
+
+// --- DELETE WEATHER ---
+module.exports.deleteWeather = (req, res) => {
+    Weather.findByIdAndDelete(req.params.weatherId)
+    .then(weather => {
+        if (!weather) return res.status(404).send({ error: "Weather not found" });
+        return res.status(200).send({ message: "Weather deleted successfully", weather });
+    })
+    .catch(err => res.status(500).send({ error: "Failed to delete weather", details: err.message }));
+};

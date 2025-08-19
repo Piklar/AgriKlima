@@ -22,6 +22,11 @@ router.patch("/:id/setAsAdmin", verify, verifyAdmin, userController.setAsAdmin);
 // Route to get all users from the database (Admin Only)
 router.get("/all", verify, verifyAdmin, userController.getAllUsers);
 
+// Update user (Users)
+router.put("/:userId", verify, userController.updateUser);
+
+// Delete user (Users)
+router.delete("/:userId", verify, userController.deleteUser);
 
 // [SECTION] Export the router
 module.exports = router;

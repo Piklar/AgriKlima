@@ -14,4 +14,8 @@ router.get("/:location", weatherController.getWeatherByLocation);
 // Update weather data for a specific location (Admin Only)
 router.patch("/:location", verify, verifyAdmin, weatherController.updateWeatherByLocation);
 
+// --- DELETE Weather (Admin only) ---
+router.delete("/:weatherId", verify, verifyAdmin, weatherController.deleteWeather);
+
+
 module.exports = router;

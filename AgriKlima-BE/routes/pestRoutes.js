@@ -13,4 +13,11 @@ router.get("/", pestController.getAllPests);
 // Get a single pest by ID (Public)
 router.get("/:pestId", pestController.getPestById);
 
+// --- UPDATE Pest (Admin only) ---
+router.put("/:pestId", verify, verifyAdmin, pestController.updatePest);
+
+// --- DELETE Pest (Admin only) ---
+router.delete("/:pestId", verify, verifyAdmin, pestController.deletePest);
+
+
 module.exports = router;

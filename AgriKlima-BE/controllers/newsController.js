@@ -43,3 +43,14 @@ module.exports.updateNews = (req, res) => {
         })
         .catch(err => res.status(500).send({ error: "Failed to update article", details: err.message }));
 };
+
+
+// --- DELETE NEWS ---
+module.exports.deleteNews = (req, res) => {
+    News.findByIdAndDelete(req.params.newsId)
+    .then(news => {
+        if (!news) return res.status(404).send({ error: "News not found" });
+        return res.status(200).send({ message: "News deleted successfully", news });
+    })
+    .catch(err => res.status(500).send({ error: "Failed to delete news", details: err.message }));
+};

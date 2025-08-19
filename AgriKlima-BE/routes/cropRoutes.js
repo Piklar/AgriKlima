@@ -13,4 +13,10 @@ router.get("/", cropController.getAllCrops);
 // Get a single crop by ID (Public)
 router.get("/:cropId", cropController.getCropById);
 
+// --- UPDATE a crop (Admin only) ---
+router.put("/:cropId", verify, verifyAdmin, cropController.updateCrop);
+
+// --- DELETE a crop (Admin only) ---
+router.delete("/:cropId", verify, verifyAdmin, cropController.deleteCrop);
+
 module.exports = router;

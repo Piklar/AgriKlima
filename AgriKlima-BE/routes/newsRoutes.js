@@ -16,4 +16,7 @@ router.get("/:newsId", newsController.getNewsById);
 // Update a news article (Admin only)
 router.patch("/:newsId", verify, verifyAdmin, newsController.updateNews);
 
+// --- DELETE News (Admin only) ---
+router.delete("/:newsId", verify, verifyAdmin, newsController.deleteNews);
+
 module.exports = router;

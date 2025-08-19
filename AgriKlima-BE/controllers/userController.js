@@ -171,3 +171,36 @@ module.exports.setAsAdmin = (req,res) => {
         return res.status(500).send({ error: 'Failed in Find' });
     });
 }
+
+// --- UPDATE USER (Users) ---
+module.exports.updateUser = (req, res) => {
+    // Make sure req.user is defined
+    if (!req.user) return res.status(401).send({ error: "Unauthorized" });
+    if (req.user._id.toString() !== req.params.userId) {
+        return res.status(403).send({ error: "Forbidden: You can only update your own account." });
+    }
+    User.findByIdAndUpdate(
+        req.params.userId,
+        { ...req.body },
+        { new: true, runValidators: true }
+    )
+    .then(user => {
+        if (!user) return res.status(404).send({ error: "User not found" });
+        return res.status(200).send({ message: "User updated successfully", user });
+    })
+    .catch(err => res.status(500).send({ error: "Failed to update user", details: err.message }));
+};
+
+// --- DELETE USER (Users) ---
+module.exports.deleteUser = (req, res) => {
+    // Only allow users to delete their own account
+    if (req.user._id.toString() !== req.params.userId) {
+        return res.status(403).send({ error: "Forbidden: You can only delete your own account." });
+    }
+    User.findByIdAndDelete(req.params.userId)
+    .then(user => {
+        if (!user) return res.status(404).send({ error: "User not found" });
+        return res.status(200).send({ message: "User deleted successfully", user });
+    })
+    .catch(err => res.status(500).send({ error: "Failed to delete user", details: err.message }));
+};
