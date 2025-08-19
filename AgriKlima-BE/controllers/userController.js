@@ -41,6 +41,26 @@ module.exports.registerUser = (req,res) => {
 	}
 };
 
+module.exports.getAllUsers = (req, res) => {
+    return User.find({})
+        .then(users => {
+            if (users.length > 0) {
+                // Exclude passwords for all users found
+                const usersWithoutPasswords = users.map(user => {
+                    user.password = undefined;
+                    return user;
+                });
+                return res.status(200).send({ users: usersWithoutPasswords });
+            } else {
+                return res.status(404).send({ message: 'No users found' });
+            }
+        })
+        .catch(err => {
+            console.error("Failed to fetch all users: ", err);
+            return res.status(500).send({ error: 'Failed to fetch users' });
+        });
+};
+
 /**
  * [AUTHENTICATE] Log in a user.
  * @param {object} req - The request object from the client.

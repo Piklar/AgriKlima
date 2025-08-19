@@ -4,8 +4,6 @@ const router = express.Router();
 const { verify, verifyAdmin } = require("../auth");
 const cropController = require('../controllers/cropController');
 
-console.log("What is cropController?", cropController); 
-
 // Add a new crop (Admin only)
 router.post("/add", verify, verifyAdmin, cropController.addCrop);
 

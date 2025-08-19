@@ -26,7 +26,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect all routes
+// Connect all routes   
 app.use("/users", userRoutes);
 app.use("/crops", cropRoutes);
 app.use("/pests", pestRoutes);
