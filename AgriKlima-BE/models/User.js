@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: [true, 'Password is Required'] },
     isAdmin: { type: Boolean, default: false },
     mobileNo: { type: String, required: [true, 'Mobile Number is Required'] },
+    isActive: { type: Boolean, default: true },
 
     // --- ADD NEW FIELDS FOR AGRIKLIMA ---
     location: {

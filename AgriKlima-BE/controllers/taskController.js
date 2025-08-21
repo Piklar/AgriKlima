@@ -57,3 +57,24 @@ exports.deleteTask = async (req, res) => {
         res.status(500).json({ error: "Failed to delete task", details: err.message });
     }
 };
+
+// Archive Task
+
+exports.archiveTask = async (req, res) => {
+    try {
+        const archivedTask = await Task.findByIdAndUpdate(
+            req.params.taskId,
+            { isActive: false },
+            { new: true }
+        );
+        if (!archivedTask) {
+            return res.status(404).send({ error: "Task not found" });
+        }
+        res.status(200).send({
+            message: "Task archived successfully",
+            archiveTask: archivedTask
+        });
+    } catch (err) {
+        res.status(500).send({ error: "Error archiving task", details: err });
+    }
+};

@@ -204,3 +204,25 @@ module.exports.deleteUser = (req, res) => {
     })
     .catch(err => res.status(500).send({ error: "Failed to delete user", details: err.message }));
 };
+
+
+// Archive User (Admin Only)
+
+exports.archiveUser = async (req, res) => {
+    try {
+        const archivedUser = await User.findByIdAndUpdate(
+            req.params.userId,
+            { isActive: false },
+            { new: true }
+        );
+        if (!archivedUser) {
+            return res.status(404).send({ error: "User not found" });
+        }
+        res.status(200).send({
+            message: "User archived successfully",
+            archiveUser: archivedUser
+        });
+    } catch (err) {
+        res.status(500).send({ error: "Error archiving user", details: err });
+    }
+};
