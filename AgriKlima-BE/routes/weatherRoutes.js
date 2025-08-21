@@ -17,5 +17,4 @@ router.patch("/:location", verify, verifyAdmin, weatherController.updateWeatherB
 // --- DELETE Weather (Admin only) ---
 router.delete("/:weatherId", verify, verifyAdmin, weatherController.deleteWeather);
 
-
 module.exports = router;

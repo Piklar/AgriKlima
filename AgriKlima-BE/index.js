@@ -11,6 +11,7 @@ const cropRoutes = require("./routes/cropRoutes");
 const pestRoutes = require("./routes/pestRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
+const taskRoutes = require("./routes/taskRoutes");
 
 const PORT = process.env.PORT || 4000;
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -32,6 +33,7 @@ app.use("/crops", cropRoutes);
 app.use("/pests", pestRoutes);
 app.use("/news", newsRoutes);
 app.use("/weather", weatherRoutes);
+app.use("/task", taskRoutes); 
 
 app.listen(PORT, () => {
     console.log(`API is now online on port ${PORT}`);
