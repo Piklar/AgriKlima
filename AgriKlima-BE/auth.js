@@ -15,7 +15,7 @@ const secret = process.env.JWT_SECRET || "AgriKlimaFallbackSecret";
 module.exports.createAccessToken = (user) => {
 	// The data that will be part of the token's payload
 const data = {
-        _id: user._id, // fixed!
+        _id: user.id, // fixed!
         email: user.email,
         isAdmin: user.isAdmin
     };
