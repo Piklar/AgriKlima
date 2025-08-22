@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Container, Box, Typography, TextField, Button, Divider, Link as MuiLink, Grid, InputAdornment } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
@@ -9,90 +9,64 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import logo from '../assets/logo.png';
-import googleLogo from '../assets/images/google-logo.png';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, user, loading } = useAuth();
 
-  // State for form inputs and loading
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Common styles for input fields and buttons
-  const inputStyles = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '30px',
-      backgroundColor: '#f9f9f9'
-    }
-  };
-
-  const buttonStyles = {
-    borderRadius: '30px',
-    padding: '12px 0',
-    textTransform: 'none',
-    fontSize: '16px',
-    fontWeight: '600'
-  };
-
-  // Handle login form submit with real API call
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      // Call the login function from AuthContext with the user's input
-      const user = await login(email, password);
-
+  // Watch for successful authentication and redirect
+  useEffect(() => {
+    if (isAuthenticated && user) {
       Swal.fire({
         title: 'Login Successful!',
         text: `Welcome back, ${user.firstName}!`,
         icon: 'success',
-        timer: 2000,
+        timer: 1500,
         showConfirmButton: false
       });
 
-      // Intelligent redirect based on user role
       if (user.isAdmin) {
         navigate('/admin/crops');
       } else {
         navigate('/dashboard');
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      const errorMessage = error.response?.data?.error || "An unexpected error occurred. Please try again.";
-      Swal.fire('Login Failed', errorMessage, 'error');
-    } finally {
-      setLoading(false);
     }
+  }, [isAuthenticated, user, navigate]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await login(email, password);
+      // Success handled by useEffect
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
+      Swal.fire('Login Failed', errorMessage, 'error');
+      setIsSubmitting(false);
+    }
+    // Don't set isSubmitting to false on success, as navigation will occur
   };
+
+  // If still checking token, or already logged in, don't show form
+  if (loading) return <Typography>Loading...</Typography>;
+  if (isAuthenticated) { navigate('/dashboard'); return null; }
 
   return (
     <Box sx={{ backgroundColor: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* 1. Header Section */}
       <Container maxWidth="lg">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0' }}>
-          <Button 
-            startIcon={<ArrowBackIcon />} 
-            onClick={() => navigate(-1)}
-            sx={{ color: 'var(--dark-text)', textTransform: 'none' }}
-          >
-            Back
-          </Button>
+          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ color: 'var(--dark-text)', textTransform: 'none' }}>Back</Button>
           <img src={logo} alt="AgriKlima Logo" style={{ height: '40px' }} />
-          <MuiLink href="/signup" underline="hover" sx={{ color: 'var(--dark-text)', fontWeight: 500 }}>
-            Create An Account
-          </MuiLink>
+          <MuiLink component={RouterLink} to="/signup" underline="hover" sx={{ color: 'var(--dark-text)', fontWeight: 500 }}>Create An Account</MuiLink>
         </Box>
       </Container>
-
-      {/* 2. Main Login Form Section */}
       <Container maxWidth="md" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <Typography variant="h4" sx={{ textAlign: 'center', mb: 5, fontWeight: 600 }}>
-          Log In
-        </Typography>
+        <Typography variant="h4" sx={{ textAlign: 'center', mb: 5, fontWeight: 600 }}>Log In</Typography>
         <Grid container alignItems="center" spacing={4}>
-          {/* Left Side: Email/Password Form */}
           <Grid item xs={12} md={5}>
             <Box component="form" noValidate autoComplete="off" onSubmit={handleLogin}>
               <TextField
@@ -100,7 +74,6 @@ const LoginPage = () => {
                 required
                 label="Email Address"
                 margin="normal"
-                sx={inputStyles}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 InputProps={{
@@ -108,7 +81,7 @@ const LoginPage = () => {
                     <InputAdornment position="start">
                       <EmailOutlinedIcon sx={{ color: 'grey.500' }} />
                     </InputAdornment>
-                  ),
+                  )
                 }}
               />
               <TextField
@@ -117,7 +90,6 @@ const LoginPage = () => {
                 type="password"
                 label="Password"
                 margin="normal"
-                sx={inputStyles}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 InputProps={{
@@ -125,66 +97,34 @@ const LoginPage = () => {
                     <InputAdornment position="start">
                       <LockOutlinedIcon sx={{ color: 'grey.500' }} />
                     </InputAdornment>
-                  ),
+                  )
                 }}
               />
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                disabled={loading}
-                sx={{
-                  ...buttonStyles,
-                  mt: 2,
-                  backgroundColor: 'var(--primary-green)',
-                  '&:hover': {
-                    backgroundColor: 'var(--light-green)'
-                  }
-                }}
+                disabled={isSubmitting}
+                sx={{ mt: 2, py: 1.5, borderRadius: '30px', bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)' } }}
               >
-                {loading ? 'Logging in...' : 'Login'}
+                {isSubmitting ? 'Logging in...' : 'Log In'}
               </Button>
             </Box>
           </Grid>
-
-          {/* Center Divider */}
           <Grid item xs={12} md={2} sx={{ textAlign: 'center' }}>
-            <Divider orientation="vertical" sx={{ height: '150px', display: { xs: 'none', md: 'inline-flex' } }}>
-              <Typography sx={{ px: 2, color: 'grey.500' }}>OR</Typography>
-            </Divider>
-            <Divider sx={{ display: { xs: 'block', md: 'none' }, my: 2 }}>
-              <Typography sx={{ color: 'grey.500' }}>OR</Typography>
-            </Divider>
+            <Divider orientation="vertical" sx={{ height: '150px', display: { xs: 'none', md: 'inline-flex' } }}>OR</Divider>
+            <Divider sx={{ display: { xs: 'block', md: 'none' }, my: 2 }}>OR</Divider>
           </Grid>
-
-          {/* Right Side: Social Login */}
           <Grid item xs={12} md={5}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<img src={googleLogo} alt="Google" style={{ height: '20px' }} />}
-              sx={{
-                ...buttonStyles,
-                color: 'var(--dark-text)',
-                borderColor: 'grey.400',
-                justifyContent: 'center',
-                '&:hover': {
-                  borderColor: 'var(--dark-text)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                }
-              }}
-            >
-              Continue with Google
-            </Button>
+            {/* Google Login would have its own handler */}
+            <Button fullWidth variant="outlined" sx={{ py: 1.5, borderRadius: '30px', color: 'var(--dark-text)', borderColor: 'grey.400' }}>Continue with Google</Button>
           </Grid>
         </Grid>
       </Container>
-
-      {/* 3. Footer Link Section */}
       <Box sx={{ padding: '40px 0', textAlign: 'center' }}>
         <Typography variant="body1">
           Don't have an Account?{' '}
-          <MuiLink href="/signup" underline="always" sx={{ fontWeight: 'bold', color: 'var(--dark-text)' }}>
+          <MuiLink component={RouterLink} to="/signup" underline="always" sx={{ fontWeight: 'bold', color: 'var(--dark-text)' }}>
             Sign up
           </MuiLink>
         </Typography>
@@ -193,4 +133,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

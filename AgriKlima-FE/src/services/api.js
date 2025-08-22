@@ -5,13 +5,25 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "https://agriklima-backend.onrender.com",
 });
 
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default API;
+
 // ---- USER ROUTES ----
 export const registerUser = (data) => API.post("/users/register", data);
 export const loginUser = (data) => API.post("/users/login", data);
 
 // Token-based requests
 export const getProfile = (token) =>
-  API.get("/users/details", { headers: { Authorization: `Bearer ${token}` } });
+  API.get("/users/details", { headers: { Authorization: `Bearer ${token}` } })
+    .then(res => console.log(res.data))
+    .catch(err => console.error(err));
 
 export const resetPassword = (token, data) =>
   API.patch("/users/resetPassword", data, {
