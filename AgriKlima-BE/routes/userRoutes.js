@@ -28,5 +28,8 @@ router.put("/:userId", verify, userController.updateUser);
 // Delete user (Users)
 router.delete("/:userId", verify, userController.deleteUser);
 
+// Archive user (Admin Only)
+router.put("/:userId/archive", verify, verifyAdmin, userController.archiveUser);
+
 // [SECTION] Export the router
 module.exports = router;
