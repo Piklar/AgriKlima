@@ -191,20 +191,21 @@ module.exports.updateUser = (req, res) => {
     .catch(err => res.status(500).send({ error: "Failed to update user", details: err.message }));
 };
 
-// --- DELETE USER (Users) ---
-module.exports.deleteUser = (req, res) => {
-    // Only allow users to delete their own account
-    if (req.user._id.toString() !== req.params.userId) {
-        return res.status(403).send({ error: "Forbidden: You can only delete your own account." });
+exports.deleteUser = async (req, res) => {
+    try {
+        const archivedUser = await User.findByIdAndUpdate(
+            req.params.userId,
+            { isActive: false },
+            { new: true }
+        );
+        if (!archivedUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.status(200).json({ message: "User archived (soft deleted)", user: archivedUser });
+    } catch (err) {
+        res.status(500).json({ error: "Error archiving user", details: err });
     }
-    User.findByIdAndDelete(req.params.userId)
-    .then(user => {
-        if (!user) return res.status(404).send({ error: "User not found" });
-        return res.status(200).send({ message: "User deleted successfully", user });
-    })
-    .catch(err => res.status(500).send({ error: "Failed to delete user", details: err.message }));
 };
-
 
 // Archive User (Admin Only)
 
