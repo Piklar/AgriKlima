@@ -3,20 +3,21 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 
-// Layouts and Route Protection
-import PublicHeader from './components/Header';
-import Footer from './components/Footer';
+// --- LAYOUTS & ROUTE GUARDS ---
+import PublicLayout from './components/PublicLayout';
+import SharedLayout from './components/SharedLayout';
 import LoggedInLayout from './components/LoggedInLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import AdminLayout from './pages/Admin/AdminLayout';
+import PublicHomeRoute from './components/PublicHomeRoute'; // <-- Public Home guard
 
-// Public Pages
+// --- PAGE IMPORTS ---
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import AboutUsPage from './pages/AboutUsPage';
 import NewsPage from './pages/NewsPage';
-
-// --- Logged-In User Pages ---
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import WeatherPage from './pages/WeatherPage';
@@ -24,9 +25,7 @@ import CropsPage from './pages/CropsPage';
 import PestsPage from './pages/PestsPage';
 import CalendarPage from './pages/CalendarPage';
 
-// --- Admin Panel Imports ---
-import AdminRoute from './components/AdminRoute';
-import AdminLayout from './pages/Admin/AdminLayout';
+// --- ADMIN PAGES ---
 import ManageCrops from './pages/Admin/ManageCrops';
 import ManageUsers from './pages/Admin/ManageUsers';
 import ManageNews from './pages/Admin/ManageNews';
@@ -34,62 +33,40 @@ import ManagePests from './pages/Admin/ManagePests';
 import ManageTasks from './pages/Admin/ManageTasks';
 import ManageWeather from './pages/Admin/ManageWeather';
 
-// Public Layout Component
-const PublicLayout = ({ children }) => (
-  <>
-    <PublicHeader />
-    {children}
-    <Footer />
-  </>
-);
-
 function App() {
   return (
     <Routes>
-      {/* Standalone pages without any layout */}
+      {/* --- STANDALONE ROUTES (No Layout) --- */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
 
-      {/* --- Public Routes with Public Layout --- */}
-      <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
-      
-      {/* --- Protected Routes with Logged-In Layout --- */}
-      <Route 
-        path="/dashboard" 
-        element={<ProtectedRoute><LoggedInLayout><DashboardPage /></LoggedInLayout></ProtectedRoute>} 
-      />
-      <Route 
-        path="/profile" 
-        element={<ProtectedRoute><LoggedInLayout><ProfilePage /></LoggedInLayout></ProtectedRoute>} 
-      />
-      <Route 
-        path="/weather" 
-        element={<ProtectedRoute><LoggedInLayout><WeatherPage /></LoggedInLayout></ProtectedRoute>} 
-      />
-      <Route 
-        path="/crops" 
-        element={<ProtectedRoute><LoggedInLayout><CropsPage /></LoggedInLayout></ProtectedRoute>} 
-      />
-      <Route 
-        path="/pests" 
-        element={<ProtectedRoute><LoggedInLayout><PestsPage /></LoggedInLayout></ProtectedRoute>} 
-      />
-      <Route 
-        path="/calendar" 
-        element={<ProtectedRoute><LoggedInLayout><CalendarPage /></LoggedInLayout></ProtectedRoute>} 
-      />
+      {/* --- PUBLIC HOMEPAGE ROUTE --- */}
+      {/* Redirects logged-in users to dashboard, otherwise shows homepage */}
+      <Route element={<PublicHomeRoute />}>
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<HomePage />} />
+        </Route>
+      </Route>
 
-      {/* --- Shared Routes (will show different navbar based on auth state) --- */}
-      <Route 
-        path="/about" 
-        element={<ProtectedRoute><LoggedInLayout><AboutUsPage /></LoggedInLayout></ProtectedRoute>} 
-      />
-      <Route 
-        path="/news" 
-        element={<ProtectedRoute><LoggedInLayout><NewsPage /></LoggedInLayout></ProtectedRoute>} 
-      />
+      {/* --- SHARED ROUTES (Visible to Everyone, Navbar changes if logged in) --- */}
+      <Route element={<SharedLayout />}>
+        <Route path="/about" element={<AboutUsPage />} />
+        <Route path="/news" element={<NewsPage />} />
+      </Route>
 
-      {/* --- ADMIN PANEL ROUTES --- */}
+      {/* --- PROTECTED USER ROUTES --- */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<LoggedInLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/weather" element={<WeatherPage />} />
+          <Route path="/crops" element={<CropsPage />} />
+          <Route path="/pests" element={<PestsPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+        </Route>
+      </Route>
+
+      {/* --- PROTECTED ADMIN ROUTES --- */}
       <Route element={<AdminRoute />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="crops" element={<ManageCrops />} />
@@ -100,6 +77,9 @@ function App() {
           <Route path="weather" element={<ManageWeather />} />
         </Route>
       </Route>
+
+      {/* --- FALLBACK: 404 PAGE --- */}
+      <Route path="*" element={<div><h2>404 Page Not Found</h2></div>} />
     </Routes>
   );
 }

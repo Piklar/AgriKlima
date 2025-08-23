@@ -10,10 +10,9 @@ import {
   Typography,
   Button,
   Grid,
-  Card,
-  CardContent,
   Paper,
   LinearProgress,
+  CircularProgress,
   List,
   ListItem,
   ListItemIcon,
@@ -23,7 +22,9 @@ import {
 } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import AddTaskOverlay from '../components/AddTaskOverlay';
+import InfoCard from '../components/InfoCard'; // <-- Reusable InfoCard
 
+// --- ICONS ---
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
 import GrassOutlinedIcon from '@mui/icons-material/GrassOutlined';
@@ -31,34 +32,17 @@ import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlin
 import LogoutIcon from '@mui/icons-material/Logout';
 import AddIcon from '@mui/icons-material/Add';
 
-// --- Reusable Info Card Component ---
-const InfoCard = ({ title, value, icon, unit, children }) => (
-  <Card sx={{ borderRadius: '16px', boxShadow: 3, height: '100%' }}>
-    <CardContent>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-        {icon}
-        <Typography variant="h6" sx={{ ml: 1, fontWeight: 600 }}>{title}</Typography>
-      </Box>
-      {value !== undefined && value !== null && (
-        <Typography variant="h4" component="p" sx={{ fontWeight: 'bold' }}>
-          {value} {unit && <Typography variant="h6" component="span" color="text.secondary">{unit}</Typography>}
-        </Typography>
-      )}
-      {children}
-    </CardContent>
-  </Card>
-);
-
 const DashboardPage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // --- State for live data ---
+  // --- STATE ---
   const [weather, setWeather] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isTaskOverlayOpen, setIsTaskOverlayOpen] = useState(false);
 
-  // --- Fetch all dashboard data ---
+  // --- Fetch dashboard data ---
   const fetchDashboardData = useCallback(async () => {
     if (user && user.location) {
       try {
@@ -70,7 +54,11 @@ const DashboardPage = () => {
         setTasks(tasksResponse.data);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
+    } else if (user) {
+      setLoading(false);
     }
   }, [user]);
 
@@ -93,7 +81,7 @@ const DashboardPage = () => {
 
   const handleToggleTask = async (taskId) => {
     try {
-      const task = tasks.find(t => t.id === taskId);
+      const task = tasks.find(t => t.id === taskId || t._id === taskId);
       if (task) {
         await api.updateTask(taskId, { ...task, completed: !task.completed });
         fetchDashboardData();
@@ -108,7 +96,17 @@ const DashboardPage = () => {
     navigate('/');
   };
 
-  // Dummy data for the chart (replace with backend data if available)
+  // --- Loading Guard ---
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Loading Dashboard...</Typography>
+      </Box>
+    );
+  }
+
+  // --- Dummy Chart Data ---
   const weeklyHarvestData = [
     { day: 'Mon', harvestKg: 35 },
     { day: 'Tue', harvestKg: 42 },
@@ -145,22 +143,22 @@ const DashboardPage = () => {
           </Button>
         </Box>
 
-        {/* --- Key Info Cards Grid --- */}
+        {/* --- Info Cards --- */}
         <Grid container spacing={4}>
           <Grid item xs={12} sm={6} md={3}>
             <InfoCard
               title="Weather"
-              value={weather?.current?.temperature ?? '--'}
+              value={weather?.current?.temperature || '--'}
               unit="°C"
               icon={<WbSunnyOutlinedIcon color="warning" />}
             >
-              <Typography color="text.secondary">{weather?.current?.condition || 'Loading...'}</Typography>
+              <Typography color="text.secondary">{weather?.current?.condition || 'Unavailable'}</Typography>
             </InfoCard>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <InfoCard
               title="Humidity"
-              value={weather?.current?.humidity ?? '--'}
+              value={weather?.current?.humidity || '--'}
               unit="%"
               icon={<WaterDropOutlinedIcon color="info" />}
             >
@@ -174,7 +172,7 @@ const DashboardPage = () => {
           <Grid item xs={12} sm={6} md={3}>
             <InfoCard
               title="UV Index"
-              value={weather?.detailed?.uvIndex ?? '--'}
+              value={weather?.detailed?.uvIndex || '--'}
               icon={<GrassOutlinedIcon color="success" />}
             >
               <Typography color="text.secondary">Higher values require sun protection.</Typography>
@@ -183,18 +181,18 @@ const DashboardPage = () => {
           <Grid item xs={12} sm={6} md={3}>
             <InfoCard
               title="Feels Like"
-              value={weather?.detailed?.feelsLike ?? '--'}
+              value={weather?.detailed?.feelsLike || '--'}
               unit="°C"
               icon={<EventAvailableOutlinedIcon color="primary" />}
             >
-              <Typography color="text.secondary">Based on heat and humidity.</Typography>
+              <Typography color="text.secondary">Adjusted for humidity.</Typography>
             </InfoCard>
           </Grid>
         </Grid>
 
-        {/* --- Main Content Area (Chart and Activity) --- */}
+        {/* --- Chart & Tasks --- */}
         <Grid container spacing={4} mt={2}>
-          {/* Harvest Forecast Chart */}
+          {/* Harvest Chart */}
           <Grid item xs={12} lg={8}>
             <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: 3, height: '400px' }}>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Weekly Harvest Forecast (kg)</Typography>
@@ -211,7 +209,7 @@ const DashboardPage = () => {
             </Paper>
           </Grid>
 
-          {/* --- Dynamic Task List --- */}
+          {/* Task List */}
           <Grid item xs={12} lg={4}>
             <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: 3, height: '400px', display: 'flex', flexDirection: 'column' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -263,6 +261,8 @@ const DashboardPage = () => {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Add Task Overlay */}
       <AddTaskOverlay
         open={isTaskOverlayOpen}
         onClose={handleCloseTaskOverlay}
