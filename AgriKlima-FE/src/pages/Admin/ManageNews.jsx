@@ -86,11 +86,17 @@ const ManageNews = () => {
         });
     };
 
+    // ✅ Full News Fields (with summary details)
     const newsFields = [
         { name: 'title', label: 'Title', required: true },
         { name: 'author', label: 'Author', required: true },
         { name: 'imageUrl', label: 'Image URL', required: true },
-        { name: 'content', label: 'Content', required: true, multiline: true, rows: 6 },
+        { name: 'content', label: 'Full Article Content', required: true, multiline: true, rows: 8 },
+
+        // Summary (optional fields)
+        { name: 'summary.keyPoints', label: 'Key Points (one per line)', type: 'textarea', isArray: true, rows: 3 },
+        { name: 'summary.quotes', label: 'Notable Quotes (one per line)', type: 'textarea', isArray: true, rows: 3 },
+        { name: 'summary.impact', label: 'Expected Impact', multiline: true, rows: 2 },
     ];
 
     const columns = [
@@ -98,14 +104,14 @@ const ManageNews = () => {
         { field: 'title', headerName: 'Title', width: 350 },
         { field: 'author', headerName: 'Author', width: 200 },
         {
-  field: "publicationDate",
-  headerName: "Publication Date",
-  width: 200,
-  valueGetter: (params) => {
-    const date = params.row?.publicationDate;
-    return date ? new Date(date).toLocaleDateString() : "No date";
-  },
-},
+            field: "publicationDate",
+            headerName: "Publication Date",
+            width: 200,
+            valueGetter: (params) => {
+                const date = params.row?.publicationDate;
+                return date ? new Date(date).toLocaleDateString() : "No date";
+            },
+        },
         {
             field: 'actions',
             headerName: 'Actions',
@@ -124,7 +130,12 @@ const ManageNews = () => {
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Manage News</Typography>
-                <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: 'var(--primary-green)' }} onClick={handleOpenAddModal}>
+                <Button 
+                    variant="contained" 
+                    startIcon={<AddIcon />} 
+                    sx={{ bgcolor: 'var(--primary-green)' }} 
+                    onClick={handleOpenAddModal}
+                >
                     Add New Article
                 </Button>
             </Box>

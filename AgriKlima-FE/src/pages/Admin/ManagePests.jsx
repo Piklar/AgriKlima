@@ -1,5 +1,4 @@
 // src/pages/Admin/ManagePests.jsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -8,15 +7,17 @@ import Swal from 'sweetalert2';
 
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
+import { useAuth } from '../../context/AuthContext'; // Import auth context
 
 const ManagePests = () => {
+    const { token } = useAuth(); // 🔑 Get auth token
     const [pests, setPests] = useState([]);
     const [loading, setLoading] = useState(false);
     
     // State for the modal
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
-    const [currentPest, setCurrentPest] = useState(null); // Holds data for editing
+    const [modalMode, setModalMode] = useState('add');
+    const [currentPest, setCurrentPest] = useState(null);
 
     const fetchPests = useCallback(async () => {
         setLoading(true);
@@ -53,22 +54,38 @@ const ManagePests = () => {
     };
 
     const handleFormSubmit = async (formData) => {
+        console.log("Pest form submitted with data:", formData);
+        
+        if (!token) {
+            Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
+            return;
+        }
+        
         try {
             if (modalMode === 'add') {
-                await api.addPest(formData);
+                console.log("Adding pest...");
+                await api.addPest(formData, token);
                 Swal.fire('Success', 'Pest created successfully!', 'success');
             } else {
-                await api.updatePest(currentPest._id, formData);
+                console.log("Updating pest:", currentPest._id);
+                await api.updatePest(currentPest._id, formData, token);
                 Swal.fire('Success', 'Pest updated successfully!', 'success');
             }
             handleCloseModal();
-            fetchPests(); // Refresh the data grid
+            fetchPests();
         } catch (error) {
-            Swal.fire('Error', `Failed to save the pest: ${error.response?.data?.error || ''}`, 'error');
+            console.error("Failed to save pest:", error);
+            const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+            Swal.fire('Error', `Failed to save the pest: ${errorMessage}`, 'error');
         }
     };
 
     const handleDelete = (id) => {
+        if (!token) {
+            Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
+            return;
+        }
+        
         Swal.fire({
             title: 'Are you sure?',
             text: "You won't be able to revert this!",
@@ -80,27 +97,42 @@ const ManagePests = () => {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await api.deletePest(id);
+                    await api.deletePest(id, token);
                     Swal.fire('Deleted!', 'The pest has been deleted.', 'success');
-                    fetchPests(); // Refresh the data grid
+                    fetchPests();
                 } catch (error) {
-                    Swal.fire('Error', `Failed to delete the pest: ${error.response?.data?.error || ''}`, 'error');
+                    console.error("Failed to delete pest:", error);
+                    const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+                    Swal.fire('Error', `Failed to delete the pest: ${errorMessage}`, 'error');
                 }
             }
         });
     };
 
-    // Define fields for the reusable form modal
+    // --- FIXED pestFields ---
     const pestFields = [
         { name: 'name', label: 'Pest Name', required: true },
         { name: 'imageUrl', label: 'Image URL', required: true },
-        { name: 'type', label: 'Type', required: true, type: 'select', options: ['Insect Pest', 'Disease', 'Weed'] },
-        { name: 'riskLevel', label: 'Risk Level', required: true, type: 'select', options: ['Low', 'Medium', 'High'] },
-        // For nested fields, you would typically use dot notation in a more advanced form
-        // For simplicity here, we'll stick to top-level fields
+        { name: 'type', label: 'Type', type: 'select', options: ['Insect Pest', 'Disease', 'Weed'], required: true },
+        { name: 'riskLevel', label: 'Risk Level', type: 'select', options: ['Low', 'Medium', 'High'], required: true },
+        
+        // Overview - FIXED: use type instead of multiline
+        { name: 'overview.description', label: 'Description (Overview)', type: 'textarea', rows: 3 },
+        { name: 'overview.commonlyAffects', label: 'Commonly Affects (comma-separated)', type: 'textarea', isArray: true, rows: 2 },
+        { name: 'overview.seasonalActivity', label: 'Seasonal Activity (Overview)' },
+        
+        // Identification
+        { name: 'identification.size', label: 'Size (ID)', halfWidth: true },
+        { name: 'identification.color', label: 'Color (ID)', halfWidth: true },
+        { name: 'identification.shape', label: 'Shape (ID)', halfWidth: true },
+        { name: 'identification.behavior', label: 'Behavior (ID)', halfWidth: true },
+        
+        // Prevention & Treatment - FIXED: use type instead of multiline
+        { name: 'prevention', label: 'Prevention Methods (one per line)', type: 'textarea', isArray: true, rows: 4 },
+        { name: 'treatment', label: 'Treatment Methods (one per line)', type: 'textarea', isArray: true, rows: 4 },
     ];
 
-    // Define columns for the DataGrid
+    // FIXED: Define columns for the DataGrid - use 'field' instead of 'name'
     const columns = [
         { field: '_id', headerName: 'ID', width: 220 },
         { field: 'name', headerName: 'Pest Name', width: 200 },
