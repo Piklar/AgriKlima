@@ -100,21 +100,31 @@ module.exports.loginUser = (req, res) => {
  * @param {object} res - The response object to be sent to the client.
  */
 module.exports.getProfile = (req, res) => {
-	const userId = req.user.id;
-   return User.findById(userId)
+	// The `verify` middleware should have attached the decoded token payload to `req.user`.
+	// First, let's check if it exists and has an ID.
+	if (!req.user || !req.user.id) {
+        return res.status(401).send({ error: 'Invalid token or user data missing.' });
+    }
+
+    const userId = req.user.id;
+
+    return User.findById(userId)
         .then(user => {
             if (!user) {
+                // This can happen if the user was deleted after the token was issued.
             	return res.status(404).send({ error: 'User not found' });
             }
+            
+            // Exclude sensitive password from the response before sending.
             user.password = undefined;
-			// --- CHANGE: Send the user object directly, not nested ---
-			return res.status(200).send(user); 
+			return res.status(200).send(user); // Send the user object directly.
         })
         .catch(err => {
-            console.error("Failed to fetch user profile: ", err);
-            return res.status(500).send({ error: 'Failed to fetch user profile' });
+            console.error("Error in getProfile findById:", err);
+            return res.status(500).send({ error: 'Internal server error while fetching profile.' });
         });
 };
+
 
 
 /**
