@@ -1,10 +1,7 @@
-// src/components/PestDetailOverlay.jsx
+import React, { useState, useEffect } from 'react';
+import { Modal, Box, Typography, Grid, Paper, Chip } from '@mui/material';
 
-import React, { useState } from 'react';
-import { Modal, Box, Typography, Button, Grid, Paper, Chip } from '@mui/material';
-import aphidsHeroImg from '../assets/images/pest-aphids-hero.jpg';
-
-// Reusable Info Item components (can be moved to a shared file later)
+// --- Reusable Info Components ---
 const InfoItem = ({ title, content }) => (
   <Box mb={2}>
     <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5, color: 'text.secondary' }}>{title}</Typography>
@@ -15,18 +12,57 @@ const InfoItem = ({ title, content }) => (
 );
 
 const InfoList = ({ items }) => (
-    <>
-      {items.map((item, index) => (
-         <Paper key={index} elevation={0} sx={{ backgroundColor: '#f5f5f5', p: 2, borderRadius: '16px', mb: 1.5 }}>
-            <Typography>{item}</Typography>
+  <>
+    {(items && items.length > 0)
+      ? items.map((item, index) => (
+        <Paper key={index} elevation={0} sx={{ backgroundColor: '#f5f5f5', p: 2, borderRadius: '16px', mb: 1.5 }}>
+          <Typography>{item}</Typography>
         </Paper>
-      ))}
-    </>
+      ))
+      : <Typography color="text.secondary">N/A</Typography>}
+  </>
 );
 
-// Main Overlay Component
-const PestDetailOverlay = ({ open, onClose }) => {
+const TabButton = ({ label, activeTab, setActiveTab }) => {
+  const isActive = activeTab === label;
+  return (
+    <Box
+      component="button"
+      onClick={() => setActiveTab(label)}
+      sx={{
+        border: 0,
+        outline: 0,
+        borderRadius: '30px',
+        px: 3,
+        py: 1,
+        mr: 2,
+        mb: 1,
+        fontWeight: 600,
+        fontSize: '1rem',
+        backgroundColor: isActive ? 'var(--primary-green)' : '#e0e0e0',
+        color: isActive ? 'white' : 'var(--dark-text)',
+        cursor: 'pointer',
+        textTransform: 'none',
+        transition: 'background 0.2s',
+        '&:hover': {
+          backgroundColor: isActive ? 'var(--light-green)' : '#d5d5d5'
+        }
+      }}
+    >
+      {label}
+    </Box>
+  );
+};
+
+const PestDetailOverlay = ({ open, onClose, pestData }) => {
   const [activeTab, setActiveTab] = useState('Overview');
+
+  // When the modal opens, reset the tab to Overview
+  useEffect(() => {
+    if (open) setActiveTab('Overview');
+  }, [open]);
+
+  if (!pestData) return null;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -35,62 +71,75 @@ const PestDetailOverlay = ({ open, onClose }) => {
           <>
             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>Physical Characteristics</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={6}><InfoItem title="Size" content="1 - 10 mm long" /></Grid>
-              <Grid item xs={6}><InfoItem title="Color" content="Green, Black, Red, or White" /></Grid>
-              <Grid item xs={6}><InfoItem title="Shape" content="Pear-shaped body with long antennae" /></Grid>
-              <Grid item xs={6}><InfoItem title="Behavior" content="Cluster on stems and undersides of leaves" /></Grid>
+              <Grid item xs={6}><InfoItem title="Size" content={pestData.identification?.size || 'N/A'} /></Grid>
+              <Grid item xs={6}><InfoItem title="Color" content={pestData.identification?.color || 'N/A'} /></Grid>
+              <Grid item xs={6}><InfoItem title="Shape" content={pestData.identification?.shape || 'N/A'} /></Grid>
+              <Grid item xs={6}><InfoItem title="Behavior" content={pestData.identification?.behavior || 'N/A'} /></Grid>
             </Grid>
           </>
         );
       case 'Prevention':
-        return <InfoList items={['Use reflective mulches to deter aphids', 'Plant companion crops like marigolds and nasturtiums', 'Encourage beneficial insects like ladybugs', 'Regular inspection of plants']} />;
+        return <InfoList items={pestData.prevention} />;
       case 'Treatment':
-        return <InfoList items={['Spray with insecticidal soap solution', 'Use neem oil applications', 'Introduce ladybugs and lacewings', 'Use garlic or pepper spray']} />;
+        return <InfoList items={pestData.treatment} />;
       case 'Overview':
       default:
         return (
           <>
-            <InfoItem title="Description" content="Small, soft-bodied insects that feed on plant sap and can cause significant damage to crops." />
+            <InfoItem title="Description" content={pestData.overview?.description || 'N/A'} />
             <Box mb={2}>
-                <Typography variant="body1" sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}>Commonly Affects</Typography>
-                <Chip label="Tomato" sx={{ mr: 1, backgroundColor: '#ffc107', color: 'black' }} />
-                <Chip label="Pepper" sx={{ mr: 1, backgroundColor: '#ffc107', color: 'black' }} />
-                <Chip label="Lettuce" sx={{ backgroundColor: '#ffc107', color: 'black' }} />
+              <Typography variant="body1" sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}>Commonly Affects</Typography>
+              {(pestData.overview?.commonlyAffects || []).map(crop => (
+                <Chip key={crop} label={crop} sx={{ mr: 1, bgcolor: '#e0e0e0' }} />
+              ))}
             </Box>
-            <InfoItem title="Seasonal Activity" content="Most active in spring and fall, peak in warm weather" />
+            <InfoItem title="Seasonal Activity" content={pestData.overview?.seasonalActivity || 'N/A'} />
           </>
         );
     }
   };
 
-  const TabButton = ({ label }) => {
-    const isActive = activeTab === label;
-    return (
-        <Button onClick={() => setActiveTab(label)} sx={{ borderRadius: '30px', px: 3, py: 1.5, textTransform: 'none', fontSize: '1rem', fontWeight: 600, backgroundColor: isActive ? 'var(--primary-green)' : '#e0e0e0', color: isActive ? 'white' : 'var(--dark-text)', '&:hover': { backgroundColor: isActive ? 'var(--light-green)' : '#d5d5d5' }}}>
-            {label}
-        </Button>
-    );
-  };
-
   return (
-    <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Modal
+      open={open}
+      onClose={onClose}
+      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
       <Paper sx={{ width: '80%', maxWidth: '1000px', maxHeight: '90vh', borderRadius: '24px', overflowY: 'auto' }}>
-        {/* Hero Section */}
-        <Box sx={{ height: '220px', background: `linear-gradient(to top, rgba(0,0,0,0.5), transparent), url(${aphidsHeroImg})`, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', color: 'white', p: 4 }}>
-          <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-            <Typography variant="h2" sx={{ fontWeight: 'bold' }}>Aphids</Typography>
-            <Chip label="High Risk" sx={{ backgroundColor: '#f44336', color: 'white', fontWeight: 600 }} />
+        {/* Hero/Header */}
+        <Box
+          sx={{
+            height: '220px',
+            background: `linear-gradient(to top, rgba(0,0,0,0.5), transparent), url(${pestData.imageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            color: 'white',
+            p: 4
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h2" sx={{ fontWeight: 'bold' }}>{pestData.name}</Typography>
+            <Chip
+              label={`${pestData.riskLevel} Risk`}
+              sx={{
+                backgroundColor: pestData.riskLevel === 'High' ? '#f44336' : '#ffc107',
+                color: 'white',
+                fontWeight: 600
+              }}
+            />
           </Box>
-          <Typography>Insect Pest / Scientific Name-crap</Typography>
+          <Typography>{pestData.type}</Typography>
         </Box>
-
-        {/* Main Content */}
+        {/* Tabs and Content */}
         <Box p={4}>
           <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
-            <TabButton label="Overview" />
-            <TabButton label="Identification" />
-            <TabButton label="Prevention" />
-            <TabButton label="Treatment" />
+            <TabButton label="Overview" activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton label="Identification" activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton label="Prevention" activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton label="Treatment" activeTab={activeTab} setActiveTab={setActiveTab} />
           </Box>
           {renderContent()}
         </Box>
