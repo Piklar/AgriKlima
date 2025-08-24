@@ -100,22 +100,32 @@ module.exports.loginUser = (req, res) => {
  * @param {object} res - The response object to be sent to the client.
  */
 module.exports.getProfile = (req, res) => {
-	const userId = req.user.id; // Get user ID from the decoded token via the `verify` middleware
+	// The `verify` middleware should have attached the decoded token payload to `req.user`.
+	// First, let's check if it exists and has an ID.
+	if (!req.user || !req.user.id) {
+        return res.status(401).send({ error: 'Invalid token or user data missing.' });
+    }
 
-   return User.findById(userId)
+    const userId = req.user.id;
+
+    return User.findById(userId)
         .then(user => {
             if (!user) {
+                // This can happen if the user was deleted after the token was issued.
             	return res.status(404).send({ error: 'User not found' });
             }
-            // Exclude sensitive password from the response
+            
+            // Exclude sensitive password from the response before sending.
             user.password = undefined;
-			return res.status(200).send({ user });
+			return res.status(200).send(user); // Send the user object directly.
         })
         .catch(err => {
-            console.error("Failed to fetch user profile: ", err);
-            return res.status(500).send({ error: 'Failed to fetch user profile' });
+            console.error("Error in getProfile findById:", err);
+            return res.status(500).send({ error: 'Internal server error while fetching profile.' });
         });
 };
+
+
 
 /**
  * [UPDATE] Reset a user's password.
@@ -174,56 +184,35 @@ module.exports.setAsAdmin = (req,res) => {
 
 // --- UPDATE USER (Users) ---
 module.exports.updateUser = (req, res) => {
-    // Make sure req.user is defined
-    if (!req.user) return res.status(401).send({ error: "Unauthorized" });
-    if (req.user._id.toString() !== req.params.userId) {
+    // req.user comes from the `verify` middleware
+    if (!req.user || !req.user.id) return res.status(401).send({ error: "Unauthorized" });
+
+    // Allow an admin to update any user, or a user to update their own account
+    if (!req.user.isAdmin && req.user.id.toString() !== req.params.userId) {
         return res.status(403).send({ error: "Forbidden: You can only update your own account." });
     }
-    User.findByIdAndUpdate(
-        req.params.userId,
-        { ...req.body },
-        { new: true, runValidators: true }
-    )
-    .then(user => {
-        if (!user) return res.status(404).send({ error: "User not found" });
-        return res.status(200).send({ message: "User updated successfully", user });
-    })
-    .catch(err => res.status(500).send({ error: "Failed to update user", details: err.message }));
+    
+    User.findByIdAndUpdate(req.params.userId, { ...req.body }, { new: true, runValidators: true })
+        .then(user => {
+            if (!user) return res.status(404).send({ error: "User not found" });
+            user.password = undefined; // Don't send password back
+            return res.status(200).send({ message: "User updated successfully", user });
+        })
+        .catch(err => res.status(500).send({ error: "Failed to update user", details: err.message }));
 };
 
-exports.deleteUser = async (req, res) => {
-    try {
-        const archivedUser = await User.findByIdAndUpdate(
-            req.params.userId,
-            { isActive: false },
-            { new: true }
-        );
-        if (!archivedUser) {
-            return res.status(404).json({ error: "User not found" });
-        }
-        res.status(200).json({ message: "User archived (soft deleted)", user: archivedUser });
-    } catch (err) {
-        res.status(500).json({ error: "Error archiving user", details: err });
-    }
-};
+// --- DELETE USER (Users) ---
+module.exports.deleteUser = (req, res) => {
+    if (!req.user || !req.user.id) return res.status(401).send({ error: "Unauthorized" });
 
-// Archive User (Admin Only)
-
-exports.archiveUser = async (req, res) => {
-    try {
-        const archivedUser = await User.findByIdAndUpdate(
-            req.params.userId,
-            { isActive: false },
-            { new: true }
-        );
-        if (!archivedUser) {
-            return res.status(404).send({ error: "User not found" });
-        }
-        res.status(200).send({
-            message: "User archived successfully",
-            archiveUser: archivedUser
-        });
-    } catch (err) {
-        res.status(500).send({ error: "Error archiving user", details: err });
+    if (!req.user.isAdmin && req.user.id.toString() !== req.params.userId) {
+        return res.status(403).send({ error: "Forbidden: You can only delete your own account." });
     }
+
+    User.findByIdAndDelete(req.params.userId)
+        .then(user => {
+            if (!user) return res.status(404).send({ error: "User not found" });
+            return res.status(200).send({ message: "User deleted successfully" });
+        })
+        .catch(err => res.status(500).send({ error: "Failed to delete user", details: err.message }));
 };

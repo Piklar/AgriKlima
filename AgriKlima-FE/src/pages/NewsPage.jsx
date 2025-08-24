@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { Container, Grid, Typography, Box, Card, CardContent, CardMedia, Divider, Button } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Container, Grid, Typography, Box, CardMedia, Divider, Button } from '@mui/material';
+import * as api from '../services/api';
+import NewsSummaryOverlay from '../components/NewsSummaryOverlay';
 import mainNewsImage from '../assets/images/news-main.jpg';
 
-// --- Component Imports ---
-import NewsSummaryOverlay from '../components/NewsSummaryOverlay'; // <-- Import the new overlay
-
-// A small, reusable component for the sidebar news items
-const MoreNewsCard = ({ title, image }) => (
+// --- Sidebar Card Component ---
+const MoreNewsCard = ({ title, author, image }) => (
   <Box display="flex" mb={2}>
     <CardMedia
       component="img"
@@ -19,26 +18,84 @@ const MoreNewsCard = ({ title, image }) => (
         {title}
       </Typography>
       <Typography variant="caption" color="text.secondary">
-        Author - Date
+        {author ? `${author}` : "Author"} - Date
       </Typography>
     </Box>
   </Box>
 );
 
-const NewsPage = () => {
-  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+const fallbackMainArticle = {
+  title: "Sec. Francisco Tiu Laurel Jr.: leading PH agriculture to a new, bold direction",
+  content: `On November 3, 2023, Francisco P Tiu Laurel, Jr. took his oath as Secretary of the Department of Agriculture, officially accepting the role and its struggles.
 
-  const handleOpenSummary = () => setIsSummaryOpen(true);
+Before entering public service, Sec. Tiu Laurel built a successful career in business for over 30 years. He led projects in many industries like fisheries, marine services, and cold storage—all while championing sustainable business practices that protect the environment while helping the economy grow.
+
+His roadmap includes:
+- Modern mechanization and farming tools
+- More irrigation and better farm-to-market roads
+- Stronger transport and storage systems
+
+With his bold vision, the Department of Agriculture is preparing for a stronger future. One that is modern, competitive, and ready to face new challenges.`,
+  publicationDate: "2023-09-20T20:00:00Z",
+  author: "Department of Agriculture",
+  imageUrl: mainNewsImage,
+  _id: "static-main",
+};
+const fallbackMoreNews = [
+  { title: 'Umarangkada ang Agrikultura!', author: "Author", imageUrl: "" },
+  { title: 'Murang bigas, hinila pababa ang inflation!', author: "Author", imageUrl: "" },
+  { title: 'FPA to celebrate 48th anniversary with focus on smarter regulations', author: "Author", imageUrl: "" },
+  { title: 'BAI confirms first case of HPAI H5N1 in Camarines Sur', author: "Author", imageUrl: "" },
+  { title: 'Bohol tilapia farmer maps success through BFAR-PBS-TBI program', author: "Author", imageUrl: "" },
+];
+
+const NewsPage = () => {
+  // --- STATE FOR LIVE DATA ---
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await api.getNews();
+        setArticles(response.data);
+      } catch (error) {
+        console.error("Failed to fetch news:", error);
+        setArticles([]); // fallback to static content
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // --- EVENT HANDLERS ---
+  const handleOpenSummary = (article) => {
+    setSelectedArticle(article);
+    setIsSummaryOpen(true);
+  };
   const handleCloseSummary = () => setIsSummaryOpen(false);
 
-  // Dummy data for the "More News" section
-  const moreNewsData = [
-    { title: 'Umarangkada ang Agrikultura!' },
-    { title: 'Murang bigas, hinila pababa ang inflation!' },
-    { title: 'FPA to celebrate 48th anniversary with focus on smarter regulations' },
-    { title: 'BAI confirms first case of HPAI H5N1 in Camarines Sur' },
-    { title: 'Bohol tilapia farmer maps success through BFAR-PBS-TBI program' },
-  ];
+  // --- DATA LAYER: API or STATIC FALLBACK ---
+  const mainArticle =
+    !loading && articles.length > 0
+      ? articles[0]
+      : fallbackMainArticle;
+  const moreNewsData =
+    !loading && articles.length > 1
+      ? articles.slice(1, 6)
+      : fallbackMoreNews;
+
+  // --- RENDER LOGIC ---
+  if (loading)
+    return (
+      <Typography sx={{ textAlign: 'center', mt: 4 }}>
+        Loading News...
+      </Typography>
+    );
 
   return (
     <>
@@ -47,51 +104,50 @@ const NewsPage = () => {
           {/* Main News Article Column */}
           <Grid item xs={12} md={8}>
             <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
-              Sec. Francisco Tiu Laurel Jr.: leading PH agriculture to a new, bold direction
+              {mainArticle.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ margin: '10px 0 20px 0' }}>
-              20 Sep 2023, 8:00pm
+              {mainArticle.publicationDate
+                ? new Date(mainArticle.publicationDate).toLocaleDateString()
+                : "Date"}{mainArticle.author ? ` • ${mainArticle.author}` : ""}
             </Typography>
-            
-            {/* Image and Button Wrapper */}
+
             <Box sx={{ position: 'relative', mb: 4 }}>
-              <img src={mainNewsImage} alt="Secretary Francisco Tiu Laurel Jr." style={{ width: '100%', borderRadius: '8px' }} />
-              <Button 
-                variant="contained" 
-                onClick={handleOpenSummary}
-                sx={{ 
-                  position: 'absolute', 
-                  bottom: 16, 
+              <img
+                src={mainArticle.imageUrl || mainNewsImage}
+                alt={mainArticle.title}
+                style={{ width: '100%', borderRadius: '8px' }}
+              />
+              <Button
+                variant="contained"
+                onClick={() => handleOpenSummary(mainArticle)}
+                sx={{
+                  position: 'absolute',
+                  bottom: 16,
                   left: 16,
                   backgroundColor: 'var(--primary-green)',
                   borderRadius: '20px',
                   textTransform: 'none',
                   fontSize: '1rem',
-                  '&:hover': {
-                    backgroundColor: 'var(--light-green)'
-                  }
+                  '&:hover': { backgroundColor: 'var(--light-green)' },
                 }}
               >
                 Get Summary
               </Button>
             </Box>
 
-            <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
-              On November 3, 2023, Francisco P Tiu Laurel, Jr. took his oath as Secretary of the Department of Agriculture, officially accepting the role and its struggles.
-              <br /><br />
-              Before entering public service, Sec. Tiu Laurel built a successful career in business for over 30 years. He led projects in many industries like fisheries, marine services, and cold storage—all while championing sustainable business practices that protect the environment while helping the economy grow.
-              <br /><br />
-              His roadmap includes:
-              <ul>
-                <li>Modern mechanization and farming tools</li>
-                <li>More irrigation and better farm-to-market roads</li>
-                <li>Stronger transport and storage systems</li>
-              </ul>
-              With his bold vision, the Department of Agriculture is preparing for a stronger future. One that is modern, competitive, and ready to face new challenges.
+            <Typography
+              variant="body1"
+              sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}
+              component="div"
+            >
+              {mainArticle.content}
             </Typography>
-            <Typography variant="subtitle1" sx={{ marginTop: '40px', fontStyle: 'italic' }}>
-              Source: Department of Agriculture
-            </Typography>
+            {mainArticle.source && (
+              <Typography variant="subtitle1" sx={{ marginTop: '40px', fontStyle: 'italic' }}>
+                Source: {mainArticle.source}
+              </Typography>
+            )}
           </Grid>
 
           {/* More News Sidebar Column */}
@@ -101,14 +157,23 @@ const NewsPage = () => {
             </Typography>
             <Divider sx={{ marginBottom: '20px' }}/>
             {moreNewsData.map((item, index) => (
-              <MoreNewsCard key={index} title={item.title} />
+              <MoreNewsCard
+                key={item._id || index}
+                title={item.title}
+                author={item.author}
+                image={item.imageUrl}
+              />
             ))}
           </Grid>
         </Grid>
       </Container>
 
       {/* --- RENDER THE OVERLAY COMPONENT --- */}
-      <NewsSummaryOverlay open={isSummaryOpen} onClose={handleCloseSummary} />
+      <NewsSummaryOverlay
+        open={isSummaryOpen}
+        onClose={handleCloseSummary}
+        articleData={selectedArticle || mainArticle}
+      />
     </>
   );
 };

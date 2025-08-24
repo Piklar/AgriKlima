@@ -11,6 +11,20 @@ exports.addTask = async (req, res) => {
     }
 };
 
+// Get all tasks assigned to the currently logged-in user
+exports.getMyTasks = async (req, res) => {
+    try {
+        // req.user.id comes from the `verify` middleware
+        const tasks = await Task.find({ assignedTo: req.user.id });
+        if (!tasks) {
+            return res.status(200).json([]); // Return empty array if no tasks
+        }
+        res.status(200).json(tasks);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch user tasks", details: err.message });
+    }
+};
+
 // Get All Tasks
 exports.getAllTasks = async (req, res) => {
     try {

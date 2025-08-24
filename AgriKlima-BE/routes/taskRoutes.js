@@ -1,3 +1,4 @@
+//taskRoutes.js
 const express = require("express");
 const router = express.Router();
 const { verify, verifyAdmin  } = require("../auth");
@@ -5,6 +6,9 @@ const taskController = require("../controllers/taskController");
 
 // Create Task (admin or user - depending on your requirement)
 router.post("/add", verify, taskController.addTask);
+
+// --- ADD THIS NEW ROUTE for regular users ---
+router.get("/my-tasks", verify, taskController.getMyTasks);
 
 // Get All Tasks
 router.get("/", verify, taskController.getAllTasks);

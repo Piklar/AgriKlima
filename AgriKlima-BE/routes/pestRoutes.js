@@ -5,7 +5,7 @@ const { verify, verifyAdmin } = require("../auth");
 const pestController = require("../controllers/pestController");
 
 // Add a new pest (Admin only)
-router.post("/", verify, verifyAdmin, pestController.addPest);
+router.post("/add", verify, verifyAdmin, pestController.addPest);
 
 // Get all pests (Public)
 router.get("/", pestController.getAllPests);

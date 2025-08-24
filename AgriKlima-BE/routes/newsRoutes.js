@@ -5,7 +5,7 @@ const { verify, verifyAdmin } = require("../auth");
 const newsController = require("../controllers/newsController");
 
 // Add a new news article (Admin only)
-router.post("/", verify, verifyAdmin, newsController.addNews);
+router.post("/add", verify, verifyAdmin, newsController.addNews);
 
 // Get all news articles (Public)
 router.get("/", newsController.getAllNews);

@@ -33,7 +33,7 @@ app.use("/crops", cropRoutes);
 app.use("/pests", pestRoutes);
 app.use("/news", newsRoutes);
 app.use("/weather", weatherRoutes);
-app.use("/task", taskRoutes); 
+app.use("/tasks", taskRoutes); 
 
 app.listen(PORT, () => {
     console.log(`API is now online on port ${PORT}`);
