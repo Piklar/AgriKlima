@@ -2,15 +2,14 @@
 
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 
-// --- LAYOUTS & ROUTE GUARDS ---
+// --- LAYOUTS ---
 import PublicLayout from './components/PublicLayout';
 import SharedLayout from './components/SharedLayout';
 import LoggedInLayout from './components/LoggedInLayout';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
 import AdminLayout from './pages/Admin/AdminLayout';
-import PublicHomeRoute from './components/PublicHomeRoute'; // <-- Public Home guard
 
 // --- PAGE IMPORTS ---
 import HomePage from './pages/HomePage';
@@ -33,29 +32,30 @@ import ManagePests from './pages/Admin/ManagePests';
 import ManageTasks from './pages/Admin/ManageTasks';
 import ManageWeather from './pages/Admin/ManageWeather';
 
+// --- CONFIG ---
+const DEBUG_MODE = false; // Set true for debugging (disable route guards)
+
 function App() {
   return (
     <Routes>
-      {/* --- STANDALONE ROUTES (No Layout) --- */}
+      {/* --- STANDALONE ROUTES --- */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
 
-      {/* --- PUBLIC HOMEPAGE ROUTE --- */}
-      {/* Redirects logged-in users to dashboard, otherwise shows homepage */}
-      <Route element={<PublicHomeRoute />}>
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<HomePage />} />
-        </Route>
+      {/* --- PUBLIC ROUTE --- */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<HomePage />} />
       </Route>
 
-      {/* --- SHARED ROUTES (Visible to Everyone, Navbar changes if logged in) --- */}
+      {/* --- SHARED ROUTES --- */}
       <Route element={<SharedLayout />}>
         <Route path="/about" element={<AboutUsPage />} />
         <Route path="/news" element={<NewsPage />} />
       </Route>
 
-      {/* --- PROTECTED USER ROUTES --- */}
-      <Route element={<ProtectedRoute />}>
+      {/* --- USER ROUTES --- */}
+      {DEBUG_MODE ? (
+        // --- DEBUGGING MODE: guards disabled ---
         <Route element={<LoggedInLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
@@ -64,10 +64,22 @@ function App() {
           <Route path="/pests" element={<PestsPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
         </Route>
-      </Route>
+      ) : (
+        // --- PRODUCTION MODE: ProtectedRoute applied ---
+        <Route element={<ProtectedRoute />}>
+          <Route element={<LoggedInLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/weather" element={<WeatherPage />} />
+            <Route path="/crops" element={<CropsPage />} />
+            <Route path="/pests" element={<PestsPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+          </Route>
+        </Route>
+      )}
 
-      {/* --- PROTECTED ADMIN ROUTES --- */}
-      <Route element={<AdminRoute />}>
+      {/* --- ADMIN ROUTES --- */}
+      {DEBUG_MODE ? (
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="crops" element={<ManageCrops />} />
           <Route path="users" element={<ManageUsers />} />
@@ -76,9 +88,20 @@ function App() {
           <Route path="tasks" element={<ManageTasks />} />
           <Route path="weather" element={<ManageWeather />} />
         </Route>
-      </Route>
+      ) : (
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="crops" element={<ManageCrops />} />
+            <Route path="users" element={<ManageUsers />} />
+            <Route path="news" element={<ManageNews />} />
+            <Route path="pests" element={<ManagePests />} />
+            <Route path="tasks" element={<ManageTasks />} />
+            <Route path="weather" element={<ManageWeather />} />
+          </Route>
+        </Route>
+      )}
 
-      {/* --- FALLBACK: 404 PAGE --- */}
+      {/* --- FALLBACK 404 --- */}
       <Route path="*" element={<div><h2>404 Page Not Found</h2></div>} />
     </Routes>
   );

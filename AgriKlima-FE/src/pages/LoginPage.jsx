@@ -20,12 +20,12 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // If the user is already logged in, redirect them away from the login page.
+  // 🔹 Prevent logged-in users from seeing the login page
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard'); // Default redirect for already logged-in users
+    if (!loading && isAuthenticated) {
+      navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -42,13 +42,11 @@ const LoginPage = () => {
         showConfirmButton: false
       });
 
-      // --- THIS IS THE CORE REDIRECTION LOGIC ---
+      // --- REDIRECT BASED ON ROLE ---
       if (user && user.isAdmin) {
-        // If the user object exists and isAdmin is true
-        navigate('/admin/crops'); // Redirect to the admin panel
+        navigate('/admin/crops'); // Admin panel
       } else {
-        // For all other regular users
-        navigate('/dashboard'); // Redirect to the user dashboard
+        navigate('/dashboard'); // Regular users
       }
 
     } catch (error) {
@@ -60,38 +58,129 @@ const LoginPage = () => {
   };
 
   if (loading) {
-    return <Typography sx={{textAlign: 'center', mt: 5}}>Loading...</Typography>;
+    return <Typography sx={{ textAlign: 'center', mt: 5 }}>Loading...</Typography>;
   }
 
   return (
     <Box sx={{ backgroundColor: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* --- Top Navigation --- */}
       <Container maxWidth="lg">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0' }}>
-          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ color: 'var(--dark-text)', textTransform: 'none' }}>Back</Button>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate(-1)}
+            sx={{ color: 'var(--dark-text)', textTransform: 'none' }}
+          >
+            Back
+          </Button>
           <img src={logo} alt="AgriKlima Logo" style={{ height: '40px' }} />
-          <MuiLink component={RouterLink} to="/signup" underline="hover" sx={{ color: 'var(--dark-text)', fontWeight: 500 }}>Create An Account</MuiLink>
+          <MuiLink
+            component={RouterLink}
+            to="/signup"
+            underline="hover"
+            sx={{ color: 'var(--dark-text)', fontWeight: 500 }}
+          >
+            Create An Account
+          </MuiLink>
         </Box>
       </Container>
+
+      {/* --- Main Content --- */}
       <Container maxWidth="md" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <Typography variant="h4" sx={{ textAlign: 'center', mb: 5, fontWeight: 600 }}>Log In</Typography>
+        <Typography variant="h4" sx={{ textAlign: 'center', mb: 5, fontWeight: 600 }}>
+          Log In
+        </Typography>
         <Grid container alignItems="center" spacing={4}>
           <Grid item xs={12} md={5}>
             <Box component="form" noValidate autoComplete="off" onSubmit={handleLogin}>
-              <TextField fullWidth required label="Email Address" margin="normal" value={email} onChange={(e) => setEmail(e.target.value)} InputProps={{ startAdornment: (<InputAdornment position="start"><EmailOutlinedIcon sx={{ color: 'grey.500' }} /></InputAdornment>) }}/>
-              <TextField fullWidth required type="password" label="Password" margin="normal" value={password} onChange={(e) => setPassword(e.target.value)} InputProps={{ startAdornment: (<InputAdornment position="start"><LockOutlinedIcon sx={{ color: 'grey.500' }} /></InputAdornment>) }}/>
-              <Button type="submit" fullWidth variant="contained" disabled={isSubmitting} sx={{ mt: 2, py: 1.5, borderRadius: '30px', bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)' } }}>
+              <TextField
+                fullWidth
+                required
+                label="Email Address"
+                margin="normal"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailOutlinedIcon sx={{ color: 'grey.500' }} />
+                    </InputAdornment>
+                  )
+                }}
+              />
+              <TextField
+                fullWidth
+                required
+                type="password"
+                label="Password"
+                margin="normal"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockOutlinedIcon sx={{ color: 'grey.500' }} />
+                    </InputAdornment>
+                  )
+                }}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={isSubmitting}
+                sx={{
+                  mt: 2,
+                  py: 1.5,
+                  borderRadius: '30px',
+                  bgcolor: 'var(--primary-green)',
+                  '&:hover': { bgcolor: 'var(--light-green)' }
+                }}
+              >
                 {isSubmitting ? 'Logging in...' : 'Log In'}
               </Button>
             </Box>
           </Grid>
-          <Grid item xs={12} md={2} sx={{ textAlign: 'center' }}><Divider orientation="vertical" sx={{ height: '150px', display: { xs: 'none', md: 'inline-flex' } }}>OR</Divider><Divider sx={{ display: { xs: 'block', md: 'none' }, my: 2 }}>OR</Divider></Grid>
+
+          {/* Divider */}
+          <Grid item xs={12} md={2} sx={{ textAlign: 'center' }}>
+            <Divider orientation="vertical" sx={{ height: '150px', display: { xs: 'none', md: 'inline-flex' } }}>
+              OR
+            </Divider>
+            <Divider sx={{ display: { xs: 'block', md: 'none' }, my: 2 }}>OR</Divider>
+          </Grid>
+
+          {/* Google Button */}
           <Grid item xs={12} md={5}>
-            <Button fullWidth variant="outlined" sx={{ py: 1.5, borderRadius: '30px', color: 'var(--dark-text)', borderColor: 'grey.400' }}>Continue with Google</Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              sx={{
+                py: 1.5,
+                borderRadius: '30px',
+                color: 'var(--dark-text)',
+                borderColor: 'grey.400'
+              }}
+            >
+              Continue with Google
+            </Button>
           </Grid>
         </Grid>
       </Container>
+
+      {/* --- Footer --- */}
       <Box sx={{ padding: '40px 0', textAlign: 'center' }}>
-        <Typography variant="body1">Don't have an Account?{' '}<MuiLink component={RouterLink} to="/signup" underline="always" sx={{ fontWeight: 'bold', color: 'var(--dark-text)' }}>Sign up</MuiLink></Typography>
+        <Typography variant="body1">
+          Don't have an Account?{' '}
+          <MuiLink
+            component={RouterLink}
+            to="/signup"
+            underline="always"
+            sx={{ fontWeight: 'bold', color: 'var(--dark-text)' }}
+          >
+            Sign up
+          </MuiLink>
+        </Typography>
       </Box>
     </Box>
   );

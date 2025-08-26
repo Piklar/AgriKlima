@@ -53,6 +53,7 @@ export const deletePest = (id) => API.delete(`/pests/${id}`);
 
 // ---- TASK ROUTES ----
 export const getTasks = () => API.get("/tasks");
+export const getMyTasks = () => API.get("/tasks/my-tasks");
 export const getTaskById = (id) => API.get(`/tasks/${id}`);
 export const addTask = (data) => API.post("/tasks/add", data);
 export const updateTask = (id, data) => API.put(`/tasks/${id}`, data);

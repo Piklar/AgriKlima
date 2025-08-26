@@ -71,8 +71,8 @@ const CalendarPage = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      // Fetch tasks and create a simple crop list from the user profile
-      const tasksResponse = await api.getTasks();
+      // --- THE FIX: Use getMyTasks instead of getTasks ---
+      const tasksResponse = await api.getMyTasks();
       setTasks(tasksResponse.data);
 
       if (user && user.crops) {
