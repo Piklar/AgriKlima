@@ -64,10 +64,37 @@ exports.updateTask = async (req, res) => {
 // Delete Task
 exports.deleteTask = async (req, res) => {
     try {
-        const deletedTask = await Task.findByIdAndDelete(req.params.taskId);
-        if (!deletedTask) return res.status(404).json({ error: "Task not found" });
-        res.status(200).json({ message: "Task deleted", task: deletedTask });
+        const archivedTask = await Task.findByIdAndUpdate(
+            req.params.taskId,
+            { isActive: false },
+            { new: true }
+        );
+        if (!archivedTask) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+        res.status(200).json({ message: "Task archived (soft deleted)", task: archivedTask });
     } catch (err) {
-        res.status(500).json({ error: "Failed to delete task", details: err.message });
+        res.status(500).json({ error: "Error archiving task", details: err });
+    }
+};
+
+// Archive Task
+
+exports.archiveTask = async (req, res) => {
+    try {
+        const archivedTask = await Task.findByIdAndUpdate(
+            req.params.taskId,
+            { isActive: false },
+            { new: true }
+        );
+        if (!archivedTask) {
+            return res.status(404).send({ error: "Task not found" });
+        }
+        res.status(200).send({
+            message: "Task archived successfully",
+            archiveTask: archivedTask
+        });
+    } catch (err) {
+        res.status(500).send({ error: "Error archiving task", details: err });
     }
 };
