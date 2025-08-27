@@ -14,6 +14,7 @@ router.post("/login", userController.loginUser);
 router.get("/details", verify, userController.getProfile);
 router.put("/update-profile", verify, userController.updateProfile);
 router.patch('/reset-password', verify, userController.resetPassword);
+router.put("/change-password", verify, userController.changePassword);
 
 // --- ADMIN-ONLY ROUTES ---
 router.get("/all", verify, verifyAdmin, userController.getAllUsers);

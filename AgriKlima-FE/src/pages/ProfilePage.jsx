@@ -16,11 +16,11 @@ import {
 import { useAuth } from '../context/AuthContext';
 import userAvatar from '../assets/images/user-avatar.jpg';
 import EditProfileModal from '../components/EditProfileModal';
-
-// --- STEP 1: Import Swal (SweetAlert2) ---
+// --- ADDITION: Import the new ChangePasswordModal component ---
+import ChangePasswordModal from '../components/ChangePasswordModal';
 import Swal from 'sweetalert2';
 
-// --- Icon Imports (ensure @mui/icons-material is installed) ---
+// Icon Imports
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
@@ -30,41 +30,54 @@ import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import ContactSupportOutlinedIcon from '@mui/icons-material/ContactSupportOutlined';
 import PrivacyTipOutlinedIcon from '@mui/icons-material/PrivacyTipOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+// --- ADDITION: Import the icon for the new button ---
+import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
+
 
 const ProfilePage = () => {
   const { user, fetchUserDetails } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // State for your existing edit profile modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  // --- ADDITION: Add state for the new password modal ---
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  const handleOpenModal = () => {
+
+  const handleOpenEditModal = () => {
     if (user) {
-      setIsModalOpen(true);
+      setIsEditModalOpen(true);
     }
   };
   
-  // --- STEP 2: Modify the handleCloseModal function ---
-  const handleCloseModal = (wasUpdateSuccessful) => {
-    // First, always close the modal window
-    setIsModalOpen(false);
-    
-    // Then, check if the update was successful
+  const handleCloseEditModal = (wasUpdateSuccessful) => {
+    setIsEditModalOpen(false);
     if (wasUpdateSuccessful) {
-      // If it was, show the success pop-up
       Swal.fire({
         title: 'Success!',
         text: 'Your profile has been updated successfully.',
         icon: 'success',
-        timer: 2000, // The alert will automatically close after 2 seconds
+        timer: 2000,
         showConfirmButton: false
       });
-      
-      // Finally, fetch the new user details to refresh the page display
       if (typeof fetchUserDetails === 'function') {
         fetchUserDetails(); 
       }
     }
   };
 
-  // Guard clause: Shows a loading message until the user data is available.
+  // --- ADDITION: Add a handler function for the new password modal ---
+  const handleClosePasswordModal = (wasUpdateSuccessful) => {
+    setIsPasswordModalOpen(false);
+    if (wasUpdateSuccessful) {
+      Swal.fire({
+        title: 'Success!',
+        text: 'Your password has been changed successfully.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    }
+  };
+
   if (!user) {
     return <Typography sx={{ textAlign: 'center', mt: 4 }}>Loading profile...</Typography>;
   }
@@ -72,7 +85,7 @@ const ProfilePage = () => {
   return (
     <>
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        {/* Profile Header */}
+        {/* Profile Header (No changes here) */}
         <Paper elevation={4} sx={{ borderRadius: '24px', p: 3, textAlign: 'center', mb: 4 }}>
           <Avatar
             src={userAvatar}
@@ -95,10 +108,10 @@ const ProfilePage = () => {
           </Box>
         </Paper>
 
-        {/* --- Settings Lists --- */}
+        {/* --- Settings Lists (No changes here) --- */}
         <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid #eee' }}>
           <List>
-            <ListItemButton onClick={handleOpenModal}>
+            <ListItemButton onClick={handleOpenEditModal}>
               <ListItemIcon><EditOutlinedIcon /></ListItemIcon>
               <ListItemText primary="Edit profile information" />
             </ListItemButton>
@@ -115,12 +128,20 @@ const ProfilePage = () => {
           </List>
         </Paper>
 
+        {/* --- Security & Theme List (MODIFIED) --- */}
         <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid #eee' }}>
           <List>
             <ListItemButton>
               <ListItemIcon><SecurityOutlinedIcon /></ListItemIcon>
               <ListItemText primary="Security" />
             </ListItemButton>
+            
+            {/* --- ADDITION: The "Change Password" button --- */}
+            <ListItemButton onClick={() => setIsPasswordModalOpen(true)}>
+              <ListItemIcon><VpnKeyOutlinedIcon /></ListItemIcon>
+              <ListItemText primary="Change Password" />
+            </ListItemButton>
+
             <ListItem>
               <ListItemIcon><PaletteOutlinedIcon /></ListItemIcon>
               <ListItemText primary="Theme" />
@@ -129,6 +150,7 @@ const ProfilePage = () => {
           </List>
         </Paper>
 
+        {/* --- Help & Support List (No changes here) --- */}
         <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, border: '1px solid #eee' }}>
           <List>
             <ListItemButton>
@@ -147,13 +169,21 @@ const ProfilePage = () => {
         </Paper>
       </Container>
 
-      {/* MODAL COMPONENT (No changes needed here) */}
+      {/* MODALS */}
       {user && (
-        <EditProfileModal 
-          open={isModalOpen}
-          handleClose={handleCloseModal}
-          user={user}
-        />
+        <>
+          {/* Your existing Edit Profile Modal */}
+          <EditProfileModal 
+            open={isEditModalOpen}
+            handleClose={handleCloseEditModal}
+            user={user}
+          />
+          {/* --- ADDITION: The new Change Password Modal --- */}
+          <ChangePasswordModal 
+            open={isPasswordModalOpen}
+            handleClose={handleClosePasswordModal}
+          />
+        </>
       )}
     </>
   );
