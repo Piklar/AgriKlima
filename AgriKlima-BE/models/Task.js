@@ -5,7 +5,8 @@ const taskSchema = new mongoose.Schema({
     description: { type: String },
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     status: { type: String, enum: ["pending", "completed"], default: "pending" },
-    dueDate: { type: Date }
+    dueDate: { type: Date },
+    isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Task", taskSchema);

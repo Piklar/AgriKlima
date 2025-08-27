@@ -1,32 +1,28 @@
-// userRoutes.js
+// routes/userRoutes.js
+
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
 const { verify, verifyAdmin } = require("../auth");
 
-// Route for user registration (Public)
+// --- PUBLIC ROUTES (No token needed) ---
 router.post("/register", userController.registerUser);
-
-// Route for user login (Public)
 router.post("/login", userController.loginUser);
 
-// Route to get the logged-in user's profile (Private)
+// --- SPECIFIC USER ROUTES (Token needed) ---
+// These routes MUST come before any routes with dynamic params like /:userId
 router.get("/details", verify, userController.getProfile);
+router.put("/update-profile", verify, userController.updateProfile);
+router.patch('/reset-password', verify, userController.resetPassword);
+router.put("/change-password", verify, userController.changePassword);
 
-// Route to reset the logged-in user's password (Private)
-router.patch('/resetPassword', verify, userController.resetPassword);
-
-// Route to set a user as an admin by their ID (Admin Only)
-router.patch("/:id/setAsAdmin", verify, verifyAdmin, userController.setAsAdmin);
-
-// Route to get all users from the database (Admin Only)
+// --- ADMIN-ONLY ROUTES ---
 router.get("/all", verify, verifyAdmin, userController.getAllUsers);
 
-// Update user (Users)
-router.put("/:userId", verify, userController.updateUser);
-
-// Delete user (Users)
+// --- DYNAMIC ROUTES (Must come LAST) ---
+// These routes use a variable ID in the URL.
+router.patch("/:id/setAsAdmin", verify, verifyAdmin, userController.setAsAdmin);
+router.put("/:userId/update", verify, verifyAdmin, userController.updateUser);
 router.delete("/:userId", verify, userController.deleteUser);
 
-// [SECTION] Export the router
 module.exports = router;
