@@ -1,95 +1,58 @@
-import React from 'react';
-import { Button, Container, Grid, Typography, Box } from '@mui/material';
-
-// Import your images
-import heroBg from '../assets/images/about-image-1.jpg';
-import videoBg from '../assets/images/about-image-2.jpg';
-import heroImg1 from '../assets/images/hero-background.jpg';
-import aboutImg2 from '../assets/images/about-image-2.jpg';
-import visionImg from '../assets/images/mission-vision.jpg';
-import logo from '../assets/logo.png';
-
-// Import icons for features section
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+// src/pages/HomePage.jsx
+import React from "react";
+import { Box, Typography, Button } from "@mui/material";
+import heroBg from "../assets/images/about-image-1.jpg";
+import logo from "../assets/logo.png";
 
 const HomePage = () => {
-  // Styles
-  const heroStyles = {
-    backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0, 0, 0, 0.5)), url(${heroBg})`,
-    height: '90vh',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    color: 'white',
-    textAlign: 'center'
-  };
-
-  const videoBannerStyles = {
-    backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${videoBg})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    padding: '100px 0',
-    color: 'white',
-    textAlign: 'center'
-  };
-
   return (
-    <>
-      {/* Hero Section */}
-      <Box sx={heroStyles}>
-        <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-          "Without agriculture, there is no life, no growth, and no future."
-        </Typography>
-        <Box mt={3}>
-          <Button variant="contained" size="large" sx={{ backgroundColor: 'var(--primary-green)', marginRight: 2 }}>Get Started</Button>
-          <Button variant="outlined" size="large" sx={{ color: 'white', borderColor: 'white' }}>Learn More</Button>
-        </Box>
-      </Box>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url(${heroBg})`,
+        backgroundSize: "cover",
+        backgroundAttachment: 'fixed',
+        backgroundPosition: "center",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
+        color: "white",
+        px: 2,
+      }}
+    >
+      {/* Welcome Text */}
+      <Typography
+        variant="h5"
+        sx={{
+          mb: 2,
+          fontWeight: 300,
+          letterSpacing: 2,
+          fontFamily: "'Poppins', sans-serif",
+          textTransform: "uppercase",
+          color: "#f1f1f1",
+        }}
+      >
+        Welcome to
+      </Typography>
 
-      {/* About Section */}
-      <Container className="section-padding">
-        {/* Placeholder for the About section with two columns and overlapping images */}
-        <Typography variant="h4" className="section-title">About <span>AgriKlima</span></Typography>
-      </Container>
-      
-      {/* Vision/Mission Section */}
-      <Container className="section-padding">
-         {/* Placeholder for Vision/Mission */}
-         <Typography variant="h4" className="section-title">Our Vision & <span>Mission</span></Typography>
-      </Container>
+      {/* Logo or AgriKlima Text */}
+      <Box
+        component="img"
+        src={logo}
+        alt="AgriKlima Logo"
+        sx={{
+          width: { xs: "280px", md: "360px" }, // Increased sizes
+          mb: 4,
+          filter: "drop-shadow(0px 4px 6px rgba(0,0,0,0.6))",
+        }}
+      />
 
-      {/* Video Banner */}
-      <Box sx={videoBannerStyles}>
-        <Typography variant="h2" component="h2" sx={{ fontWeight: 'bold' }}>
-          Agriculture Matters to the<br />Future of Development
-        </Typography>
-        <Button variant="text" sx={{ color: 'white', marginTop: 2 }}>
-          Watch our video
-        </Button>
-      </Box>
-
-      {/* Features Section */}
-      <Container className="section-padding">
-        <Typography variant="h4" className="section-title">Our <span>Features</span></Typography>
-        <Grid container spacing={4}>
-          {['Weather Forecast', 'Recommended Crops', 'Predicted Weather Conditions'].map((feature) => (
-            <Grid item xs={12} md={4} key={feature}>
-              <Box display="flex" alignItems="center">
-                <CheckCircleIcon sx={{ color: 'var(--primary-green)', marginRight: 2 }} />
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: '600' }}>{feature}</Typography>
-                  <Typography variant="body2">There are variations you need to be sure there is anything hidden.</Typography>
-                </Box>
-              </Box>
-            </Grid>
-          ))}
-          {/* Add the other 3 features here */}
-        </Grid>
-      </Container>
-    </>
+      {/* Discover More Button */}
+      {/* Discover More Button */}
+      <Button variant="contained" sx={{ px: 5, py: 1.7, fontSize: "1.1rem", fontWeight: 300, textTransform: "uppercase", letterSpacing: 2, fontFamily: "'Poppins', sans-serif", color: "#f1f1f1", background: "linear-gradient(90deg, #2e7d32, #fbc02d)", borderRadius: "50px", boxShadow: "0px 4px 10px rgba(0,0,0,0.4)", "&:hover": { background: "linear-gradient(90deg, #1b5e20, #f9a825)" } }} onClick={() => window.location.href = '/about'}>Discover More</Button>
+    </Box>
   );
 };
 
