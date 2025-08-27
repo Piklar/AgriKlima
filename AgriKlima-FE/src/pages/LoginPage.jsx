@@ -30,7 +30,7 @@ const LoginPage = () => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
