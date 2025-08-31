@@ -2,23 +2,14 @@
 
 import React, { useState } from 'react';
 import {
-  Container,
-  Box,
-  Typography,
-  Avatar,
-  Paper,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
+  Container, Box, Typography, Avatar, Paper, List, ListItem,
+  ListItemButton, ListItemIcon, ListItemText, IconButton
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
-import userAvatar from '../assets/images/user-avatar.jpg';
-import EditProfileModal from '../components/EditProfileModal';
-// --- ADDITION: Import the new ChangePasswordModal component ---
-import ChangePasswordModal from '../components/ChangePasswordModal';
 import Swal from 'sweetalert2';
+import ProfilePictureModal from '../components/ProfilePictureModal';
+
+// --- REMOVED unused userAvatar import ---
 
 // Icon Imports
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -30,51 +21,28 @@ import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import ContactSupportOutlinedIcon from '@mui/icons-material/ContactSupportOutlined';
 import PrivacyTipOutlinedIcon from '@mui/icons-material/PrivacyTipOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
-// --- ADDITION: Import the icon for the new button ---
-import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
-
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'; // For default avatar
 
 const ProfilePage = () => {
   const { user, fetchUserDetails } = useAuth();
-  // State for your existing edit profile modal
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  // --- ADDITION: Add state for the new password modal ---
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isPictureModalOpen, setIsPictureModalOpen] = useState(false);
+  // Your other modal states would go here
+  // const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-
-  const handleOpenEditModal = () => {
-    if (user) {
-      setIsEditModalOpen(true);
-    }
-  };
-  
-  const handleCloseEditModal = (wasUpdateSuccessful) => {
-    setIsEditModalOpen(false);
+  const handleClosePictureModal = (wasUpdateSuccessful) => {
+    setIsPictureModalOpen(false);
     if (wasUpdateSuccessful) {
       Swal.fire({
         title: 'Success!',
-        text: 'Your profile has been updated successfully.',
+        text: 'Your profile picture has been updated.',
         icon: 'success',
         timer: 2000,
         showConfirmButton: false
       });
       if (typeof fetchUserDetails === 'function') {
-        fetchUserDetails(); 
+        fetchUserDetails();
       }
-    }
-  };
-
-  // --- ADDITION: Add a handler function for the new password modal ---
-  const handleClosePasswordModal = (wasUpdateSuccessful) => {
-    setIsPasswordModalOpen(false);
-    if (wasUpdateSuccessful) {
-      Swal.fire({
-        title: 'Success!',
-        text: 'Your password has been changed successfully.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
     }
   };
 
@@ -85,22 +53,34 @@ const ProfilePage = () => {
   return (
     <>
       <Container maxWidth="sm" sx={{ py: 6 }}>
-        {/* Profile Header (No changes here) */}
         <Paper elevation={4} sx={{ borderRadius: '24px', p: 3, textAlign: 'center', mb: 4 }}>
-          <Avatar
-            src={userAvatar}
-            sx={{ width: 100, height: 100, margin: '0 auto 16px', border: '4px solid white' }}
-          />
+          <Box sx={{ position: 'relative', width: 120, height: 120, margin: '0 auto 16px' }}>
+            {/* --- THIS IS THE FIX --- */}
+            <Avatar
+              src={user.profilePictureUrl}
+              sx={{ width: 120, height: 120, border: '4px solid white', bgcolor: 'var(--primary-green)' }}
+            >
+              {!user.profilePictureUrl && <AccountCircleIcon sx={{ width: 100, height: 100 }} />}
+            </Avatar>
+            <IconButton 
+              onClick={() => setIsPictureModalOpen(true)}
+              aria-label="change profile picture"
+              sx={{ 
+                position: 'absolute', bottom: 0, right: 0,
+                bgcolor: 'rgba(240, 240, 240, 0.9)',
+                '&:hover': { bgcolor: 'white' }
+              }}
+            >
+              <AddAPhotoIcon />
+            </IconButton>
+          </Box>
           <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
             {`${user.firstName || ''} ${user.lastName || ''}`}
           </Typography>
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              color: 'text.secondary',
-              mt: 1
+              display: 'flex', justifyContent: 'center', alignItems: 'center',
+              color: 'text.secondary', mt: 1
             }}
           >
             <LocationOnOutlinedIcon fontSize="small" />
@@ -108,10 +88,10 @@ const ProfilePage = () => {
           </Box>
         </Paper>
 
-        {/* --- Settings Lists (No changes here) --- */}
+        {/* The rest of the page lists... */}
         <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid #eee' }}>
           <List>
-            <ListItemButton onClick={handleOpenEditModal}>
+            <ListItemButton>
               <ListItemIcon><EditOutlinedIcon /></ListItemIcon>
               <ListItemText primary="Edit profile information" />
             </ListItemButton>
@@ -123,25 +103,17 @@ const ProfilePage = () => {
             <ListItem>
               <ListItemIcon><LanguageOutlinedIcon /></ListItemIcon>
               <ListItemText primary="Language" />
-              <Typography color="text.secondary">English</Typography>
+              <Typography color="text.secondary">{user.language || 'Not set'}</Typography>
             </ListItem>
           </List>
         </Paper>
 
-        {/* --- Security & Theme List (MODIFIED) --- */}
         <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid #eee' }}>
           <List>
             <ListItemButton>
               <ListItemIcon><SecurityOutlinedIcon /></ListItemIcon>
               <ListItemText primary="Security" />
             </ListItemButton>
-            
-            {/* --- ADDITION: The "Change Password" button --- */}
-            <ListItemButton onClick={() => setIsPasswordModalOpen(true)}>
-              <ListItemIcon><VpnKeyOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Change Password" />
-            </ListItemButton>
-
             <ListItem>
               <ListItemIcon><PaletteOutlinedIcon /></ListItemIcon>
               <ListItemText primary="Theme" />
@@ -150,7 +122,6 @@ const ProfilePage = () => {
           </List>
         </Paper>
 
-        {/* --- Help & Support List (No changes here) --- */}
         <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, border: '1px solid #eee' }}>
           <List>
             <ListItemButton>
@@ -168,22 +139,13 @@ const ProfilePage = () => {
           </List>
         </Paper>
       </Container>
-
-      {/* MODALS */}
+      
       {user && (
-        <>
-          {/* Your existing Edit Profile Modal */}
-          <EditProfileModal 
-            open={isEditModalOpen}
-            handleClose={handleCloseEditModal}
-            user={user}
-          />
-          {/* --- ADDITION: The new Change Password Modal --- */}
-          <ChangePasswordModal 
-            open={isPasswordModalOpen}
-            handleClose={handleClosePasswordModal}
-          />
-        </>
+        <ProfilePictureModal
+          open={isPictureModalOpen}
+          onClose={handleClosePictureModal}
+          user={user}
+        />
       )}
     </>
   );

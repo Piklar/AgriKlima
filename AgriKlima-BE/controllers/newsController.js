@@ -1,28 +1,63 @@
-// controllers/newsController.js
-const News = require('../models/News');
+// backend/controllers/newsController.js
 
-/**
- * [CREATE] Add a new news article to the database (Admin Only).
- */
+const News = require('../models/News');
+const cloudinary = require('../config/cloudinary');
+
+// --- THIS IS THE FIX ---
 module.exports.addNews = (req, res) => {
-    let newArticle = new News({ ...req.body });
+    const body = req.body;
+    let newArticle = new News({
+        title: body.title,
+        author: body.author,
+        imageUrl: body.imageUrl,
+        content: body.content,
+        summary: {
+            keyPoints: body['summary.keyPoints'],
+            quotes: body['summary.quotes'],
+            impact: body['summary.impact']
+        }
+    });
     newArticle.save()
         .then(article => res.status(201).send(article))
-        .catch(err => res.status(500).send({ error: "Failed to add news article", details: err.message }));
+        .catch(err => {
+            console.error("Error adding news:", err);
+            res.status(500).send({ error: "Failed to add news article", details: err.message });
+        });
 };
 
-/**
- * [READ] Get all news articles, sorted by newest first (Public).
- */
+module.exports.updateNewsImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).send({ error: 'No file uploaded.' });
+        }
+        const fileBase64 = req.file.buffer.toString('base64');
+        const fileUri = `data:${req.file.mimetype};base64,${fileBase64}`;
+        const result = await cloudinary.uploader.upload(fileUri, {
+            folder: "agriklima_news",
+            public_id: req.params.newsId,
+            overwrite: true,
+        });
+        const updatedNews = await News.findByIdAndUpdate(
+            req.params.newsId,
+            { $set: { imageUrl: result.secure_url } },
+            { new: true }
+        );
+        if (!updatedNews) {
+            return res.status(404).send({ error: 'News article not found' });
+        }
+        res.status(200).send({ message: 'News image updated successfully.', article: updatedNews });
+    } catch (error) {
+        console.error('Error updating news image:', error);
+        res.status(500).send({ error: 'Internal server error.' });
+    }
+};
+
 module.exports.getAllNews = (req, res) => {
-    News.find({}).sort({ publicationDate: -1 }) // -1 means descending order
+    News.find({}).sort({ publicationDate: -1 })
         .then(articles => res.status(200).send(articles))
         .catch(err => res.status(500).send({ error: "Failed to fetch news articles", details: err.message }));
 };
 
-/**
- * [READ] Get a single news article by its ID (Public).
- */
 module.exports.getNewsById = (req, res) => {
     News.findById(req.params.newsId)
         .then(article => {
@@ -32,11 +67,12 @@ module.exports.getNewsById = (req, res) => {
         .catch(err => res.status(500).send({ error: "Failed to fetch article", details: err.message }));
 };
 
-/**
- * [UPDATE] Update a news article by its ID (Admin Only).
- */
 module.exports.updateNews = (req, res) => {
-    News.findByIdAndUpdate(req.params.newsId, { ...req.body }, { new: true })
+    News.findByIdAndUpdate(
+        req.params.newsId, 
+        { ...req.body },
+        { new: true }
+    )
         .then(updatedArticle => {
             if (!updatedArticle) return res.status(404).send({ error: "Article not found" });
             return res.status(200).send({ message: "Article updated successfully", article: updatedArticle });
@@ -44,8 +80,6 @@ module.exports.updateNews = (req, res) => {
         .catch(err => res.status(500).send({ error: "Failed to update article", details: err.message }));
 };
 
-
-// --- DELETE NEWS ---
 module.exports.deleteNews = (req, res) => {
     News.findByIdAndDelete(req.params.newsId)
     .then(news => {
