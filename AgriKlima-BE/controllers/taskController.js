@@ -1,3 +1,5 @@
+// AgriKlima-BE/controllers/taskController.js
+
 const Task = require("../models/Task");
 
 // Create Task
@@ -11,11 +13,35 @@ exports.addTask = async (req, res) => {
     }
 };
 
-// Get all tasks assigned to the currently logged-in user
+// Get all tasks assigned to the currently logged-in user (with optional date filter)
 exports.getMyTasks = async (req, res) => {
     try {
         // req.user.id comes from the `verify` middleware
-        const tasks = await Task.find({ assignedTo: req.user.id });
+        const { startDate, endDate } = req.query;
+
+        // Build the query object
+        const query = { assignedTo: req.user.id };
+
+        // --- CORRECTED DATE LOGIC ---
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            // Normalize start date to beginning of the day (UTC)
+            start.setUTCHours(0, 0, 0, 0);
+
+            // Normalize end date to end of the day (UTC)
+            end.setUTCHours(23, 59, 59, 999);
+
+            query.dueDate = {
+                $gte: start,
+                $lte: end,
+            };
+        }
+        // --- END OF CORRECTION ---
+
+        const tasks = await Task.find(query);
+
         if (!tasks) {
             return res.status(200).json([]); // Return empty array if no tasks
         }
@@ -61,7 +87,7 @@ exports.updateTask = async (req, res) => {
     }
 };
 
-// Delete Task
+// Delete Task (Soft Delete)
 exports.deleteTask = async (req, res) => {
     try {
         const archivedTask = await Task.findByIdAndUpdate(
@@ -79,7 +105,6 @@ exports.deleteTask = async (req, res) => {
 };
 
 // Archive Task
-
 exports.archiveTask = async (req, res) => {
     try {
         const archivedTask = await Task.findByIdAndUpdate(
