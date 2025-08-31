@@ -18,21 +18,15 @@ const userSchema = new mongoose.Schema({
     // --- Fields from your original model ---
     mobileNo: { type: String, required: [true, 'Mobile Number is Required'] },
     location: { type: String, required: [true, 'Location is Required'] },
-    
-    // --- REMOVED ---
-    // The farmerStatus field has been completely removed from the schema.
-    // farmerStatus: {
-    //     type: String,
-    //     enum: ['Long Term', 'Starting'], 
-    //     required: [true, 'Farmer Status is Required']
-    // },
-    
     crops: [{ type: String }],
 
     // --- ADDED: New fields from your SignUpPage.jsx ---
     dob: { type: String, required: [true, 'Date of Birth is Required'] },
     gender: { type: String, required: [true, 'Gender is Required'] },
-    language: { type: String, default: 'Tagalog' }
+    language: { type: String, default: 'Tagalog' },
+
+    // --- THIS IS THE NEW FIELD FOR THE PROFILE PICTURE ---
+    profilePictureUrl: { type: String, default: '' }
 });
 
 module.exports = mongoose.model('User', userSchema);

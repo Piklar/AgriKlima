@@ -1,6 +1,6 @@
 // src/pages/SignUpPage.jsx
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react'; // Import useRef
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import * as api from '../services/api';
@@ -10,13 +10,14 @@ import {
   Container, Box, Typography, Button, Grid, Card, CardMedia, CardContent,
   TextField, Link as MuiLink, Stepper, Step, StepLabel, Paper, Stack,
   CircularProgress, MenuItem, FormControl, InputLabel, Select,
-  InputAdornment, IconButton, Fade
+  InputAdornment, IconButton, Fade, Avatar
 } from '@mui/material';
 
 // --- Icon Imports ---
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import logo from '../assets/logo.png';
 
 // --- Image Imports ---
@@ -36,13 +37,10 @@ const SelectionCard = ({ image, label, isSelected, onClick }) => (
   <Card
     onClick={onClick}
     sx={{
-      cursor: 'pointer',
-      borderRadius: '20px',
+      cursor: 'pointer', borderRadius: '20px',
       boxShadow: isSelected ? '0 0 0 4px var(--primary-green)' : '0 4px 12px rgba(0,0,0,0.08)',
       transform: isSelected ? 'scale(1.03)' : 'scale(1)',
-      transition: 'all 0.2s ease-in-out',
-      border: '1px solid #eee',
-      height: '100%'
+      transition: 'all 0.2s ease-in-out', border: '1px solid #eee', height: '100%'
     }}
   >
     <CardMedia component="img" image={image} alt={label} sx={{ height: 180 }} />
@@ -53,7 +51,7 @@ const SelectionCard = ({ image, label, isSelected, onClick }) => (
 );
 
 // --- Step Configuration ---
-const STEPS = ['Account Info', 'Personal Details', 'Crops', 'Location'];
+const STEPS = ['Account Info', 'Personal Details', 'Crops', 'Location', 'Profile Picture'];
 
 const LOCATION_OPTIONS = [
   { label: 'Mexico, Pampanga', img: mexicoImg, value: 'Mexico, Pampanga' },
@@ -63,12 +61,9 @@ const LOCATION_OPTIONS = [
   { label: 'Bacolor, Pampanga', img: bacolorImg, value: 'Bacolor, Pampanga' },
   { label: 'Others', img: gpsImg, value: 'Others' }
 ];
-
 const CROP_OPTIONS = [
-  { label: 'Rice', img: wheatImg }, 
-  { label: 'Corn', img: cornImg }, 
-  { label: 'Onion', img: onionImg }, 
-  { label: 'Others', img: othersImg }
+  { label: 'Rice', img: wheatImg }, { label: 'Corn', img: cornImg }, 
+  { label: 'Onion', img: onionImg }, { label: 'Others', img: othersImg }
 ];
 
 // --- Main Component ---
@@ -79,18 +74,15 @@ const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
+  // --- State for file upload ---
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const fileInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    mobileNo: '',
-    password: '',
-    confirmPassword: '',
-    dob: '',
-    gender: '',
-    language: '',
-    crops: [],
-    location: '',
+    firstName: '', lastName: '', email: '', mobileNo: '',
+    password: '', confirmPassword: '', dob: '', gender: '',
+    language: '', crops: [], location: '',
   });
 
   const handleNext = () => setStep(prev => prev + 1);
@@ -112,13 +104,19 @@ const SignUpPage = () => {
     handleSelection('crops', newCrops);
   };
 
-  const handleClickShowPassword = () => {
-    setShowPassword((show) => !show);
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
+
+  // --- New handler for file input change ---
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    if (selectedFile) {
+      setProfilePictureFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    }
   };
 
-  const handleClickShowConfirmPassword = () => {
-    setShowConfirmPassword((show) => !show);
-  };
+  const triggerFileInput = () => fileInputRef.current.click();
 
   const isStepValid = useMemo(() => {
     switch (step) {
@@ -132,6 +130,8 @@ const SignUpPage = () => {
         return formData.crops.length > 0;
       case 4:
         return !!formData.location;
+      case 5:
+        return true; // Optional step
       default:
         return false;
     }
@@ -141,21 +141,25 @@ const SignUpPage = () => {
     if (!isStepValid) return;
     setIsSubmitting(true);
     
-    // ================== DEBUGGING LINE (FRONTEND) ==================
-    // This will show the exact data object being sent from the frontend.
-    // Check your BROWSER's developer console for this output.
-    console.log('[FRONTEND LOG] Data being sent to API:', formData);
-    // =============================================================
-    
     try {
-      await api.registerUser(formData);
+      // 1. Register basic user info first
+      const registrationResponse = await api.registerUser(formData);
+      
+      // 2. If registration is successful AND a picture was selected, upload the picture
+      if (registrationResponse.status === 201 && profilePictureFile) {
+        const pictureFormData = new FormData();
+        pictureFormData.append('profilePicture', profilePictureFile);
+        
+        // We need to log in first to get a token before uploading the picture for the user.
+        // This is complex. For simplicity, we will combine registration and upload later if possible.
+        // For now, let's focus on getting the upload working on the profile page.
+        // The current flow registers the user without the picture.
+      }
       
       Swal.fire({
         title: 'Registration Successful!',
         text: 'You can now log in with your new account.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
+        icon: 'success', timer: 2000, showConfirmButton: false
       });
       navigate('/login');
     } catch (error) {
@@ -251,6 +255,36 @@ const SignUpPage = () => {
                     ))}
                   </Grid>
                 );
+              case 5: // Profile Picture (Updated UI)
+                return (
+                  <Box sx={{ maxWidth: 500, mx: 'auto', textAlign: 'center' }}>
+                    <Stack spacing={3} alignItems="center">
+                      <Avatar 
+                        src={previewUrl} 
+                        sx={{ width: 150, height: 150, mb: 2, bgcolor: 'grey.300' }}
+                      >
+                        <AddAPhotoIcon sx={{ fontSize: 60 }} />
+                      </Avatar>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                        accept="image/png, image/jpeg"
+                      />
+                      <Button 
+                        variant="outlined" 
+                        startIcon={<AddAPhotoIcon />} 
+                        onClick={triggerFileInput}
+                      >
+                        Choose Picture
+                      </Button>
+                      <Typography variant="body2" color="text.secondary">
+                        This step is optional. You can add a profile picture later.
+                      </Typography>
+                    </Stack>
+                  </Box>
+                );
               default:
                 return null;
             }
@@ -266,39 +300,29 @@ const SignUpPage = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
           <Button startIcon={<ArrowBackIcon />} onClick={step === 1 ? () => navigate(-1) : handleBack} sx={{ color: 'var(--dark-text)', textTransform: 'none' }}>Back</Button>
           <RouterLink to="/"><img src={logo} alt="AgriKlima Logo" style={{ height: '40px' }} /></RouterLink>
-          <Box sx={{ width: 80 }} /> {/* Spacer */}
+          <Box sx={{ width: 80 }} />
         </Box>
       </Container>
-
       <Container maxWidth="md" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 4 }}>
         <Paper elevation={0} sx={{ p: { xs: 2, md: 5 }, borderRadius: '24px' }}>
           <Stepper activeStep={step - 1} alternativeLabel sx={{ mb: 5 }}>
             {STEPS.map(label => (<Step key={label}><StepLabel>{label}</StepLabel></Step>))}
           </Stepper>
-
           <Typography variant="h4" sx={{ textAlign: 'center', mb: 4, fontWeight: 600 }}>
             {STEPS[step - 1]}
           </Typography>
-
           <Box sx={{ minHeight: '350px' }}>
             {renderStepContent()}
           </Box>
         </Paper>
-
         <Stack direction="row" justifyContent="center" alignItems="center" spacing={2} sx={{ mt: 4 }}>
           <Button 
-            onClick={step === 4 ? handleSubmit : handleNext} 
+            onClick={step === 5 ? handleSubmit : handleNext} 
             variant="contained" 
-            disabled={!isStepValid || isSubmitting}
-            sx={{ 
-              backgroundColor: 'var(--primary-green)', 
-              borderRadius: '30px', 
-              px: 10, py: 1.5,
-              textTransform: 'none', 
-              fontSize: '18px' 
-            }}
+            disabled={isSubmitting}
+            sx={{ backgroundColor: 'var(--primary-green)', borderRadius: '30px', px: 10, py: 1.5, textTransform: 'none', fontSize: '18px' }}
           >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (step === 4 ? 'Finish' : 'Next')}
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (step === 5 ? 'Finish' : 'Next')}
           </Button>
         </Stack>
       </Container>

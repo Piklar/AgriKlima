@@ -1,11 +1,10 @@
 // src/pages/Admin/ManageNews.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import { Box, Button, Typography, Paper, Avatar } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import Swal from 'sweetalert2';
-
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
 
@@ -51,18 +50,34 @@ const ManageNews = () => {
         setCurrentNews(null);
     };
 
-    const handleFormSubmit = async (formData) => {
+    const handleFormSubmit = async (formData, imageFile) => {
         try {
+            let savedItem;
             if (modalMode === 'add') {
-                await api.addNews(formData);
+                const response = await api.addNews(formData);
+                savedItem = response.data;
+                if (imageFile) Swal.fire({ title: 'Step 1/2 Complete', text: 'Article details saved. Now uploading image...', icon: 'info', timer: 1500, showConfirmButton: false });
             } else {
-                await api.updateNews(currentNews._id, formData);
+                const response = await api.updateNews(currentNews._id, formData);
+                // --- THIS IS THE FIX ---
+                // For news, the response is nested under the 'article' key
+                savedItem = response.article;
             }
-            Swal.fire('Success', `News article ${modalMode === 'add' ? 'created' : 'updated'}!`, 'success');
+
+            if (imageFile && savedItem?._id) {
+                const uploadFormData = new FormData();
+                uploadFormData.append('image', imageFile);
+                await api.uploadNewsImage(savedItem._id, uploadFormData);
+            }
+
+            Swal.fire('Success!', `News article ${modalMode === 'add' ? 'created' : 'updated'} successfully.`, 'success');
             handleCloseModal();
             fetchNews();
+            
         } catch (error) {
-            Swal.fire('Error', `Failed to save the article: ${error.response?.data?.error || ''}`, 'error');
+            console.error("Failed to save news article:", error);
+            const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
+            Swal.fire('Error', `Failed to save the article: ${errorMessage}`, 'error');
         }
     };
 
@@ -89,7 +104,7 @@ const ManageNews = () => {
     const newsFields = [
         { name: 'title', label: 'Title', required: true, group: 'Article Content' },
         { name: 'author', label: 'Author', required: true, group: 'Article Content' },
-        { name: 'imageUrl', label: 'Image URL', required: true, group: 'Article Content' },
+        { name: 'imageUrl', label: 'Image URL', group: 'Article Content' },
         { name: 'content', label: 'Full Article Content', required: true, type: 'textarea', rows: 12, group: 'Article Content' },
         { name: 'summary.keyPoints', label: 'Key Points (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'AI Summary Details' },
         { name: 'summary.quotes', label: 'Notable Quotes (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'AI Summary Details' },
@@ -97,14 +112,27 @@ const ManageNews = () => {
     ];
 
     const columns = [
+        { 
+            field: 'imageUrl', 
+            headerName: 'Image', 
+            width: 100,
+            renderCell: (params) => (
+              <Avatar 
+                src={params.value} 
+                variant="rounded"
+                sx={{ width: 56, height: 56 }} 
+              />
+            ),
+            sortable: false,
+            filterable: false,
+        },
         { field: 'title', headerName: 'Title', flex: 1 },
         { field: 'author', headerName: 'Author', width: 200 },
         {
             field: "publicationDate",
             headerName: "Publication Date",
             width: 200,
-            // --- THIS IS THE FIX ---
-            valueGetter: (value, row) => new Date(row.publicationDate).toLocaleDateString(),
+            valueGetter: (value, row) => row.publicationDate ? new Date(row.publicationDate).toLocaleDateString() : 'N/A',
         },
         {
             field: 'actions',
@@ -139,6 +167,7 @@ const ManageNews = () => {
                     columns={columns}
                     loading={loading}
                     getRowId={(row) => row._id}
+                    rowHeight={70}
                 />
             </Paper>
             <AdminFormModal

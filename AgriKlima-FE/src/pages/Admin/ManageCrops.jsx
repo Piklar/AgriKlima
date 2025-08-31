@@ -1,11 +1,10 @@
 // src/pages/Admin/ManageCrops.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import { Box, Button, Typography, Paper, Avatar } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import Swal from 'sweetalert2';
-
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
 import { useAuth } from '../../context/AuthContext';
@@ -18,7 +17,6 @@ const ManageCrops = () => {
   const [modalMode, setModalMode] = useState('add');
   const [currentCrop, setCurrentCrop] = useState(null);
 
-  // Fetch crops
   const fetchCrops = useCallback(async () => {
     setLoading(true);
     try {
@@ -36,7 +34,6 @@ const ManageCrops = () => {
     fetchCrops();
   }, [fetchCrops]);
 
-  // Modal handlers
   const handleOpenAddModal = () => {
     setModalMode('add');
     setCurrentCrop(null);
@@ -54,30 +51,40 @@ const ManageCrops = () => {
     setCurrentCrop(null);
   };
 
-  // Form submission
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async (formData, imageFile) => {
     if (!token) {
       Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
       return;
     }
     try {
+      let savedItem;
       if (modalMode === 'add') {
-        await api.addCrop(formData, token);
-        Swal.fire('Success', 'Crop created successfully!', 'success');
+        const response = await api.addCrop(formData, token);
+        savedItem = response.data;
+        if (imageFile) Swal.fire({ title: 'Step 1/2 Complete', text: 'Crop details saved. Now uploading image...', icon: 'info', timer: 1500, showConfirmButton: false });
       } else {
-        await api.updateCrop(currentCrop._id, formData, token);
-        Swal.fire('Success', 'Crop updated successfully!', 'success');
+        const response = await api.updateCrop(currentCrop._id, formData, token);
+        // --- FIX: For crops, the response IS the data. ---
+        savedItem = response;
       }
+      
+      if (imageFile && savedItem?._id) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('image', imageFile);
+        await api.uploadCropImage(savedItem._id, uploadFormData);
+      }
+      
+      Swal.fire('Success', `Crop ${modalMode === 'add' ? 'created' : 'updated'} successfully!`, 'success');
       handleCloseModal();
       fetchCrops();
+
     } catch (error) {
       console.error("Failed to save crop:", error);
-      const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+      const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
       Swal.fire('Error', `Failed to save the crop: ${errorMessage}`, 'error');
     }
   };
 
-  // Delete
   const handleDelete = (id) => {
     if (!token) {
       Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
@@ -105,33 +112,40 @@ const ManageCrops = () => {
     });
   };
 
-  // --- Field definitions with 'group' property ---
   const cropFields = [
-    // Group 1: Basic Information
     { name: 'name', label: 'Crop Name', required: true, group: 'Basic Information' },
     { name: 'description', label: 'Main Description', required: true, type: 'textarea', rows: 4, group: 'Basic Information' },
-    { name: 'imageUrl', label: 'Image URL', required: true, group: 'Basic Information' },
+    { name: 'imageUrl', label: 'Image URL', group: 'Basic Information' },
     { name: 'season', label: 'Season', type: 'select', options: ['All Year', 'Dry Season', 'Wet Season'], defaultValue: 'All Year', group: 'Basic Information' },
     { name: 'overview.plantingSeason', label: 'Planting Season', group: 'Basic Information' },
     { name: 'overview.harvestTime', label: 'Harvest Time', group: 'Basic Information' },
-
-    // Group 2: Growing Guide
     { name: 'growingGuide.climate', label: 'Climate', group: 'Growing Guide' },
     { name: 'growingGuide.soilType', label: 'Soil Type', group: 'Growing Guide' },
     { name: 'growingGuide.waterNeeds', label: 'Water Needs', group: 'Growing Guide' },
     { name: 'growingGuide.fertilizer', label: 'Fertilizer', group: 'Growing Guide' },
     { name: 'marketInfo.priceRange', label: 'Price Range (e.g., ₱50-₱60/kg)', group: 'Growing Guide' },
     { name: 'marketInfo.storageMethod', label: 'Storage Method', group: 'Growing Guide' },
-
-    // Group 3: Health & Market
     { name: 'healthCare.commonDiseases', label: 'Common Diseases (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
     { name: 'healthCare.pestControl', label: 'Pest Control (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
     { name: 'healthCare.nutritionalValue', label: 'Nutritional Value (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
     { name: 'marketInfo.cookingTips', label: 'Cooking Tips (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
   ];
 
-  // DataGrid columns
   const columns = [
+    { 
+      field: 'imageUrl', 
+      headerName: 'Image', 
+      width: 100,
+      renderCell: (params) => (
+        <Avatar 
+          src={params.value} 
+          variant="rounded"
+          sx={{ width: 56, height: 56 }} 
+        />
+      ),
+      sortable: false,
+      filterable: false,
+    },
     { field: 'name', headerName: 'Crop Name', width: 200 },
     { field: 'season', headerName: 'Season', width: 150 },
     { field: 'description', headerName: 'Description', flex: 1 },
@@ -168,6 +182,7 @@ const ManageCrops = () => {
           columns={columns}
           loading={loading}
           getRowId={(row) => row._id}
+          rowHeight={70}
         />
       </Paper>
       <AdminFormModal
@@ -176,7 +191,6 @@ const ManageCrops = () => {
         onSubmit={handleFormSubmit}
         initialData={currentCrop}
         mode={modalMode}
-        // --- THIS IS THE FIX: Changed `mode` to `modalMode` ---
         title={modalMode === 'add' ? 'Add New Crop' : 'Edit Crop'}
         fields={cropFields}
       />
