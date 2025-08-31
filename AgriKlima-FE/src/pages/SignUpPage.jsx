@@ -1,19 +1,25 @@
 // src/pages/SignUpPage.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { 
-  Container, Box, Typography, Button, Grid, Card, CardMedia, CardContent,
-  TextField, Link as MuiLink, Select, MenuItem, FormControl, InputLabel,
-  InputAdornment, CircularProgress
-} from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import logo from '../assets/logo.png';
 import Swal from 'sweetalert2';
+import * as api from '../services/api';
 
-// Image Imports (ensure these paths are correct in your project)
+// --- MUI Imports ---
+import {
+  Container, Box, Typography, Button, Grid, Card, CardMedia, CardContent,
+  TextField, Link as MuiLink, Stepper, Step, StepLabel, Paper, Stack,
+  CircularProgress, MenuItem, FormControl, InputLabel, Select,
+  InputAdornment, IconButton, Fade
+} from '@mui/material';
+
+// --- Icon Imports ---
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import logo from '../assets/logo.png';
+
+// --- Image Imports ---
 import mexicoImg from '../assets/images/location-mexico.jpg';
 import csfpImg from '../assets/images/location-csfp.jpg';
 import staAnaImg from '../assets/images/location-sta-ana.jpg';
@@ -24,64 +30,78 @@ import wheatImg from '../assets/images/crop-wheat.jpg';
 import cornImg from '../assets/images/crop-corn.jpg';
 import onionImg from '../assets/images/crop-onion.jpg';
 import othersImg from '../assets/images/crop-others.jpg';
-import farmerImg from '../assets/images/farmer-long-term.png';
 
-// --- THIS IS THE FIX: The actual component code is included ---
+// --- Reusable Selection Card ---
 const SelectionCard = ({ image, label, isSelected, onClick }) => (
   <Card
     onClick={onClick}
     sx={{
       cursor: 'pointer',
       borderRadius: '20px',
-      boxShadow: isSelected ? '0 0 0 3px var(--primary-green)' : '0 4px 12px rgba(0,0,0,0.08)',
+      boxShadow: isSelected ? '0 0 0 4px var(--primary-green)' : '0 4px 12px rgba(0,0,0,0.08)',
       transform: isSelected ? 'scale(1.03)' : 'scale(1)',
       transition: 'all 0.2s ease-in-out',
-      border: '1px solid #eee'
+      border: '1px solid #eee',
+      height: '100%'
     }}
   >
-    <CardMedia component="img" image={image} alt={label} sx={{ height: 160 }} />
+    <CardMedia component="img" image={image} alt={label} sx={{ height: 180 }} />
     <CardContent>
-      <Typography variant="h6" align="center" sx={{ fontWeight: 600 }}>
-        {label}
-      </Typography>
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600 }}>{label}</Typography>
     </CardContent>
   </Card>
 );
 
-// --- Main SignUp Page Component ---
+// --- Step Configuration ---
+const STEPS = ['Account Info', 'Personal Details', 'Crops', 'Location'];
+
+const LOCATION_OPTIONS = [
+  { label: 'Mexico, Pampanga', img: mexicoImg, value: 'Mexico, Pampanga' },
+  { label: 'City of San Fernando, Pampanga', img: csfpImg, value: 'City of San Fernando, Pampanga' },
+  { label: 'Santa Ana, Pampanga', img: staAnaImg, value: 'Santa Ana, Pampanga' },
+  { label: 'Arayat, Pampanga', img: arayatImg, value: 'Arayat, Pampanga' },
+  { label: 'Bacolor, Pampanga', img: bacolorImg, value: 'Bacolor, Pampanga' },
+  { label: 'Others', img: gpsImg, value: 'Others' }
+];
+
+const CROP_OPTIONS = [
+  { label: 'Rice', img: wheatImg }, 
+  { label: 'Corn', img: cornImg }, 
+  { label: 'Onion', img: onionImg }, 
+  { label: 'Others', img: othersImg }
+];
+
+// --- Main Component ---
 const SignUpPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const [formData, setFormData] = useState({
-    fullName: '', dob: '', gender: '', phone: '',
-    language: 'Tagalog', email: '', password: '', confirmPassword: '',
-    farmerStatus: '', crops: [], location: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    mobileNo: '',
+    password: '',
+    confirmPassword: '',
+    dob: '',
+    gender: '',
+    language: '',
+    crops: [],
+    location: '',
   });
 
-  // --- MODIFIED handleNext with Password Validation ---
-  const handleNext = () => {
-    if (step === 1) {
-      if (formData.password.length < 8) {
-        Swal.fire('Password Too Short', 'Your password must be at least 8 characters long.', 'error');
-        return; 
-      }
-      if (formData.password !== formData.confirmPassword) {
-        Swal.fire('Passwords Do Not Match', 'Please ensure both password fields are the same.', 'error');
-        return;
-      }
-    }
-    setStep(prev => prev + 1);
-  };
-  
+  const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleCustomChange = (field, value) => {
+  
+  const handleSelection = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
   
@@ -89,145 +109,199 @@ const SignUpPage = () => {
     const newCrops = formData.crops.includes(crop)
       ? formData.crops.filter(c => c !== crop)
       : [...formData.crops, crop];
-    handleCustomChange('crops', newCrops);
+    handleSelection('crops', newCrops);
   };
-  
-  const handleSubmit = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      Swal.fire('Error', 'Passwords do not match.', 'error');
-      return;
-    }
-    setIsSubmitting(true);
 
+  const handleClickShowPassword = () => {
+    setShowPassword((show) => !show);
+  };
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword((show) => !show);
+  };
+
+  const isStepValid = useMemo(() => {
+    switch (step) {
+      case 1:
+        return formData.firstName && formData.lastName && formData.email.includes('@') && 
+               formData.mobileNo.length === 11 && formData.password.length >= 8 && 
+               formData.password === formData.confirmPassword;
+      case 2:
+        return formData.dob && formData.gender && formData.language;
+      case 3:
+        return formData.crops.length > 0;
+      case 4:
+        return !!formData.location;
+      default:
+        return false;
+    }
+  }, [formData, step]);
+
+  const handleSubmit = async () => {
+    if (!isStepValid) return;
+    setIsSubmitting(true);
+    
+    // ================== DEBUGGING LINE (FRONTEND) ==================
+    // This will show the exact data object being sent from the frontend.
+    // Check your BROWSER's developer console for this output.
+    console.log('[FRONTEND LOG] Data being sent to API:', formData);
+    // =============================================================
+    
     try {
-      const response = await fetch('http://localhost:4000/users/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed.');
-      }
+      await api.registerUser(formData);
+      
       Swal.fire({
         title: 'Registration Successful!',
         text: 'You can now log in with your new account.',
         icon: 'success',
-        confirmButtonText: 'Go to Login'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          navigate('/login');
-        }
+        timer: 2000,
+        showConfirmButton: false
       });
+      navigate('/login');
     } catch (error) {
-      Swal.fire('Registration Failed', error.message, 'error');
+      const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
+      Swal.fire('Registration Failed', errorMessage, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderStep1 = () => (
-    <>
-      <Typography variant="h4" sx={{ textAlign: 'center', mb: 4, fontWeight: 600 }}>Sign Up</Typography>
-      <Grid container spacing={4} justifyContent="center">
-        <Grid item xs={12} md={5}>
-          <Box sx={{ border: '1px solid #ddd', borderRadius: '20px', p: 4 }}>
-            <TextField fullWidth name="fullName" label="Complete Name" value={formData.fullName} onChange={handleChange} placeholder="Ex: Juan Dela Cruz" variant="outlined" margin="normal" />
-            <Grid container spacing={2}>
-              <Grid item xs={6}><TextField fullWidth name="dob" label="Date of birth" value={formData.dob} onChange={handleChange} placeholder="DD/MM/YYYY" variant="outlined" margin="normal" /></Grid>
-              <Grid item xs={6}><FormControl fullWidth margin="normal"><InputLabel>Gender</InputLabel><Select name="gender" value={formData.gender} onChange={handleChange} label="Gender"><MenuItem value="Male">Male</MenuItem><MenuItem value="Female">Female</MenuItem></Select></FormControl></Grid>
-            </Grid>
-            <TextField fullWidth name="phone" label="Phone number" value={formData.phone} onChange={handleChange} placeholder="+63XXXXXXXXXX" variant="outlined" margin="normal" />
-            <FormControl fullWidth margin="normal"><InputLabel>Language</InputLabel><Select name="language" value={formData.language} onChange={handleChange} label="Language"><MenuItem value="Tagalog">Tagalog</MenuItem><MenuItem value="English">English</MenuItem></Select></FormControl>
-          </Box>
-        </Grid>
-        <Grid item xs={12} md={5}>
-            <TextField fullWidth name="email" label="Email Address" value={formData.email} onChange={handleChange} sx={{'& .MuiOutlinedInput-root': {borderRadius: '30px'}}} margin="normal" InputProps={{startAdornment: (<InputAdornment position="start"><EmailOutlinedIcon sx={{color: 'grey.500'}} /></InputAdornment>)}}/>
-            <TextField fullWidth name="password" type="password" label="Password" value={formData.password} onChange={handleChange} sx={{'& .MuiOutlinedInput-root': {borderRadius: '30px'}}} margin="normal" InputProps={{startAdornment: (<InputAdornment position="start"><LockOutlinedIcon sx={{color: 'grey.500'}} /></InputAdornment>)}}/>
-            <TextField fullWidth name="confirmPassword" type="password" label="Confirm Password" value={formData.confirmPassword} onChange={handleChange} sx={{'& .MuiOutlinedInput-root': {borderRadius: '30px'}}} margin="normal" InputProps={{startAdornment: (<InputAdornment position="start"><LockOutlinedIcon sx={{color: 'grey.500'}} /></InputAdornment>)}}/>
-        </Grid>
-      </Grid>
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
-        <Button onClick={handleNext} variant="contained" sx={{ backgroundColor: 'var(--primary-green)', borderRadius: '30px', padding: '12px 80px', textTransform: 'none', fontSize: '18px' }}>Signup</Button>
-        <Typography variant="body2" sx={{ mt: 2, color: 'grey.600' }}>
-            By creating an account, you agree to the <MuiLink component={RouterLink} to="/terms">Terms of use</MuiLink> and <MuiLink component={RouterLink} to="/privacy">Privacy Policy</MuiLink>.
-        </Typography>
-      </Box>
-    </>
-  );
-
-  const renderStep2 = () => (
-    <>
-      <Typography variant="h4" sx={{ textAlign: 'center', mb: 5, fontWeight: 600 }}>Starting to Farm or Current Farmer?</Typography>
-      <Grid container spacing={4} justifyContent="center" maxWidth="sm" mx="auto">
-        <Grid item xs={12} sm={6}>
-          <SelectionCard image={farmerImg} label="Long Term Farmer" isSelected={formData.farmerStatus === 'Long Term'} onClick={() => handleCustomChange('farmerStatus', 'Long Term')} />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <SelectionCard image={farmerImg} label="Starting Farmer" isSelected={formData.farmerStatus === 'Starting'} onClick={() => handleCustomChange('farmerStatus', 'Starting')} />
-        </Grid>
-      </Grid>
-    </>
-  );
-
-  const renderStep3 = () => (
-    <>
-      <Typography variant="h4" sx={{ textAlign: 'center', mb: 5, fontWeight: 600 }}>Choose what are the crops</Typography>
-      <Grid container spacing={4} justifyContent="center" maxWidth="lg" mx="auto">
-        {[{label: 'Wheat', img: wheatImg}, {label: 'Corn', img: cornImg}, {label: 'Onion', img: onionImg}, {label: 'Others', img: othersImg}].map(crop => (
-            <Grid item xs={12} sm={6} md={3} key={crop.label}>
-                <SelectionCard image={crop.img} label={crop.label} isSelected={formData.crops.includes(crop.label)} onClick={() => handleCropToggle(crop.label)} />
-            </Grid>
-        ))}
-      </Grid>
-    </>
-  );
-
-  const renderStep4 = () => (
-    <>
-      <Typography variant="h4" sx={{ textAlign: 'center', mb: 5, fontWeight: 600 }}>Where do you reside?</Typography>
-      <Grid container spacing={4} justifyContent="center" maxWidth="lg" mx="auto">
-        {[
-            {label: 'Mexico', img: mexicoImg}, {label: 'CSFP', img: csfpImg}, {label: 'Sta Ana', img: staAnaImg},
-            {label: 'Arayat', img: arayatImg}, {label: 'Bacolor', img: bacolorImg}, {label: 'Use my GPS', img: gpsImg}
-        ].map(loc => (
-            <Grid item xs={12} sm={6} md={4} key={loc.label}>
-                <SelectionCard image={loc.img} label={loc.label} isSelected={formData.location === loc.label} onClick={() => handleCustomChange('location', loc.label)} />
-            </Grid>
-        ))}
-      </Grid>
-    </>
-  );
+  const renderStepContent = () => {
+    return (
+      <Fade in={true} key={step}>
+        <Box>
+          {(() => {
+            switch (step) {
+              case 1: // Account Info
+                return (
+                  <Box sx={{ maxWidth: 500, mx: 'auto' }}>
+                    <Stack spacing={3}>
+                      <TextField name="firstName" label="First Name" value={formData.firstName} onChange={handleChange} fullWidth required />
+                      <TextField name="lastName" label="Last Name" value={formData.lastName} onChange={handleChange} fullWidth required />
+                      <TextField name="email" label="Email Address" type="email" value={formData.email} onChange={handleChange} fullWidth required />
+                      <TextField name="mobileNo" label="Mobile Number" type="tel" value={formData.mobileNo} onChange={handleChange} fullWidth required inputProps={{ maxLength: 11 }} helperText="Format: 09123456789" />
+                      <TextField name="password" label="Password (min 8 characters)" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={handleChange} fullWidth required 
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                      <TextField name="confirmPassword" label="Confirm Password" type={showConfirmPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange} fullWidth required 
+                        error={formData.password !== formData.confirmPassword && formData.confirmPassword !== ''} 
+                        helperText={formData.password !== formData.confirmPassword && formData.confirmPassword !== '' ? "Passwords do not match" : ""}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton aria-label="toggle confirm password visibility" onClick={handleClickShowConfirmPassword} edge="end">
+                                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </Stack>
+                  </Box>
+                );
+              case 2: // Personal Details
+                return (
+                  <Box sx={{ maxWidth: 500, mx: 'auto' }}>
+                    <Stack spacing={3}>
+                      <TextField name="dob" label="Date of Birth" type="date" value={formData.dob} onChange={handleChange} fullWidth required InputLabelProps={{ shrink: true }} />
+                      <FormControl fullWidth required>
+                        <InputLabel>Gender</InputLabel>
+                        <Select name="gender" value={formData.gender} label="Gender" onChange={handleChange}>
+                          <MenuItem value="Male">Male</MenuItem>
+                          <MenuItem value="Female">Female</MenuItem>
+                          <MenuItem value="Other">Other</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <FormControl fullWidth required>
+                        <InputLabel>Language</InputLabel>
+                        <Select name="language" value={formData.language} label="Language" onChange={handleChange}>
+                          <MenuItem value="English">English</MenuItem>
+                          <MenuItem value="Filipino">Filipino</MenuItem>
+                          <MenuItem value="Kapampangan">Kapampangan</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Stack>
+                  </Box>
+                );
+              case 3: // Crops
+                return (
+                  <Grid container spacing={3} justifyContent="center" maxWidth="lg" mx="auto">
+                    {CROP_OPTIONS.map(crop => (
+                      <Grid item xs={12} sm={6} md={3} key={crop.label}>
+                        <SelectionCard image={crop.img} label={crop.label} isSelected={formData.crops.includes(crop.label)} onClick={() => handleCropToggle(crop.label)} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                );
+              case 4: // Location
+                return (
+                  <Grid container spacing={3} justifyContent="center" maxWidth="lg" mx="auto">
+                    {LOCATION_OPTIONS.map(loc => (
+                      <Grid item xs={12} sm={6} md={4} key={loc.value}>
+                        <SelectionCard image={loc.img} label={loc.label} isSelected={formData.location === loc.value} onClick={() => handleSelection('location', loc.value)} />
+                      </Grid>
+                    ))}
+                  </Grid>
+                );
+              default:
+                return null;
+            }
+          })()}
+        </Box>
+      </Fade>
+    );
+  };
 
   return (
-    <Box sx={{ backgroundColor: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Container maxWidth="lg">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0' }}>
+    <Box sx={{ backgroundColor: '#f9fafb', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Container maxWidth="md">
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
           <Button startIcon={<ArrowBackIcon />} onClick={step === 1 ? () => navigate(-1) : handleBack} sx={{ color: 'var(--dark-text)', textTransform: 'none' }}>Back</Button>
-          <img src={logo} alt="AgriKlima Logo" style={{ height: '40px' }} />
-          <Box sx={{ width: 80 }} />
+          <RouterLink to="/"><img src={logo} alt="AgriKlima Logo" style={{ height: '40px' }} /></RouterLink>
+          <Box sx={{ width: 80 }} /> {/* Spacer */}
         </Box>
       </Container>
 
-      <Container maxWidth="lg" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 4 }}>
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
-        {step === 4 && renderStep4()}
-      </Container>
-      
-      {step > 1 && (
-        <Box sx={{ padding: '40px 0', textAlign: 'center' }}>
+      <Container maxWidth="md" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 4 }}>
+        <Paper elevation={0} sx={{ p: { xs: 2, md: 5 }, borderRadius: '24px' }}>
+          <Stepper activeStep={step - 1} alternativeLabel sx={{ mb: 5 }}>
+            {STEPS.map(label => (<Step key={label}><StepLabel>{label}</StepLabel></Step>))}
+          </Stepper>
+
+          <Typography variant="h4" sx={{ textAlign: 'center', mb: 4, fontWeight: 600 }}>
+            {STEPS[step - 1]}
+          </Typography>
+
+          <Box sx={{ minHeight: '350px' }}>
+            {renderStepContent()}
+          </Box>
+        </Paper>
+
+        <Stack direction="row" justifyContent="center" alignItems="center" spacing={2} sx={{ mt: 4 }}>
           <Button 
             onClick={step === 4 ? handleSubmit : handleNext} 
-            variant="contained"
-            disabled={isSubmitting}
-            sx={{ backgroundColor: 'var(--primary-green)', borderRadius: '30px', padding: '12px 100px', textTransform: 'none', fontSize: '18px' }}
+            variant="contained" 
+            disabled={!isStepValid || isSubmitting}
+            sx={{ 
+              backgroundColor: 'var(--primary-green)', 
+              borderRadius: '30px', 
+              px: 10, py: 1.5,
+              textTransform: 'none', 
+              fontSize: '18px' 
+            }}
           >
             {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (step === 4 ? 'Finish' : 'Next')}
           </Button>
-        </Box>
-      )}
+        </Stack>
+      </Container>
     </Box>
   );
 };

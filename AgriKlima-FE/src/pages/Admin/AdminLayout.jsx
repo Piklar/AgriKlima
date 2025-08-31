@@ -1,17 +1,17 @@
 // src/pages/Admin/AdminLayout.jsx
 
 import React from 'react';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material';
+import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider } from '@mui/material';
 import { NavLink, Outlet } from 'react-router-dom';
 
 // Icons for the sidebar
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import GrassIcon from '@mui/icons-material/Grass';
 import PestControlIcon from '@mui/icons-material/PestControl';
 import ArticleIcon from '@mui/icons-material/Article';
 import PeopleIcon from '@mui/icons-material/People';
 import TaskIcon from '@mui/icons-material/Task';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp'; // <-- Import new icon
 
 const drawerWidth = 240;
 
@@ -35,6 +35,7 @@ const AdminLayout = () => {
                 <Toolbar>
                     <Typography variant="h6" noWrap component="div">AgriKlima Admin</Typography>
                 </Toolbar>
+                <Divider />
                 <List>
                     {menuItems.map((item) => (
                         <ListItem key={item.text} disablePadding>
@@ -45,8 +46,20 @@ const AdminLayout = () => {
                         </ListItem>
                     ))}
                 </List>
+                <Divider />
+                {/* --- ADDED: Back to App Button --- */}
+                <List>
+                    <ListItem disablePadding>
+                        <ListItemButton component={NavLink} to="/dashboard">
+                            <ListItemIcon>
+                                <ExitToAppIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Back to App" />
+                        </ListItemButton>
+                    </ListItem>
+                </List>
             </Drawer>
-            <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}>
+            <Box component="main" sx={{ flexGrow: 1, bgcolor: '#f4f6f8', p: 3, minHeight: '100vh' }}>
                 <Toolbar /> {/* This is a spacer to push content below the app bar */}
                 <Outlet /> {/* Child routes will be rendered here */}
             </Box>

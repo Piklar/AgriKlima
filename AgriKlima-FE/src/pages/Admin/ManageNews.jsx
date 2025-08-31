@@ -21,7 +21,7 @@ const ManageNews = () => {
         setLoading(true);
         try {
             const response = await api.getNews();
-            setNews(response.data || []); // Ensure `news` is always an array
+            setNews(response.data || []);
         } catch (error) {
             console.error("Failed to fetch news:", error);
             Swal.fire('Error', 'Could not fetch news from the server.', 'error');
@@ -86,31 +86,25 @@ const ManageNews = () => {
         });
     };
 
-    // ✅ Full News Fields (with summary details)
     const newsFields = [
-        { name: 'title', label: 'Title', required: true },
-        { name: 'author', label: 'Author', required: true },
-        { name: 'imageUrl', label: 'Image URL', required: true },
-        { name: 'content', label: 'Full Article Content', required: true, multiline: true, rows: 8 },
-
-        // Summary (optional fields)
-        { name: 'summary.keyPoints', label: 'Key Points (one per line)', type: 'textarea', isArray: true, rows: 3 },
-        { name: 'summary.quotes', label: 'Notable Quotes (one per line)', type: 'textarea', isArray: true, rows: 3 },
-        { name: 'summary.impact', label: 'Expected Impact', multiline: true, rows: 2 },
+        { name: 'title', label: 'Title', required: true, group: 'Article Content' },
+        { name: 'author', label: 'Author', required: true, group: 'Article Content' },
+        { name: 'imageUrl', label: 'Image URL', required: true, group: 'Article Content' },
+        { name: 'content', label: 'Full Article Content', required: true, type: 'textarea', rows: 12, group: 'Article Content' },
+        { name: 'summary.keyPoints', label: 'Key Points (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'AI Summary Details' },
+        { name: 'summary.quotes', label: 'Notable Quotes (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'AI Summary Details' },
+        { name: 'summary.impact', label: 'Expected Impact', type: 'textarea', rows: 4, group: 'AI Summary Details' },
     ];
 
     const columns = [
-        { field: '_id', headerName: 'ID', width: 220 },
-        { field: 'title', headerName: 'Title', width: 350 },
+        { field: 'title', headerName: 'Title', flex: 1 },
         { field: 'author', headerName: 'Author', width: 200 },
         {
             field: "publicationDate",
             headerName: "Publication Date",
             width: 200,
-            valueGetter: (params) => {
-                const date = params.row?.publicationDate;
-                return date ? new Date(date).toLocaleDateString() : "No date";
-            },
+            // --- THIS IS THE FIX ---
+            valueGetter: (value, row) => new Date(row.publicationDate).toLocaleDateString(),
         },
         {
             field: 'actions',
@@ -119,8 +113,8 @@ const ManageNews = () => {
             sortable: false,
             renderCell: (params) => (
                 <Box>
-                    <Button size="small" onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
-                    <Button size="small" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
+                    <Button size="small" variant="outlined" sx={{ mr: 1 }} onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
+                    <Button size="small" variant="outlined" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
                 </Box>
             ),
         },
@@ -133,13 +127,13 @@ const ManageNews = () => {
                 <Button 
                     variant="contained" 
                     startIcon={<AddIcon />} 
-                    sx={{ bgcolor: 'var(--primary-green)' }} 
+                    sx={{ bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)'} }} 
                     onClick={handleOpenAddModal}
                 >
                     Add New Article
                 </Button>
             </Box>
-            <Paper sx={{ height: '70vh', width: '100%' }}>
+            <Paper sx={{ height: '75vh', width: '100%' }}>
                 <DataGrid
                     rows={news}
                     columns={columns}

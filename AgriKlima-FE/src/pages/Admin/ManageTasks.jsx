@@ -21,48 +21,15 @@ const ManageTasks = () => {
         setLoading(true);
         try {
             const response = await api.getTasks();
-            console.log('Tasks API response:', response); // Debug log
+            const tasksData = response.data || [];
             
-            // Extract tasks data from response
-            let tasksData = [];
-            
-            if (response && response.data && Array.isArray(response.data)) {
-                tasksData = response.data;
-            } else if (Array.isArray(response)) {
-                tasksData = response;
-            } else if (response && Array.isArray(response.tasks)) {
-                tasksData = response.tasks;
-            } else if (response && response.data && Array.isArray(response.data.tasks)) {
-                tasksData = response.data.tasks;
-            }
-            
-            console.log('Processed tasks data:', tasksData); // Debug log
-            
-            // Transform data for DataGrid - use direct field access
-            const gridTasks = tasksData.map((task, index) => ({
-                // Use id field that DataGrid expects
-                id: task._id || task.id || `temp-id-${index}`,
-                // Keep all original data
+            const gridTasks = tasksData.map(task => ({
+                id: task._id,
                 ...task,
-                // Ensure we have display-friendly fields
-                displayTitle: task.title || 'Untitled Task',
-                displayDescription: task.description ? (task.description.length > 50 ? `${task.description.substring(0, 50)}...` : task.description) : 'No description',
-                displayStatus: task.status || 'pending',
-                displayDueDate: task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No Due Date',
-                displayAssignedTo: task.assignedTo ? 
-                    (typeof task.assignedTo === 'object' ? 
-                        (task.assignedTo.firstName && task.assignedTo.lastName ? 
-                            `${task.assignedTo.firstName} ${task.assignedTo.lastName}` : 
-                            task.assignedTo.username || task.assignedTo.email || task.assignedTo._id || 'Unknown User') : 
-                        `User ID: ${task.assignedTo}`) : 
-                    'Not Assigned'
+                displayAssignedTo: task.assignedTo ? `${task.assignedTo.firstName} ${task.assignedTo.lastName}` : 'Not Assigned'
             }));
             
             setTasks(gridTasks);
-            
-            if (gridTasks.length === 0) {
-                Swal.fire('Info', 'No tasks found.', 'info');
-            }
         } catch (error) {
             console.error('Error fetching tasks:', error);
             Swal.fire('Error', 'Could not fetch tasks from the server.', 'error');
@@ -78,20 +45,14 @@ const ManageTasks = () => {
 
     const handleFormSubmit = async (formData) => {
         try {
-            let response;
             if (modalMode === 'add') {
-                response = await api.addTask(formData);
+                await api.addTask(formData);
             } else {
-                response = await api.updateTask(currentTask._id, formData);
+                await api.updateTask(currentTask._id, formData);
             }
-            
-            if (response && (response.status === 200 || response.status === 201)) {
-                Swal.fire('Success', `Task ${modalMode === 'add' ? 'created' : 'updated'}!`, 'success');
-                handleCloseModal();
-                fetchTasks();
-            } else {
-                throw new Error('Operation failed');
-            }
+            Swal.fire('Success', `Task ${modalMode === 'add' ? 'created' : 'updated'}!`, 'success');
+            handleCloseModal();
+            fetchTasks();
         } catch (error) {
             console.error('Form submission error:', error);
             Swal.fire('Error', 'Operation failed. Please check the console for details.', 'error');
@@ -99,9 +60,6 @@ const ManageTasks = () => {
     };
 
     const handleDelete = async (id) => {
-        // Extract the actual _id from the grid id
-        const actualId = tasks.find(task => task.id === id)?._id || id;
-        
         Swal.fire({
             title: 'Are you sure?',
             text: "You won't be able to revert this!",
@@ -113,7 +71,7 @@ const ManageTasks = () => {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await api.deleteTask(actualId);
+                    await api.deleteTask(id);
                     Swal.fire('Deleted!', 'The task has been deleted.', 'success');
                     fetchTasks();
                 } catch (error) {
@@ -130,28 +88,13 @@ const ManageTasks = () => {
         setIsModalOpen(true);
     };
 
-    const handleOpenEditModal = (gridTask) => {
+    const handleOpenEditModal = (task) => {
         setModalMode('edit');
-        // Get the original task data (without display fields)
-        const originalTask = {
-            _id: gridTask._id,
-            title: gridTask.title,
-            description: gridTask.description,
-            status: gridTask.status,
-            dueDate: gridTask.dueDate,
-            assignedTo: gridTask.assignedTo
-        };
-        
         const preparedTask = {
-            ...originalTask,
-            dueDate: originalTask.dueDate ? new Date(originalTask.dueDate).toISOString().split('T')[0] : '',
-            assignedTo: originalTask.assignedTo ? 
-                (typeof originalTask.assignedTo === 'object' ? 
-                    originalTask.assignedTo._id || originalTask.assignedTo.id : 
-                    originalTask.assignedTo) 
-                : ''
+          ...task,
+          dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+          assignedTo: task.assignedTo?._id || ''
         };
-        
         setCurrentTask(preparedTask);
         setIsModalOpen(true);
     };
@@ -162,40 +105,12 @@ const ManageTasks = () => {
     };
 
     const columns = [
-        { 
-            field: 'displayTitle', 
-            headerName: 'Title', 
-            width: 250,
-        },
-        { 
-            field: 'displayDescription', 
-            headerName: 'Description', 
-            width: 200,
-        },
-        { 
-            field: 'displayStatus', 
-            headerName: 'Status', 
-            width: 120,
-            renderCell: (params) => (
-                <span style={{ 
-                    color: params.value === 'completed' ? 'green' : 'orange',
-                    fontWeight: 'bold',
-                    textTransform: 'capitalize'
-                }}>
-                    {params.value}
-                </span>
-            )
-        },
-        { 
-            field: 'displayDueDate', 
-            headerName: 'Due Date', 
-            width: 150,
-        },
-        { 
-            field: 'displayAssignedTo', 
-            headerName: 'Assigned To', 
-            width: 220,
-        },
+        { field: 'title', headerName: 'Title', width: 250 },
+        { field: 'description', headerName: 'Description', flex: 1 },
+        { field: 'status', headerName: 'Status', width: 120 },
+        // --- THIS IS THE FIX ---
+        { field: 'dueDate', headerName: 'Due Date', width: 150, valueGetter: (value, row) => row.dueDate ? new Date(row.dueDate).toLocaleDateString() : 'N/A' },
+        { field: 'displayAssignedTo', headerName: 'Assigned To', width: 220 },
         {
             field: 'actions',
             headerName: 'Actions',
@@ -203,78 +118,36 @@ const ManageTasks = () => {
             sortable: false,
             renderCell: (params) => (
                 <Box>
-                    <Button 
-                        size="small" 
-                        variant="outlined" 
-                        onClick={() => handleOpenEditModal(params.row)}
-                        sx={{ mr: 1 }}
-                    >
-                        Edit
-                    </Button>
-                    <Button 
-                        size="small" 
-                        variant="outlined" 
-                        color="error" 
-                        onClick={() => handleDelete(params.row.id)}
-                    >
-                        Delete
-                    </Button>
+                    <Button size="small" variant="outlined" sx={{ mr: 1 }} onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
+                    <Button size="small" variant="outlined" color="error" onClick={() => handleDelete(params.row.id)}>Delete</Button>
                 </Box>
             ),
         },
     ];
 
     const taskFields = [
-        { name: 'title', label: 'Title', required: true },
-        { name: 'description', label: 'Description', multiline: true, rows: 3 },
-        { 
-            name: 'status', 
-            label: 'Status', 
-            type: 'select', 
-            options: ['pending', 'completed'], 
-            defaultValue: 'pending' 
-        },
-        { 
-            name: 'dueDate', 
-            label: 'Due Date', 
-            type: 'date'
-        },
-        { 
-            name: 'assignedTo', 
-            label: 'Assigned To (User ID)', 
-            required: false,
-            helperText: 'Enter the user ID or leave empty if not assigned'
-        },
+        { name: 'title', label: 'Title', required: true, group: 'Task Details' },
+        { name: 'description', label: 'Description', type: 'textarea', rows: 4, group: 'Task Details' },
+        { name: 'status', label: 'Status', type: 'select', options: ['pending', 'completed'], defaultValue: 'pending', group: 'Task Details' },
+        { name: 'dueDate', label: 'Due Date', type: 'date', group: 'Task Details' },
+        { name: 'assignedTo', label: 'Assigned To (User ID)', helperText: 'Enter a valid User ID', group: 'Task Details' },
     ];
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                    Manage Tasks
-                </Typography>
-                <Button 
-                    variant="contained" 
-                    startIcon={<AddIcon />} 
-                    sx={{ 
-                        bgcolor: 'primary.main',
-                        '&:hover': { bgcolor: 'primary.dark' }
-                    }} 
-                    onClick={handleOpenAddModal}
-                >
+        <Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Manage Tasks</Typography>
+                <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)'} }} onClick={handleOpenAddModal}>
                     Add New Task
                 </Button>
             </Box>
 
-            <Paper sx={{ height: '70vh', width: '100%', p: 2 }}>
+            <Paper sx={{ height: '75vh', width: '100%' }}>
                 <DataGrid 
                     rows={tasks} 
                     columns={columns} 
                     loading={loading} 
                     getRowId={(row) => row.id}
-                    pageSize={10}
-                    rowsPerPageOptions={[10, 25, 50]}
-                    disableSelectionOnClick
                 />
             </Paper>
             
