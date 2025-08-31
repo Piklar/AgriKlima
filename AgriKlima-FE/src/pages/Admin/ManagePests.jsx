@@ -1,4 +1,5 @@
 // src/pages/Admin/ManagePests.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -7,14 +8,13 @@ import Swal from 'sweetalert2';
 
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
-import { useAuth } from '../../context/AuthContext'; // Import auth context
+import { useAuth } from '../../context/AuthContext';
 
 const ManagePests = () => {
-    const { token } = useAuth(); // 🔑 Get auth token
+    const { token } = useAuth();
     const [pests, setPests] = useState([]);
     const [loading, setLoading] = useState(false);
     
-    // State for the modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('add');
     const [currentPest, setCurrentPest] = useState(null);
@@ -54,8 +54,6 @@ const ManagePests = () => {
     };
 
     const handleFormSubmit = async (formData) => {
-        console.log("Pest form submitted with data:", formData);
-        
         if (!token) {
             Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
             return;
@@ -63,11 +61,9 @@ const ManagePests = () => {
         
         try {
             if (modalMode === 'add') {
-                console.log("Adding pest...");
                 await api.addPest(formData, token);
                 Swal.fire('Success', 'Pest created successfully!', 'success');
             } else {
-                console.log("Updating pest:", currentPest._id);
                 await api.updatePest(currentPest._id, formData, token);
                 Swal.fire('Success', 'Pest updated successfully!', 'success');
             }
@@ -109,35 +105,28 @@ const ManagePests = () => {
         });
     };
 
-    // --- FIXED pestFields ---
     const pestFields = [
-        { name: 'name', label: 'Pest Name', required: true },
-        { name: 'imageUrl', label: 'Image URL', required: true },
-        { name: 'type', label: 'Type', type: 'select', options: ['Insect Pest', 'Disease', 'Weed'], required: true },
-        { name: 'riskLevel', label: 'Risk Level', type: 'select', options: ['Low', 'Medium', 'High'], required: true },
-        
-        // Overview - FIXED: use type instead of multiline
-        { name: 'overview.description', label: 'Description (Overview)', type: 'textarea', rows: 3 },
-        { name: 'overview.commonlyAffects', label: 'Commonly Affects (comma-separated)', type: 'textarea', isArray: true, rows: 2 },
-        { name: 'overview.seasonalActivity', label: 'Seasonal Activity (Overview)' },
-        
-        // Identification
-        { name: 'identification.size', label: 'Size (ID)', halfWidth: true },
-        { name: 'identification.color', label: 'Color (ID)', halfWidth: true },
-        { name: 'identification.shape', label: 'Shape (ID)', halfWidth: true },
-        { name: 'identification.behavior', label: 'Behavior (ID)', halfWidth: true },
-        
-        // Prevention & Treatment - FIXED: use type instead of multiline
-        { name: 'prevention', label: 'Prevention Methods (one per line)', type: 'textarea', isArray: true, rows: 4 },
-        { name: 'treatment', label: 'Treatment Methods (one per line)', type: 'textarea', isArray: true, rows: 4 },
+        { name: 'name', label: 'Pest Name', required: true, group: 'Basic Information' },
+        { name: 'imageUrl', label: 'Image URL', required: true, group: 'Basic Information' },
+        { name: 'type', label: 'Type', type: 'select', options: ['Insect Pest', 'Disease', 'Weed'], required: true, group: 'Basic Information' },
+        { name: 'riskLevel', label: 'Risk Level', type: 'select', options: ['Low', 'Medium', 'High'], required: true, group: 'Basic Information' },
+        { name: 'overview.description', label: 'Description', type: 'textarea', rows: 3, group: 'Basic Information' },
+        { name: 'overview.seasonalActivity', label: 'Seasonal Activity', group: 'Basic Information' },
+        { name: 'identification.size', label: 'Size', group: 'Identification' },
+        { name: 'identification.color', label: 'Color', group: 'Identification' },
+        { name: 'identification.shape', label: 'Shape', group: 'Identification' },
+        { name: 'identification.behavior', label: 'Behavior', group: 'Identification' },
+        { name: 'overview.commonlyAffects', label: 'Commonly Affects (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Control Methods' },
+        { name: 'prevention', label: 'Prevention Methods (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Control Methods' },
+        { name: 'treatment', label: 'Treatment Methods (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Control Methods' },
     ];
 
-    // FIXED: Define columns for the DataGrid - use 'field' instead of 'name'
     const columns = [
-        { field: '_id', headerName: 'ID', width: 220 },
         { field: 'name', headerName: 'Pest Name', width: 200 },
         { field: 'type', headerName: 'Type', width: 150 },
         { field: 'riskLevel', headerName: 'Risk Level', width: 150 },
+        // --- THIS IS THE FIX ---
+        { field: 'overview.description', headerName: 'Description', flex: 1, valueGetter: (value, row) => row.overview?.description || '' },
         {
             field: 'actions',
             headerName: 'Actions',
@@ -145,8 +134,8 @@ const ManagePests = () => {
             sortable: false,
             renderCell: (params) => (
                 <Box>
-                    <Button size="small" onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
-                    <Button size="small" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
+                    <Button size="small" variant="outlined" sx={{ mr: 1 }} onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
+                    <Button size="small" variant="outlined" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
                 </Box>
             ),
         },
@@ -156,11 +145,11 @@ const ManagePests = () => {
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Manage Pests</Typography>
-                <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: 'var(--primary-green)' }} onClick={handleOpenAddModal}>
+                <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)'} }} onClick={handleOpenAddModal}>
                     Add New Pest
                 </Button>
             </Box>
-            <Paper sx={{ height: '70vh', width: '100%' }}>
+            <Paper sx={{ height: '75vh', width: '100%' }}>
                 <DataGrid
                     rows={pests}
                     columns={columns}

@@ -54,23 +54,18 @@ const ManageCrops = () => {
     setCurrentCrop(null);
   };
 
-  // Form submission - ADD DEBUGGING
+  // Form submission
   const handleFormSubmit = async (formData) => {
-    console.log("Form submitted with data:", formData);
-
     if (!token) {
       Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
       return;
     }
-
     try {
       if (modalMode === 'add') {
-        console.log("Adding crop...");
-        await api.addCrop(formData, token); // Make sure your api.addCrop accepts token
+        await api.addCrop(formData, token);
         Swal.fire('Success', 'Crop created successfully!', 'success');
       } else {
-        console.log("Updating crop:", currentCrop._id);
-        await api.updateCrop(currentCrop._id, formData, token); // Make sure your api.updateCrop accepts token
+        await api.updateCrop(currentCrop._id, formData, token);
         Swal.fire('Success', 'Crop updated successfully!', 'success');
       }
       handleCloseModal();
@@ -110,35 +105,36 @@ const ManageCrops = () => {
     });
   };
 
-  // --- FIXED crop fields ---
+  // --- Field definitions with 'group' property ---
   const cropFields = [
-    { name: 'name', label: 'Crop Name', required: true },
-    { name: 'description', label: 'Main Description', required: true, type: 'textarea', rows: 4 },
-    { name: 'imageUrl', label: 'Image URL', required: true },
-    { name: 'season', label: 'Season', type: 'select', options: ['All Year', 'Dry Season', 'Wet Season'], defaultValue: 'All Year' },
+    // Group 1: Basic Information
+    { name: 'name', label: 'Crop Name', required: true, group: 'Basic Information' },
+    { name: 'description', label: 'Main Description', required: true, type: 'textarea', rows: 4, group: 'Basic Information' },
+    { name: 'imageUrl', label: 'Image URL', required: true, group: 'Basic Information' },
+    { name: 'season', label: 'Season', type: 'select', options: ['All Year', 'Dry Season', 'Wet Season'], defaultValue: 'All Year', group: 'Basic Information' },
+    { name: 'overview.plantingSeason', label: 'Planting Season', group: 'Basic Information' },
+    { name: 'overview.harvestTime', label: 'Harvest Time', group: 'Basic Information' },
 
-    { name: 'overview.plantingSeason', label: 'Planting Season (Overview)' },
-    { name: 'overview.harvestTime', label: 'Harvest Time (Overview)' },
+    // Group 2: Growing Guide
+    { name: 'growingGuide.climate', label: 'Climate', group: 'Growing Guide' },
+    { name: 'growingGuide.soilType', label: 'Soil Type', group: 'Growing Guide' },
+    { name: 'growingGuide.waterNeeds', label: 'Water Needs', group: 'Growing Guide' },
+    { name: 'growingGuide.fertilizer', label: 'Fertilizer', group: 'Growing Guide' },
+    { name: 'marketInfo.priceRange', label: 'Price Range (e.g., ₱50-₱60/kg)', group: 'Growing Guide' },
+    { name: 'marketInfo.storageMethod', label: 'Storage Method', group: 'Growing Guide' },
 
-    { name: 'growingGuide.climate', label: 'Climate (Growing Guide)' },
-    { name: 'growingGuide.soilType', label: 'Soil Type (Growing Guide)' },
-    { name: 'growingGuide.waterNeeds', label: 'Water Needs (Growing Guide)' },
-    { name: 'growingGuide.fertilizer', label: 'Fertilizer (Growing Guide)' },
-
-    { name: 'healthCare.commonDiseases', label: 'Common Diseases', type: 'textarea', isArray: true, rows: 3 },
-    { name: 'healthCare.pestControl', label: 'Pest Control', type: 'textarea', isArray: true, rows: 3 },
-    { name: 'healthCare.nutritionalValue', label: 'Nutritional Value', type: 'textarea', isArray: true, rows: 3 },
-
-    { name: 'marketInfo.priceRange', label: 'Price Range', halfWidth: true },
-    { name: 'marketInfo.storageMethod', label: 'Storage Method', halfWidth: true },
-    { name: 'marketInfo.cookingTips', label: 'Cooking Tips', type: 'textarea', isArray: true, rows: 3 },
+    // Group 3: Health & Market
+    { name: 'healthCare.commonDiseases', label: 'Common Diseases (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
+    { name: 'healthCare.pestControl', label: 'Pest Control (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
+    { name: 'healthCare.nutritionalValue', label: 'Nutritional Value (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
+    { name: 'marketInfo.cookingTips', label: 'Cooking Tips (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
   ];
 
   // DataGrid columns
   const columns = [
     { field: 'name', headerName: 'Crop Name', width: 200 },
     { field: 'season', headerName: 'Season', width: 150 },
-    { field: 'description', headerName: 'Description', width: 350 },
+    { field: 'description', headerName: 'Description', flex: 1 },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -146,8 +142,8 @@ const ManageCrops = () => {
       sortable: false,
       renderCell: (params) => (
         <Box>
-          <Button size="small" onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
-          <Button size="small" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
+          <Button size="small" variant="outlined" sx={{ mr: 1 }} onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
+          <Button size="small" variant="outlined" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
         </Box>
       ),
     },
@@ -160,13 +156,13 @@ const ManageCrops = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          sx={{ bgcolor: 'var(--primary-green)' }}
+          sx={{ bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)'} }}
           onClick={handleOpenAddModal}
         >
           Add New Crop
         </Button>
       </Box>
-      <Paper sx={{ height: '70vh', width: '100%' }}>
+      <Paper sx={{ height: '75vh', width: '100%' }}>
         <DataGrid
           rows={crops}
           columns={columns}
@@ -180,6 +176,7 @@ const ManageCrops = () => {
         onSubmit={handleFormSubmit}
         initialData={currentCrop}
         mode={modalMode}
+        // --- THIS IS THE FIX: Changed `mode` to `modalMode` ---
         title={modalMode === 'add' ? 'Add New Crop' : 'Edit Crop'}
         fields={cropFields}
       />

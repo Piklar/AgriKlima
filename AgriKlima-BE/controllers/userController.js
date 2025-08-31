@@ -1,4 +1,4 @@
-// controllers/userController.js
+// backend/controllers/userController.js
 
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
@@ -7,38 +7,27 @@ const auth = require("../auth");
 // --- [CREATE] Register a new user ---
 module.exports.registerUser = async (req, res) => {
     try {
-        const { fullName, dob, gender, phone, language, email, password, farmerStatus, crops, location } = req.body;
-
-        if (!fullName || !email || !password || !phone) {
-            return res.status(400).send({ error: "Missing required fields." });
+        const { firstName, lastName, email, password, mobileNo, location, crops, dob, gender, language } = req.body;
+        if (!firstName || !lastName || !email || !password || !mobileNo) {
+            return res.status(400).send({ error: "Missing required account fields." });
         }
         if (password.length < 8) {
             return res.status(400).send({ error: "Password must be at least 8 characters." });
+        }
+        if (mobileNo.length !== 11) {
+            return res.status(400).send({ error: "Mobile number must be 11 digits." });
         }
         const existingUser = await User.findOne({ email: email });
         if (existingUser) {
             return res.status(409).send({ error: "Email is already in use." });
         }
-
-        const locationMap = {
-            'Sta Ana': 'Santa Ana, Pampanga', 'Arayat': 'Arayat, Pampanga', 'CSFP': 'San Fernando, Pampanga',
-            'Bacolor': 'Bacolor, Pampanga', 'Mexico': 'Mexico, Pampanga'
-        };
-        const formattedLocation = locationMap[location] || location;
-
-        const nameParts = fullName.trim().split(' ');
-        const firstName = nameParts.shift();
-        const lastName = nameParts.join(' ');
-
         const newUser = new User({
-            firstName, lastName: lastName || ' ', email,
-            password: bcrypt.hashSync(password, 10), mobileNo: phone, location: formattedLocation,
-            farmerStatus, crops, dob, gender, language
+            firstName, lastName, email,
+            password: bcrypt.hashSync(password, 10),
+            mobileNo, location, crops, dob, gender, language
         });
-
         await newUser.save();
         res.status(201).send({ message: "User registered successfully!" });
-
     } catch (error) {
         console.error("Error during user registration:", error);
         if (error.name === 'ValidationError') {
@@ -68,15 +57,14 @@ module.exports.loginUser = (req, res) => {
 };
 
 // --- [READ] Get a user's own profile details ---
-// This is the function that fixes your "undefined" problem.
 module.exports.getProfile = (req, res) => {
     return User.findById(req.user.id)
         .then(user => {
             if (!user) {
                 return res.status(404).send({ error: 'User not found' });
             }
-            user.password = undefined; // Don't send the password back
-            return res.status(200).send(user); // Send the full user object
+            user.password = undefined;
+            return res.status(200).send(user);
         })
         .catch(err => {
             console.error("Error in getProfile:", err);
@@ -130,8 +118,14 @@ module.exports.resetPassword = async (req, res) => {
 
 // === ADMIN-ONLY FUNCTIONS ===
 module.exports.getAllUsers = (req, res) => {
-    User.find({}).then(users => res.status(200).send(users))
-    .catch(err => res.status(500).send({ error: 'Failed to fetch users' }));
+    User.find({}).select('-password')
+    .then(users => {
+        return res.status(200).send({ users: users });
+    })
+    .catch(err => {
+        console.error("Error in getAllUsers:", err);
+        return res.status(500).send({ error: 'Failed to fetch users' });
+    });
 };
 module.exports.setAsAdmin = (req, res) => {
     User.findByIdAndUpdate(req.params.id, { isAdmin: true }, { new: true })
