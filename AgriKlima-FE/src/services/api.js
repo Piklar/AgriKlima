@@ -23,12 +23,28 @@ export const registerUser = (data) => API.post("/users/register", data);
 export const loginUser = (data) => API.post("/users/login", data);
 export const getProfile = () => API.get("/users/details"); // no need to pass token explicitly
 export const resetPassword = (data) => API.patch("/users/resetPassword", data);
+export const changePassword = (data) => API.patch("/users/change-password", data);
 export const getAllUsers = () => API.get("/users/all");
 export const setAsAdmin = (userId) => API.patch(`/users/${userId}/setAsAdmin`);
+
+// --- THIS IS THE ONLY FUNCTION NEEDED FOR UPDATING PROFILE INFO ---
+// It correctly calls PUT /users/:userId, which matches our secure backend route.
 export const updateUser = (userId, data) => API.put(`/users/${userId}`, data);
+
 export const deleteUser = (userId) => API.delete(`/users/${userId}`);
 export const getUserById = (userId) => API.get(`/users/${userId}`);
+<<<<<<< Updated upstream
 export const updateUserProfile = (data) => API.put(`/users/${data._id}`, data);
+=======
+
+// --- The old, incorrect `updateUserProfileInfo` has been REMOVED ---
+
+export const updateProfilePicture = (formData) => {
+  return API.patch('/users/update-picture', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+>>>>>>> Stashed changes
 
 // ---- CROP ROUTES ----
 export const getCrops = () => API.get("/crops");
@@ -53,7 +69,7 @@ export const deletePest = (id) => API.delete(`/pests/${id}`);
 
 // ---- TASK ROUTES ----
 export const getTasks = () => API.get("/tasks");
-export const getMyTasks = () => API.get("/tasks/my-tasks");
+export const getMyTasks = (params = {}) => API.get("/tasks/my-tasks", { params }); // Kept the fix for calendar
 export const getTaskById = (id) => API.get(`/tasks/${id}`);
 export const addTask = (data) => API.post("/tasks/add", data);
 export const updateTask = (id, data) => API.put(`/tasks/${id}`, data);
