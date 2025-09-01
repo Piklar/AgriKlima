@@ -8,6 +8,7 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '' });
 
   useEffect(() => {
+    // --- Only update the form if the user prop exists ---
     if (user) {
       setFormData({
         firstName: user.firstName || '',
@@ -15,7 +16,7 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
         email: user.email || '',
       });
     }
-  }, [user, open]);
+  }, [user, open]); // Re-run when modal opens or user data changes
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -24,12 +25,13 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user?._id) {
-        Swal.fire('Error', 'User data is not available. Please try again.', 'error');
-        return;
+      Swal.fire('Error', 'User data is not available. Please try again.', 'error');
+      return;
     }
     try {
+      // ✅ Correct API call: updateUser(userId, formData)
       await api.updateUser(user._id, formData);
-      
+
       Swal.fire({
         title: 'Success!',
         text: 'Profile updated successfully!',
@@ -38,8 +40,8 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
         timerProgressBar: true
       });
 
-      onUpdate();
-      onClose();
+      onUpdate(); // refresh user data in parent
+      onClose();  // close modal
     } catch (error) {
       console.error('Failed to update profile:', error);
       Swal.fire('Error', error.response?.data?.error || 'Failed to update profile.', 'error');
@@ -52,9 +54,28 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
-            <TextField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} required />
-            <TextField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required />
-            <TextField label="Email Address" name="email" type="email" value={formData.email} onChange={handleChange} required />
+            <TextField
+              label="First Name"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+            />
+            <TextField
+              label="Last Name"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+            />
+            <TextField
+              label="Email Address"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: '16px 24px' }}>

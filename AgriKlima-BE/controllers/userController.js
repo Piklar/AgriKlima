@@ -137,23 +137,8 @@ module.exports.resetPassword = async (req, res) => {
   }
 };
 
-// === ADMIN-ONLY FUNCTIONS ===
-module.exports.getAllUsers = (req, res) => {
-    User.find({})
-    .then(users => { return res.status(200).send({ users: users }); })
-    .catch(err => {
-        console.error("Error in getAllUsers:", err);
-        return res.status(500).send({ error: 'Failed to fetch users' });
-    });
-};
 
-module.exports.setAsAdmin = (req, res) => {
-    User.findByIdAndUpdate(req.params.id, { isAdmin: true }, { new: true })
-    .then(user => res.status(200).send({ message: "User set as admin", user }))
-    .catch(err => res.status(500).send({ error: "Failed to set user as admin" }));
-};
-
-// ===== FINAL, CLEAN, and WORKING version of updateUser =====
+// --- [UPDATE] Update a user's profile information ---
 module.exports.updateUser = async (req, res) => {
     try {
         const userIdToUpdate = req.params.userId;
@@ -183,6 +168,23 @@ module.exports.updateUser = async (req, res) => {
         console.error("Error in updateUser:", error); 
         res.status(500).send({ message: 'Internal server error' }); 
     }
+};
+
+
+// === ADMIN-ONLY FUNCTIONS ===
+module.exports.getAllUsers = (req, res) => {
+    User.find({})
+    .then(users => { return res.status(200).send({ users: users }); })
+    .catch(err => {
+        console.error("Error in getAllUsers:", err);
+        return res.status(500).send({ error: 'Failed to fetch users' });
+    });
+};
+
+module.exports.setAsAdmin = (req, res) => {
+    User.findByIdAndUpdate(req.params.id, { isAdmin: true }, { new: true })
+    .then(user => res.status(200).send({ message: "User set as admin", user }))
+    .catch(err => res.status(500).send({ error: "Failed to set user as admin" }));
 };
 
 module.exports.deleteUser = (req, res) => {

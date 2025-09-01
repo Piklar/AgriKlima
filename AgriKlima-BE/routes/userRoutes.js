@@ -17,13 +17,15 @@ router.post("/login", userController.loginUser);
 router.get("/details", verify, userController.getProfile);
 router.patch("/change-password", verify, userController.changePassword);
 router.patch("/update-picture", verify, upload.single('profilePicture'), userController.updateProfilePicture);
+router.patch('/resetPassword', verify, userController.resetPassword);
 
 // PUT to update the user's main profile info (firstName, lastName, email)
 router.put("/:userId", verify, userController.updateUser);
 
+
 // === ADMIN-ONLY ROUTES ===
 router.get("/all", verify, verifyAdmin, userController.getAllUsers);
-router.patch("/:userId/setAsAdmin", verify, verifyAdmin, userController.setAsAdmin);
-router.delete("/:userId", verify, verifyAdmin, userController.deleteUser);
+router.patch("/:id/setAsAdmin", verify, verifyAdmin, userController.setAsAdmin);
+router.delete("/:userId", verify, userController.deleteUser);
 
 module.exports = router;
