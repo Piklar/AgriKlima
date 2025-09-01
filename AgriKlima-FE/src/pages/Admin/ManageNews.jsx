@@ -1,11 +1,10 @@
 // src/pages/Admin/ManageNews.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import { Box, Button, Typography, Paper, Avatar } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import Swal from 'sweetalert2';
-
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
 
@@ -21,7 +20,7 @@ const ManageNews = () => {
         setLoading(true);
         try {
             const response = await api.getNews();
-            setNews(response.data || []); // Ensure `news` is always an array
+            setNews(response.data || []);
         } catch (error) {
             console.error("Failed to fetch news:", error);
             Swal.fire('Error', 'Could not fetch news from the server.', 'error');
@@ -51,18 +50,34 @@ const ManageNews = () => {
         setCurrentNews(null);
     };
 
-    const handleFormSubmit = async (formData) => {
+    const handleFormSubmit = async (formData, imageFile) => {
         try {
+            let savedItem;
             if (modalMode === 'add') {
-                await api.addNews(formData);
+                const response = await api.addNews(formData);
+                savedItem = response.data;
+                if (imageFile) Swal.fire({ title: 'Step 1/2 Complete', text: 'Article details saved. Now uploading image...', icon: 'info', timer: 1500, showConfirmButton: false });
             } else {
-                await api.updateNews(currentNews._id, formData);
+                const response = await api.updateNews(currentNews._id, formData);
+                // --- THIS IS THE FIX ---
+                // For news, the response is nested under the 'article' key
+                savedItem = response.article;
             }
-            Swal.fire('Success', `News article ${modalMode === 'add' ? 'created' : 'updated'}!`, 'success');
+
+            if (imageFile && savedItem?._id) {
+                const uploadFormData = new FormData();
+                uploadFormData.append('image', imageFile);
+                await api.uploadNewsImage(savedItem._id, uploadFormData);
+            }
+
+            Swal.fire('Success!', `News article ${modalMode === 'add' ? 'created' : 'updated'} successfully.`, 'success');
             handleCloseModal();
             fetchNews();
+            
         } catch (error) {
-            Swal.fire('Error', `Failed to save the article: ${error.response?.data?.error || ''}`, 'error');
+            console.error("Failed to save news article:", error);
+            const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
+            Swal.fire('Error', `Failed to save the article: ${errorMessage}`, 'error');
         }
     };
 
@@ -86,31 +101,38 @@ const ManageNews = () => {
         });
     };
 
-    // ✅ Full News Fields (with summary details)
     const newsFields = [
-        { name: 'title', label: 'Title', required: true },
-        { name: 'author', label: 'Author', required: true },
-        { name: 'imageUrl', label: 'Image URL', required: true },
-        { name: 'content', label: 'Full Article Content', required: true, multiline: true, rows: 8 },
-
-        // Summary (optional fields)
-        { name: 'summary.keyPoints', label: 'Key Points (one per line)', type: 'textarea', isArray: true, rows: 3 },
-        { name: 'summary.quotes', label: 'Notable Quotes (one per line)', type: 'textarea', isArray: true, rows: 3 },
-        { name: 'summary.impact', label: 'Expected Impact', multiline: true, rows: 2 },
+        { name: 'title', label: 'Title', required: true, group: 'Article Content' },
+        { name: 'author', label: 'Author', required: true, group: 'Article Content' },
+        { name: 'imageUrl', label: 'Image URL', group: 'Article Content' },
+        { name: 'content', label: 'Full Article Content', required: true, type: 'textarea', rows: 12, group: 'Article Content' },
+        { name: 'summary.keyPoints', label: 'Key Points (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'AI Summary Details' },
+        { name: 'summary.quotes', label: 'Notable Quotes (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'AI Summary Details' },
+        { name: 'summary.impact', label: 'Expected Impact', type: 'textarea', rows: 4, group: 'AI Summary Details' },
     ];
 
     const columns = [
-        { field: '_id', headerName: 'ID', width: 220 },
-        { field: 'title', headerName: 'Title', width: 350 },
+        { 
+            field: 'imageUrl', 
+            headerName: 'Image', 
+            width: 100,
+            renderCell: (params) => (
+              <Avatar 
+                src={params.value} 
+                variant="rounded"
+                sx={{ width: 56, height: 56 }} 
+              />
+            ),
+            sortable: false,
+            filterable: false,
+        },
+        { field: 'title', headerName: 'Title', flex: 1 },
         { field: 'author', headerName: 'Author', width: 200 },
         {
             field: "publicationDate",
             headerName: "Publication Date",
             width: 200,
-            valueGetter: (params) => {
-                const date = params.row?.publicationDate;
-                return date ? new Date(date).toLocaleDateString() : "No date";
-            },
+            valueGetter: (value, row) => row.publicationDate ? new Date(row.publicationDate).toLocaleDateString() : 'N/A',
         },
         {
             field: 'actions',
@@ -119,8 +141,8 @@ const ManageNews = () => {
             sortable: false,
             renderCell: (params) => (
                 <Box>
-                    <Button size="small" onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
-                    <Button size="small" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
+                    <Button size="small" variant="outlined" sx={{ mr: 1 }} onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
+                    <Button size="small" variant="outlined" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
                 </Box>
             ),
         },
@@ -133,18 +155,19 @@ const ManageNews = () => {
                 <Button 
                     variant="contained" 
                     startIcon={<AddIcon />} 
-                    sx={{ bgcolor: 'var(--primary-green)' }} 
+                    sx={{ bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)'} }} 
                     onClick={handleOpenAddModal}
                 >
                     Add New Article
                 </Button>
             </Box>
-            <Paper sx={{ height: '70vh', width: '100%' }}>
+            <Paper sx={{ height: '75vh', width: '100%' }}>
                 <DataGrid
                     rows={news}
                     columns={columns}
                     loading={loading}
                     getRowId={(row) => row._id}
+                    rowHeight={70}
                 />
             </Paper>
             <AdminFormModal

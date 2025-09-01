@@ -1,135 +1,52 @@
+// src/components/ChangePasswordModal.jsx
 import React, { useState } from 'react';
-import { Modal, Box, Typography, TextField, Button, CircularProgress } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box } from '@mui/material';
+import * as api from '../services/api';
+import Swal from 'sweetalert2';
 
-const modalStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 450,
-  maxWidth: '95%',
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-  borderRadius: '16px',
-};
+const ChangePasswordModal = ({ open, onClose }) => {
+  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
-const ChangePasswordModal = ({ open, handleClose }) => {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const handleChange = (e) => {
+    setPasswords({ ...passwords, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-
-    // Client-side validation
-    if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      Swal.fire('Error', 'New passwords do not match.', 'error');
       return;
     }
-    if (newPassword.length < 8) {
-      setError("New password must be at least 8 characters long.");
-      return;
-    }
-
-    setIsLoading(true);
-
     try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            throw new Error("Authentication token not found.");
-        }
-
-        const response = await fetch(`http://localhost:4000/users/change-password`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ currentPassword, newPassword })
-        });
-
-        const responseData = await response.json();
-        if (!response.ok) {
-            throw new Error(responseData.error || 'Failed to change password');
-        }
-
-        setIsLoading(false);
-        handleClose(true); // Close modal and signal success
-
+      await api.changePassword({
+        currentPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword,
+      });
+      onClose();
+      Swal.fire('Success', 'Password changed successfully!', 'success');
     } catch (error) {
-        console.error('Error changing password:', error);
-        setError(error.message);
-        setIsLoading(false);
+      console.error('Failed to change password:', error);
+      Swal.fire('Error', error.response?.data?.error || 'Failed to change password.', 'error');
     }
-  };
-  
-  // Reset form state when modal closes
-  const handleModalClose = (wasSuccess) => {
-    handleClose(wasSuccess);
-    setTimeout(() => {
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        setError(null);
-    }, 300); // Delay reset to allow modal to animate out
   };
 
   return (
-    <Modal open={open} onClose={() => handleModalClose(false)}>
-      <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-          Change Password
-        </Typography>
-
-        <TextField
-          type="password"
-          name="currentPassword"
-          label="Current Password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          fullWidth
-          margin="normal"
-          required
-        />
-        <TextField
-          type="password"
-          name="newPassword"
-          label="New Password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          fullWidth
-          margin="normal"
-          required
-        />
-        <TextField
-          type="password"
-          name="confirmPassword"
-          label="Confirm New Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          fullWidth
-          margin="normal"
-          required
-        />
-        
-        {error && (
-            <Typography color="error" sx={{ mt: 2, textAlign: 'center' }}>
-                {error}
-            </Typography>
-        )}
-
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1 }}>
-          <Button onClick={() => handleModalClose(false)} disabled={isLoading}>Cancel</Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Change Password</DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+            <TextField label="Current Password" name="currentPassword" type="password" value={passwords.currentPassword} onChange={handleChange} required />
+            <TextField label="New Password" name="newPassword" type="password" value={passwords.newPassword} onChange={handleChange} required />
+            <TextField label="Confirm New Password" name="confirmPassword" type="password" value={passwords.confirmPassword} onChange={handleChange} required />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: '16px 24px' }}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="contained">Update Password</Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

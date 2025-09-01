@@ -1,8 +1,14 @@
-// routes/cropRoutes.js
+// backend/routes/cropRoutes.js
+
 const express = require("express");
 const router = express.Router();
 const { verify, verifyAdmin } = require("../auth");
 const cropController = require('../controllers/cropController');
+
+// Configure multer for file uploads
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 // Add a new crop (Admin only)
 router.post("/add", verify, verifyAdmin, cropController.addCrop);
@@ -13,10 +19,13 @@ router.get("/", cropController.getAllCrops);
 // Get a single crop by ID (Public)
 router.get("/:cropId", cropController.getCropById);
 
-// --- UPDATE a crop (Admin only) ---
+// UPDATE a crop's text information (Admin only)
 router.put("/:cropId", verify, verifyAdmin, cropController.updateCrop);
 
-// --- DELETE a crop (Admin only) ---
+// --- NEW ROUTE for uploading a crop image ---
+router.patch("/:cropId/upload-image", verify, verifyAdmin, upload.single('image'), cropController.updateCropImage);
+
+// DELETE a crop (Admin only)
 router.delete("/:cropId", verify, verifyAdmin, cropController.deleteCrop);
 
 module.exports = router;

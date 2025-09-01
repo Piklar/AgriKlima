@@ -1,0 +1,103 @@
+// src/components/ChatbotOverlay.jsx
+
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, Paper, Typography, TextField, Button, IconButton, CircularProgress } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import SendIcon from '@mui/icons-material/Send';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import * as api from '../services/api';
+
+const ChatbotOverlay = ({ open, onClose }) => {
+    const [messages, setMessages] = useState([
+        { sender: 'bot', text: 'Hello! I am KlimaBot. How can I help you with your farming needs today?' }
+    ]);
+    const [inputValue, setInputValue] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const messagesEndRef = useRef(null);
+
+    // Auto-scroll to the latest message
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    const handleSend = async () => {
+        if (!inputValue.trim()) return;
+
+        const userMessage = { sender: 'user', text: inputValue };
+        setMessages(prev => [...prev, userMessage]);
+        setInputValue('');
+        setIsLoading(true);
+
+        try {
+            const response = await api.sendMessageToBot({ message: inputValue });
+            const botMessage = { sender: 'bot', text: response.data.response };
+            setMessages(prev => [...prev, botMessage]);
+        } catch (error) {
+            const errorMessage = { sender: 'bot', text: 'Sorry, I am having trouble connecting. Please try again.' };
+            setMessages(prev => [...prev, errorMessage]);
+            console.error("Chatbot error:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (!open) return null;
+
+    return (
+        <Paper 
+            elevation={8}
+            sx={{
+                position: 'fixed',
+                bottom: { xs: 16, md: 100 },
+                right: { xs: 16, md: 40 },
+                width: '90%',
+                maxWidth: '400px',
+                height: '60vh',
+                maxHeight: '600px',
+                borderRadius: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                zIndex: 1300 // Ensure it's above other elements
+            }}
+        >
+            {/* Header */}
+            <Box sx={{ p: 2, bgcolor: 'var(--primary-green)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <SmartToyIcon /> KlimaBot
+                </Typography>
+                <IconButton onClick={onClose} sx={{ color: 'white' }}><CloseIcon /></IconButton>
+            </Box>
+
+            {/* Messages Area */}
+            <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto', bgcolor: '#f9fafb' }}>
+                {messages.map((msg, index) => (
+                    <Box key={index} sx={{ mb: 2, display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+                        <Paper
+                            elevation={1}
+                            sx={{
+                                p: 1.5,
+                                borderRadius: '16px',
+                                bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.200',
+                                color: msg.sender === 'user' ? 'white' : 'black',
+                                maxWidth: '80%'
+                            }}
+                        >
+                            {msg.text}
+                        </Paper>
+                    </Box>
+                ))}
+                {isLoading && <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}><CircularProgress size={24} /></Box>}
+                <div ref={messagesEndRef} />
+            </Box>
+
+            {/* Input Area */}
+            <Box component="form" onSubmit={(e) => { e.preventDefault(); handleSend(); }} sx={{ p: 1, display: 'flex', gap: 1, borderTop: '1px solid #eee' }}>
+                <TextField fullWidth variant="outlined" size="small" placeholder="Ask about crops, pests..." value={inputValue} onChange={(e) => setInputValue(e.target.value)} />
+                <Button type="submit" variant="contained" endIcon={<SendIcon />} disabled={isLoading}>Send</Button>
+            </Box>
+        </Paper>
+    );
+};
+
+export default ChatbotOverlay;

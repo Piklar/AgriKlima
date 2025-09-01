@@ -1,10 +1,11 @@
-// models/Crop.js
+// backend/models/Crop.js
 const mongoose = require('mongoose');
 
 const cropSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, required: true },
-    imageUrl: { type: String, required: true },
+    // --- THIS IS THE FIX ---
+    imageUrl: { type: String, required: false }, // Changed from true to false
     season: { type: String, enum: ['All Year', 'Dry Season', 'Wet Season'], default: 'All Year' },
     overview: {
         plantingSeason: String,
