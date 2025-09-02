@@ -18,9 +18,6 @@ module.exports.registerUser = async (req, res) => {
         if (mobileNo.length !== 11) {
             return res.status(400).send({ error: "Mobile number must be 11 digits." });
         }
-        if (mobileNo.length !== 11) {
-            return res.status(400).send({ error: "Mobile number must be 11 digits." });
-        }
         const existingUser = await User.findOne({ email: email });
         if (existingUser) {
             return res.status(409).send({ error: "Email is already in use." });
