@@ -60,8 +60,7 @@ const ManageNews = () => {
             } else {
                 const response = await api.updateNews(currentNews._id, formData);
                 // --- THIS IS THE FIX ---
-                // For news, the response is nested under the 'article' key
-                savedItem = response.article;
+                savedItem = response.data.article;
             }
 
             if (imageFile && savedItem?._id) {

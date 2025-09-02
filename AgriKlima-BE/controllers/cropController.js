@@ -5,33 +5,42 @@ const cloudinary = require('../config/cloudinary');
 
 // --- THIS IS THE FIX ---
 module.exports.addCrop = (req, res) => {
-    // req.body arrives as a flat object, e.g. { name: 'Corn', 'overview.plantingSeason': 'Summer' }
-    const body = req.body;
+    // Destructure the nested objects from the request body
+    const { 
+        name, 
+        description, 
+        imageUrl, 
+        season, 
+        overview, 
+        growingGuide, 
+        healthCare, 
+        marketInfo 
+    } = req.body;
 
     const newCrop = new Crop({
-        name: body.name,
-        description: body.description,
-        imageUrl: body.imageUrl,
-        season: body.season,
+        name,
+        description,
+        imageUrl,
+        season,
         overview: {
-            plantingSeason: body['overview.plantingSeason'],
-            harvestTime: body['overview.harvestTime']
+            plantingSeason: overview.plantingSeason,
+            harvestTime: overview.harvestTime
         },
         growingGuide: {
-            climate: body['growingGuide.climate'],
-            soilType: body['growingGuide.soilType'],
-            waterNeeds: body['growingGuide.waterNeeds'],
-            fertilizer: body['growingGuide.fertilizer']
+            climate: growingGuide.climate,
+            soilType: growingGuide.soilType,
+            waterNeeds: growingGuide.waterNeeds,
+            fertilizer: growingGuide.fertilizer
         },
         healthCare: {
-            commonDiseases: body['healthCare.commonDiseases'],
-            pestControl: body['healthCare.pestControl'],
-            nutritionalValue: body['healthCare.nutritionalValue']
+            commonDiseases: healthCare.commonDiseases,
+            pestControl: healthCare.pestControl,
+            nutritionalValue: healthCare.nutritionalValue
         },
         marketInfo: {
-            priceRange: body['marketInfo.priceRange'],
-            storageMethod: body['marketInfo.storageMethod'],
-            cookingTips: body['marketInfo.cookingTips']
+            priceRange: marketInfo.priceRange,
+            storageMethod: marketInfo.storageMethod,
+            cookingTips: marketInfo.cookingTips
         }
     });
 

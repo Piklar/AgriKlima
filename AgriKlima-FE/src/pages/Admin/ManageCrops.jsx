@@ -64,8 +64,9 @@ const ManageCrops = () => {
         if (imageFile) Swal.fire({ title: 'Step 1/2 Complete', text: 'Crop details saved. Now uploading image...', icon: 'info', timer: 1500, showConfirmButton: false });
       } else {
         const response = await api.updateCrop(currentCrop._id, formData, token);
-        // --- FIX: For crops, the response IS the data. ---
-        savedItem = response;
+        // --- THIS IS THE FIX ---
+        // Axios wraps the response in a `data` object.
+        savedItem = response.data;
       }
       
       if (imageFile && savedItem?._id) {

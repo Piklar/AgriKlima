@@ -5,18 +5,27 @@ const cloudinary = require('../config/cloudinary');
 
 // --- THIS IS THE FIX ---
 module.exports.addNews = (req, res) => {
-    const body = req.body;
+    // Destructure the nested summary object and top-level properties from the request body.
+    const {
+        title,
+        author,
+        imageUrl,
+        content,
+        summary
+    } = req.body;
+
     let newArticle = new News({
-        title: body.title,
-        author: body.author,
-        imageUrl: body.imageUrl,
-        content: body.content,
+        title,
+        author,
+        imageUrl,
+        content,
         summary: {
-            keyPoints: body['summary.keyPoints'],
-            quotes: body['summary.quotes'],
-            impact: body['summary.impact']
+            keyPoints: summary.keyPoints,
+            quotes: summary.quotes,
+            impact: summary.impact
         }
     });
+
     newArticle.save()
         .then(article => res.status(201).send(article))
         .catch(err => {
