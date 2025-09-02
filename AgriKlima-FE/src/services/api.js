@@ -21,20 +21,24 @@ export default API;
 export const registerUser = (data) => API.post("/users/register", data);
 export const loginUser = (data) => API.post("/users/login", data);
 export const getProfile = () => API.get("/users/details");
+export const changePassword = (data) => API.patch("/users/change-password", data);
 export const resetPassword = (data) => API.patch("/users/resetPassword", data);
 export const getAllUsers = () => API.get("/users/all");
 export const setAsAdmin = (userId) => API.patch(`/users/${userId}/setAsAdmin`);
+
+// ✅ Corrected version: pass `userId` and `data` separately
 export const updateUser = (userId, data) => API.put(`/users/${userId}`, data);
+
 export const deleteUser = (userId) => API.delete(`/users/${userId}`);
 export const getUserById = (userId) => API.get(`/users/${userId}`);
-// --- RENAMED for clarity ---
+
+// Optional: a more general update route (if your backend supports it)
 export const updateUserProfileInfo = (data) => API.put(`/users/update-profile`, data);
-// --- NEW function for profile picture ---
+
+// Profile picture upload
 export const updateProfilePicture = (formData) => {
   return API.patch('/users/update-picture', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
 

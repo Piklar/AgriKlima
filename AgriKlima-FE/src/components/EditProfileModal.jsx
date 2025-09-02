@@ -1,104 +1,89 @@
 // src/components/EditProfileModal.jsx
-
 import React, { useState, useEffect } from 'react';
-import { Modal, Box, Typography, TextField, Button, CircularProgress } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box } from '@mui/material';
+import * as api from '../services/api';
+import Swal from 'sweetalert2';
 
-const modalStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 450,
-  maxWidth: '95%',
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-  borderRadius: '16px',
-};
-
-const EditProfileModal = ({ open, handleClose, user }) => {
+const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '' });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (user && open) {
+    // --- Only update the form if the user prop exists ---
+    if (user) {
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
       });
-      setError(null);
     }
-  }, [user, open]);
+  }, [user, open]); // Re-run when modal opens or user data changes
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
+    if (!user?._id) {
+      Swal.fire('Error', 'User data is not available. Please try again.', 'error');
+      return;
+    }
     try {
-        // --- THIS IS THE FIX ---
-        // We now use the correct key 'authToken' to match your AuthContext.
-        const token = localStorage.getItem('authToken');
-        
-        if (!token) {
-            // This error should no longer appear.
-            throw new Error("Authentication token not found.");
-        }
+      // ✅ Correct API call: updateUser(userId, formData)
+      await api.updateUser(user._id, formData);
 
-        const response = await fetch(`http://localhost:4000/users/update-profile`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(formData)
-        });
+      Swal.fire({
+        title: 'Success!',
+        text: 'Profile updated successfully!',
+        icon: 'success',
+        timer: 2000,
+        timerProgressBar: true
+      });
 
-        const responseData = await response.json();
-        if (!response.ok) {
-            throw new Error(responseData.error || 'Failed to update profile');
-        }
-
-        setIsLoading(false);
-        handleClose(true); // Close modal and signal success
+      onUpdate(); // refresh user data in parent
+      onClose();  // close modal
     } catch (error) {
-        console.error('Error updating profile:', error);
-        setError(error.message);
-        setIsLoading(false);
+      console.error('Failed to update profile:', error);
+      Swal.fire('Error', error.response?.data?.error || 'Failed to update profile.', 'error');
     }
   };
 
-  if (!user) return null;
-
   return (
-    <Modal open={open} onClose={() => handleClose(false)}>
-      <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-          Edit Profile Information
-        </Typography>
-        <TextField name="firstName" label="First Name" value={formData.firstName} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField name="lastName" label="Last Name" value={formData.lastName} onChange={handleChange} fullWidth margin="normal" required />
-        <TextField name="email" label="Email" type="email" value={formData.email} onChange={handleChange} fullWidth margin="normal" required />
-        {error && (
-            <Typography color="error" sx={{ mt: 2, textAlign: 'center' }}>
-                {error}
-            </Typography>
-        )}
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1 }}>
-          <Button onClick={() => handleClose(false)} disabled={isLoading}>Cancel</Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
-          </Button>
-        </Box>
-      </Box>
-    </Modal>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Edit Profile Information</DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+            <TextField
+              label="First Name"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+            />
+            <TextField
+              label="Last Name"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+            />
+            <TextField
+              label="Email Address"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: '16px 24px' }}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="contained">Save Changes</Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 
