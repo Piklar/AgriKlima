@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
-// --- REMOVED unused userAvatar import ---
 
 // Icon Imports
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -61,13 +60,15 @@ const LoggedInNavbar = () => {
       sx={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(8px)', padding: '10px 5%' }}
     >
       <Toolbar>
+        {/* Logo */}
         <Box sx={{ flexGrow: 1 }}>
           <NavLink to="/dashboard">
             <img src={logo} alt="AgriKlima Logo" style={{ height: '45px', display: 'block' }} />
           </NavLink>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        {/* Navigation Links */}
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, alignItems: 'center' }}>
           <NavLink to="/dashboard" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>Home</NavLink>
           <NavLink to="/about" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>About Us</NavLink>
           <NavLink to="/weather" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>Weather</NavLink>
@@ -90,10 +91,16 @@ const LoggedInNavbar = () => {
             )}
         </Box>
 
+        {/* User Profile Section */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', ml: 3 }}>
           <Button onClick={handleMenu} sx={{ textTransform: 'none', borderRadius: '20px', p: 0.5 }}>
             {/* --- THIS IS THE FIX --- */}
-            <Avatar alt={user?.firstName} src={user?.profilePictureUrl} sx={{ width: 32, height: 32, mr: 1, bgcolor: 'var(--primary-green)' }}>
+            <Avatar 
+                alt={user?.firstName} 
+                src={user?.profilePictureUrl} 
+                sx={{ width: 32, height: 32, mr: 1, bgcolor: 'var(--primary-green)' }}
+            >
+                {/* Fallback icon if there is no picture URL */}
                 {!user?.profilePictureUrl && <AccountCircleIcon />}
             </Avatar>
             <Typography sx={{ color: 'var(--dark-text)', display: { xs: 'none', md: 'block' } }}>
