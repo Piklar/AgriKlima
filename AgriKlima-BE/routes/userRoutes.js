@@ -1,17 +1,16 @@
 // backend/routes/userRoutes.js
+// backend/routes/userRoutes.js
 
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
 const { verify, verifyAdmin } = require("../auth");
 
-// --- Configure Multer for file uploads ---
 const multer = require('multer');
-// This sets up multer to temporarily store uploaded files in a directory called 'uploads'
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Route for user registration (Public)
+// === PUBLIC ROUTES ===
 router.post("/register", userController.registerUser);
 
 // Route for user login (Public)
@@ -19,26 +18,20 @@ router.post("/login", userController.loginUser);
 
 // Route to get the logged-in user's profile (Private)
 router.get("/details", verify, userController.getProfile);
-
-// Route to reset the logged-in user's password (Private)
+router.patch("/change-password", verify, userController.changePassword);
+router.patch("/update-picture", verify, upload.single('profilePicture'), userController.updateProfilePicture);
 router.patch('/resetPassword', verify, userController.resetPassword);
 
-// --- NEW ROUTE for updating the profile picture ---
-router.patch("/update-picture", verify, upload.single('profilePicture'), userController.updateProfilePicture);
-
-// --- RENAMED ROUTE for updating general profile info ---
-router.put("/update-profile", verify, userController.updateProfile);
-
-// Route to set a user as an admin by their ID (Admin Only)
-router.patch("/:id/setAsAdmin", verify, verifyAdmin, userController.setAsAdmin);
-
-// Route to get all users from the database (Admin Only)
-router.get("/all", verify, verifyAdmin, userController.getAllUsers);
-
-// Update user (Admin or self)
+// PUT to update the user's main profile info (firstName, lastName, email)
 router.put("/:userId", verify, userController.updateUser);
 
-// Delete user (Admin or self)
+
+// --- ADMIN-ONLY ROUTES ---
+router.get("/all", verify, verifyAdmin, userController.getAllUsers);
+
+// --- DYNAMIC ROUTES (Must come LAST) ---
+router.patch("/:id/setAsAdmin", verify, verifyAdmin, userController.setAsAdmin);
+router.put("/:userId/update", verify, verifyAdmin, userController.updateUser);
 router.delete("/:userId", verify, userController.deleteUser);
 
 module.exports = router;
