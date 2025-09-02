@@ -5,26 +5,39 @@ const cloudinary = require('../config/cloudinary');
 
 // --- THIS IS THE FIX ---
 module.exports.addPest = (req, res) => {
-    const body = req.body;
+    // Destructure the nested objects and top-level properties from the request body.
+    // The incoming JSON should match this structure.
+    const { 
+        name, 
+        type, 
+        riskLevel, 
+        imageUrl, 
+        overview, 
+        identification, 
+        prevention, 
+        treatment 
+    } = req.body;
+
     let newPest = new Pest({
-        name: body.name,
-        type: body.type,
-        riskLevel: body.riskLevel,
-        imageUrl: body.imageUrl,
+        name,
+        type,
+        riskLevel,
+        imageUrl,
         overview: {
-            description: body['overview.description'],
-            commonlyAffects: body['overview.commonlyAffects'],
-            seasonalActivity: body['overview.seasonalActivity']
+            description: overview.description,
+            commonlyAffects: overview.commonlyAffects,
+            seasonalActivity: overview.seasonalActivity
         },
         identification: {
-            size: body['identification.size'],
-            color: body['identification.color'],
-            shape: body['identification.shape'],
-            behavior: body['identification.behavior']
+            size: identification.size,
+            color: identification.color,
+            shape: identification.shape,
+            behavior: identification.behavior
         },
-        prevention: body.prevention,
-        treatment: body.treatment
+        prevention: prevention,
+        treatment: treatment
     });
+
     newPest.save()
         .then(pest => res.status(201).send(pest))
         .catch(err => {

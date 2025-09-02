@@ -1,12 +1,28 @@
+// src/pages/NewsPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import { Container, Grid, Typography, Box, CardMedia, Divider, Button } from '@mui/material';
 import * as api from '../services/api';
 import NewsSummaryOverlay from '../components/NewsSummaryOverlay';
 import mainNewsImage from '../assets/images/news-main.jpg';
 
-// --- Sidebar Card Component ---
-const MoreNewsCard = ({ title, author, image }) => (
-  <Box display="flex" mb={2}>
+// --- Sidebar Card Component (MODIFIED) ---
+const MoreNewsCard = ({ title, author, image, onClick }) => (
+  // The outer Box is now a button-like element
+  <Box 
+    onClick={onClick}
+    sx={{ 
+      display: 'flex', 
+      mb: 2, 
+      p: 1, // Add some padding
+      borderRadius: '8px', // Add rounded corners
+      cursor: 'pointer', // Make it look clickable
+      transition: 'background-color 0.2s ease-in-out',
+      '&:hover': {
+        backgroundColor: '#f5f5f5' // Add a hover effect
+      }
+    }}
+  >
     <CardMedia
       component="img"
       sx={{ width: 100, height: 80, marginRight: 2, borderRadius: '4px' }}
@@ -18,7 +34,8 @@ const MoreNewsCard = ({ title, author, image }) => (
         {title}
       </Typography>
       <Typography variant="caption" color="text.secondary">
-        {author ? `${author}` : "Author"} - Date
+        {/* Added a safe check for publicationDate */}
+        {author ? `${author}` : "Author"} - {new Date().toLocaleDateString()}
       </Typography>
     </Box>
   </Box>
@@ -50,7 +67,6 @@ const fallbackMoreNews = [
 ];
 
 const NewsPage = () => {
-  // --- STATE FOR LIVE DATA ---
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
@@ -64,7 +80,7 @@ const NewsPage = () => {
         setArticles(response.data);
       } catch (error) {
         console.error("Failed to fetch news:", error);
-        setArticles([]); // fallback to static content
+        setArticles([]);
       } finally {
         setLoading(false);
       }
@@ -72,34 +88,39 @@ const NewsPage = () => {
     fetchData();
   }, []);
 
-  // --- EVENT HANDLERS ---
   const handleOpenSummary = (article) => {
     setSelectedArticle(article);
     setIsSummaryOpen(true);
   };
-  const handleCloseSummary = () => setIsSummaryOpen(false);
+  const handleCloseSummary = () => {
+      setIsSummaryOpen(false);
+      // It's good practice to clear the selected article on close
+      setSelectedArticle(null); 
+  };
 
-  // --- DATA LAYER: API or STATIC FALLBACK ---
-  const mainArticle =
-    !loading && articles.length > 0
-      ? articles[0]
-      : fallbackMainArticle;
-  const moreNewsData =
-    !loading && articles.length > 1
-      ? articles.slice(1, 6)
-      : fallbackMoreNews;
+  const mainArticle = !loading && articles.length > 0 ? articles[0] : fallbackMainArticle;
+  const moreNewsData = !loading && articles.length > 1 ? articles.slice(1, 6) : fallbackMoreNews;
 
-  // --- RENDER LOGIC ---
-  if (loading)
+  if (loading) {
     return (
-      <Typography sx={{ textAlign: 'center', mt: 4 }}>
-        Loading News...
-      </Typography>
+      <Container sx={{ py: 5, textAlign: 'center' }}>
+        <Typography variant="h5">Loading News...</Typography>
+      </Container>
     );
+  }
+    
+  if (articles.length === 0 && !loading) {
+     return (
+        <Container sx={{ py: 5, textAlign: 'center' }}>
+            <Typography variant="h5">No News Articles Found</Typography>
+            <Typography color="text.secondary">Please check back later for the latest updates.</Typography>
+        </Container>
+     );
+  }
 
   return (
     <>
-      <Container sx={{ padding: '40px 0' }}>
+      <Container sx={{ padding: { xs: '20px', md: '40px 0' } }}>
         <Grid container spacing={5}>
           {/* Main News Article Column */}
           <Grid item xs={12} md={8}>
@@ -156,19 +177,23 @@ const NewsPage = () => {
               More News
             </Typography>
             <Divider sx={{ marginBottom: '20px' }}/>
+            {/* --- THIS IS THE FIX --- */}
             {moreNewsData.map((item, index) => (
               <MoreNewsCard
                 key={item._id || index}
                 title={item.title}
                 author={item.author}
                 image={item.imageUrl}
+                // Pass the handler function to make the card clickable
+                onClick={() => handleOpenSummary(item)}
               />
             ))}
           </Grid>
         </Grid>
       </Container>
 
-      {/* --- RENDER THE OVERLAY COMPONENT --- */}
+      {/* RENDER THE OVERLAY COMPONENT */}
+      {/* Pass the selected article if it exists, otherwise pass the main article as a fallback */}
       <NewsSummaryOverlay
         open={isSummaryOpen}
         onClose={handleCloseSummary}

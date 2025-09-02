@@ -1,11 +1,13 @@
+// src/pages/PestsPage.jsx
+
 import React, { useState, useEffect } from 'react';
 import {
   Container, Box, Typography, Grid, Card, CardContent, CardMedia,
-  Button, Fab, Chip, Skeleton, useTheme, useMediaQuery
+  Button, Fab, Chip, Skeleton, useTheme, useMediaQuery, Modal, Paper, IconButton
 } from '@mui/material';
 import {
   BugReport, Search, CheckCircleOutline, Healing,
-  Article, Warning, ChevronRight
+  Article, Warning, ChevronRight, Close
 } from '@mui/icons-material';
 import * as api from '../services/api';
 import pestsHero from '../assets/images/pests-hero.jpg';
@@ -73,17 +75,65 @@ const ArticleCard = ({ image, title, description, loading }) => {
   );
 };
 
+// --- THIS IS THE NEW MODAL COMPONENT ---
+const InfoModal = ({ open, handleClose, content }) => (
+  <Modal open={open} onClose={handleClose}>
+    <Paper sx={{
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: '90%',
+      maxWidth: 500,
+      bgcolor: 'background.paper',
+      borderRadius: '16px',
+      boxShadow: 24,
+      p: 3,
+    }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+          {content.title}
+        </Typography>
+        <IconButton onClick={handleClose}>
+          <Close />
+        </IconButton>
+      </Box>
+      <Typography sx={{ mt: 2 }}>{content.description}</Typography>
+    </Paper>
+  </Modal>
+);
+
+// --- THIS IS THE NEW CONTENT OBJECT ---
+const modalInfoContent = {
+  detection: {
+    title: 'Early Detection',
+    description: 'Early detection involves regularly scouting your fields for signs of pests and diseases. Look for unusual spots on leaves, wilting, insect eggs, or larvae. Using traps and monitoring weather conditions can help predict outbreaks before they become severe, allowing for timely and targeted intervention.'
+  },
+  prevention: {
+    title: 'Prevention Methods',
+    description: 'Preventive measures are the first line of defense. This includes crop rotation to break pest cycles, planting pest-resistant varieties, maintaining healthy soil, and encouraging natural predators like ladybugs and birds. Proper sanitation, such as removing crop debris, can also reduce pest habitats.'
+  },
+  treatment: {
+    title: 'Treatment Options',
+    description: 'If pests are present, treatment may be necessary. Options range from biological controls, like introducing beneficial insects, to using organic pesticides such as neem oil. In severe cases, chemical pesticides may be used, but always follow the instructions carefully to protect yourself, the environment, and beneficial organisms.'
+  }
+};
+
+
 const PestsPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // --- STATE FOR LIVE DATA ---
   const [pests, setPests] = useState([]);
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [selectedPest, setSelectedPest] = useState(null);
+
+  // --- NEW STATE for the informational modal ---
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: '', description: '' });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,6 +164,16 @@ const PestsPage = () => {
   const handleCloseOverlay = () => {
     setIsOverlayOpen(false);
     setSelectedPest(null);
+  };
+
+  // --- NEW HANDLERS for the informational modal ---
+  const handleOpenInfoModal = (topic) => {
+    setModalContent(modalInfoContent[topic]);
+    setIsInfoModalOpen(true);
+  };
+
+  const handleCloseInfoModal = () => {
+    setIsInfoModalOpen(false);
   };
 
   const articles = news.length > 0 ? news.slice(0, 3) : [];
@@ -157,7 +217,7 @@ const PestsPage = () => {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.6)', // Increased opacity for stronger effect
+          backgroundColor: 'rgba(0,0,0,0.6)',
           zIndex: 1,
         }
       }}>
@@ -169,47 +229,45 @@ const PestsPage = () => {
           <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
             Protect your crops with effective pest management strategies and early detection techniques.
           </Typography>
+          {/* --- UPDATED BUTTONS with onClick handlers --- */}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center', mt: 4 }}>
             <Button
+              onClick={() => handleOpenInfoModal('detection')}
               startIcon={<Search />}
               variant="contained"
               sx={{
                 bgcolor: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(10px)',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                borderRadius: '20px',
-                py: 1.5,
-                px: 3,
+                borderRadius: '20px', py: 1.5, px: 3,
                 border: '1px solid rgba(255,255,255,0.2)'
               }}
             >
               Early Detection
             </Button>
             <Button
+              onClick={() => handleOpenInfoModal('prevention')}
               startIcon={<CheckCircleOutline />}
               variant="contained"
               sx={{
                 bgcolor: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(10px)',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                borderRadius: '20px',
-                py: 1.5,
-                px: 3,
+                borderRadius: '20px', py: 1.5, px: 3,
                 border: '1px solid rgba(255,255,255,0.2)'
               }}
             >
               Prevention Methods
             </Button>
             <Button
+              onClick={() => handleOpenInfoModal('treatment')}
               startIcon={<Healing />}
               variant="contained"
               sx={{
                 bgcolor: 'rgba(255,255,255,0.2)',
                 backdropFilter: 'blur(10px)',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
-                borderRadius: '20px',
-                py: 1.5,
-                px: 3,
+                borderRadius: '20px', py: 1.5, px: 3,
                 border: '1px solid rgba(255,255,255,0.2)'
               }}
             >
@@ -219,7 +277,7 @@ const PestsPage = () => {
         </Container>
       </Box>
 
-      {/* --- Featured Pests Section (NOW DYNAMIC) --- */}
+      {/* --- Featured Pests Section --- */}
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
           <Warning sx={{ color: 'primary.main', fontSize: 40, mr: 2 }} />
@@ -227,7 +285,6 @@ const PestsPage = () => {
             Common Pests
           </Typography>
         </Box>
-
         {loading ? (
           <Grid container spacing={4}>
             {[...Array(6)].map((_, index) => (
@@ -250,34 +307,18 @@ const PestsPage = () => {
                 <Card
                   onClick={() => handleOpenOverlay(pest)}
                   sx={{
-                    borderRadius: '20px',
-                    boxShadow: 2,
-                    cursor: 'pointer',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: 4,
-                    }
+                    borderRadius: '20px', boxShadow: 2, cursor: 'pointer',
+                    overflow: 'hidden', transition: 'all 0.3s ease',
+                    '&:hover': { transform: 'translateY(-8px)', boxShadow: 4 }
                   }}
                 >
                   <Box sx={{ position: 'relative' }}>
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={pest.imageUrl}
-                      alt={pest.name}
-                      sx={{ transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }}
-                    />
+                    <CardMedia component="img" height="200" image={pest.imageUrl} alt={pest.name} sx={{ transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }} />
                     <Chip
                       label="Pest Alert"
                       sx={{
-                        position: 'absolute',
-                        top: 16,
-                        right: 16,
-                        background: 'rgba(255, 87, 34, 0.9)',
-                        color: 'white',
-                        fontWeight: 600
+                        position: 'absolute', top: 16, right: 16,
+                        background: 'rgba(255, 87, 34, 0.9)', color: 'white', fontWeight: 600
                       }}
                     />
                   </Box>
@@ -292,13 +333,8 @@ const PestsPage = () => {
                       variant="outlined"
                       endIcon={<ChevronRight />}
                       sx={{
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
-                        borderRadius: '20px',
-                        '&:hover': {
-                          borderColor: 'primary.dark',
-                          backgroundColor: 'rgba(104, 159, 56, 0.1)'
-                        }
+                        borderColor: 'primary.main', color: 'primary.main', borderRadius: '20px',
+                        '&:hover': { borderColor: 'primary.dark', backgroundColor: 'rgba(104, 159, 56, 0.1)' }
                       }}
                     >
                       Learn More
@@ -318,32 +354,11 @@ const PestsPage = () => {
         )}
       </Container>
 
-      {/* --- Articles Section (NOW DYNAMIC) --- */}
+      {/* --- Articles Section --- */}
       <Box sx={{
-        background: 'linear-gradient(to right, #8BC34A, #CDDC39)',
-        py: 8,
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: -50,
-          left: -50,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.2)',
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          bottom: -30,
-          right: -30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.2)',
-        }
+        background: 'linear-gradient(to right, #8BC34A, #CDDC39)', py: 8, position: 'relative', overflow: 'hidden',
+        '&::before': { content: '""', position: 'absolute', top: -50, left: -50, width: 150, height: 150, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.2)' },
+        '&::after': { content: '""', position: 'absolute', bottom: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: 'rgba(255, 255, 255, 0.2)' }
       }}>
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
@@ -352,33 +367,22 @@ const PestsPage = () => {
               Related Articles
             </Typography>
           </Box>
-
           {loading ? (
             <Grid container spacing={4}>
-              {[...Array(3)].map((_, index) => (
-                <Grid item xs={12} md={4} key={index}>
-                  <ArticleCard loading={true} />
-                </Grid>
-              ))}
+              {[...Array(3)].map((_, index) => (<Grid item xs={12} md={4} key={index}><ArticleCard loading={true} /></Grid>))}
             </Grid>
           ) : articles.length > 0 ? (
             <Grid container spacing={4}>
               {articles.map(article => (
                 <Grid item xs={12} md={4} key={article._id}>
-                  <ArticleCard
-                    image={article.imageUrl}
-                    title={article.title}
-                    description={article.content || ''}
-                  />
+                  <ArticleCard image={article.imageUrl} title={article.title} description={article.content || ''} />
                 </Grid>
               ))}
             </Grid>
           ) : (
             <Box sx={{ textAlign: 'center', py: 4, color: 'white' }}>
               <Article sx={{ fontSize: 48, mb: 2, opacity: 0.7 }} />
-              <Typography variant="h6">
-                No articles available at the moment
-              </Typography>
+              <Typography variant="h6">No articles available at the moment</Typography>
             </Box>
           )}
         </Container>
@@ -387,31 +391,27 @@ const PestsPage = () => {
       {/* --- Floating Chatbot Icon --- */}
       <Fab
         sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          backgroundColor: 'primary.main',
-          color: 'white',
-          width: 60,
-          height: 60,
-          '&:hover': {
-            backgroundColor: 'primary.dark',
-            transform: 'scale(1.1)'
-          },
+          position: 'fixed', bottom: 24, right: 24,
+          backgroundColor: 'primary.main', color: 'white',
+          width: 60, height: 60,
+          '&:hover': { backgroundColor: 'primary.dark', transform: 'scale(1.1)' },
           transition: 'all 0.3s ease'
         }}
       >
         <img src={chatbotIcon} alt="Chatbot" style={{ width: '70%', height: '70%' }} />
       </Fab>
 
-      {/* --- Pest Detail Overlay (dynamic) --- */}
+      {/* --- Pest Detail Overlay --- */}
       {selectedPest && (
-        <PestDetailOverlay
-          open={isOverlayOpen}
-          onClose={handleCloseOverlay}
-          pestData={selectedPest}
-        />
+        <PestDetailOverlay open={isOverlayOpen} onClose={handleCloseOverlay} pestData={selectedPest} />
       )}
+
+      {/* --- RENDER THE NEW INFO MODAL --- */}
+      <InfoModal
+        open={isInfoModalOpen}
+        handleClose={handleCloseInfoModal}
+        content={modalContent}
+      />
     </Box>
   );
 };

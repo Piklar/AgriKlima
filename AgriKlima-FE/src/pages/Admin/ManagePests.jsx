@@ -66,8 +66,7 @@ const ManagePests = () => {
             } else {
                 const response = await api.updatePest(currentPest._id, formData, token);
                 // --- THIS IS THE FIX ---
-                // For pests, the response is nested under the 'pest' key
-                savedItem = response.pest;
+                savedItem = response.data.pest;
             }
 
             if (imageFile && savedItem?._id) {
