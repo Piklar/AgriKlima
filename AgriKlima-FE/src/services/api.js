@@ -64,3 +64,6 @@ export const getWeather = (location) => API.get(`/weather/${location}`);
 export const addWeather = (data) => API.post("/weather", data);
 export const updateWeather = (location, data) => API.patch(`/weather/${location}`, data);
 export const deleteWeather = (id) => API.delete(`/weather/${id}`);
+
+// ---- CHATBOT ROUTE ----
+export const sendMessageToBot = (data) => API.post("/chat/send", data);
