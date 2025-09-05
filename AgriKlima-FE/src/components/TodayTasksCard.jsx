@@ -1,28 +1,76 @@
 // src/components/TodayTasksCard.jsx
-
 import React from 'react';
-import { Box, Typography, Paper, Button, Skeleton, List, ListItem, Checkbox, ListItemText, Divider, Chip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Skeleton,
+  List,
+  ListItem,
+  Checkbox,
+  ListItemText,
+  Divider,
+  Chip
+} from '@mui/material';
 import { isToday } from 'date-fns';
 import TaskIcon from '@mui/icons-material/Task';
 
 const TodayTasksCard = ({ tasks, loading, onTaskToggle, onManageTasks }) => {
-  const todayTasks = tasks.filter(task => isToday(new Date(task.dueDate)));
-  const pendingTasksCount = todayTasks.filter(t => t.status !== 'completed').length;
+  const todayTasks = tasks.filter((task) => isToday(new Date(task.dueDate)));
+  const pendingTasksCount = todayTasks.filter((t) => t.status !== 'completed').length;
 
   return (
-    <Paper sx={{ p: 3, borderRadius: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.08)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper
+      elevation={1}
+      sx={{
+        p: 3,
+        borderRadius: '10px', // unified with other cards
+        boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: (theme) => theme.palette.background.paper,
+        transition: 'transform 0.3s, box-shadow 0.3s',
+        '&:hover': {
+          transform: 'translateY(-3px)',
+          boxShadow: '0 10px 28px rgba(0,0,0,0.1)',
+        },
+      }}
+    >
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <TaskIcon color="primary" sx={{ mr: 1.5, fontSize: '2rem' }} />
-        <Typography variant="h5" sx={{ fontWeight: 'bold', flexGrow: 1 }}>Today's Tasks</Typography>
-        {pendingTasksCount > 0 && <Chip label={`${pendingTasksCount} pending`} color="primary" size="small" />}
+        <TaskIcon sx={{ mr: 1.5, fontSize: '2rem', color: (theme) => theme.palette.primary.main }} />
+        <Typography
+          variant="h6"
+          sx={{
+            fontFamily: '"Playfair Display", serif',
+            fontWeight: 700,
+            flexGrow: 1,
+            color: (theme) => theme.palette.primary.main,
+          }}
+        >
+          Today’s Tasks
+        </Typography>
+        {pendingTasksCount > 0 && (
+          <Chip
+            label={`${pendingTasksCount} pending`}
+            color="primary"
+            size="small"
+            sx={{ fontFamily: 'Inter, sans-serif' }}
+          />
+        )}
       </Box>
+
       <Divider sx={{ mb: 2 }} />
+
       <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 1 }}>
         {loading ? (
-            [...Array(3)].map((_, i) => <Skeleton key={i} variant="text" height={40} sx={{ mb: 1 }} />)
+          [...Array(3)].map((_, i) => (
+            <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: '10px' }} />
+          ))
         ) : todayTasks.length > 0 ? (
           <List dense>
-            {todayTasks.map(task => (
+            {todayTasks.map((task) => (
               <ListItem
                 key={task._id}
                 secondaryAction={
@@ -36,22 +84,42 @@ const TodayTasksCard = ({ tasks, loading, onTaskToggle, onManageTasks }) => {
               >
                 <ListItemText
                   primary={task.title}
-                  sx={{ textDecoration: task.status === 'completed' ? 'line-through' : 'none', color: task.status === 'completed' ? 'text.disabled' : 'text.primary' }}
+                  sx={{
+                    fontFamily: 'Inter, sans-serif',
+                    textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                    color:
+                      task.status === 'completed'
+                        ? (theme) => theme.palette.text.disabled
+                        : (theme) => theme.palette.text.primary,
+                  }}
                 />
               </ListItem>
             ))}
           </List>
         ) : (
-          <Box sx={{ textAlign: 'center', py: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 6,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <TaskIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-            <Typography color="text.secondary">No tasks scheduled for today.</Typography>
+            <Typography color="text.secondary" sx={{ fontFamily: 'Inter, sans-serif' }}>
+              No tasks scheduled for today.
+            </Typography>
           </Box>
         )}
       </Box>
-      <Button 
+
+      <Button
         variant="contained"
+        color="primary"
         onClick={onManageTasks}
-        sx={{ mt: 2, bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)' } }}
+        sx={{ mt: 2, textTransform: 'none', fontWeight: 600 }}
       >
         Manage All Tasks
       </Button>

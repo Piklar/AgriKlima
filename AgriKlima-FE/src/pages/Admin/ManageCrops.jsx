@@ -1,5 +1,4 @@
 // src/pages/Admin/ManageCrops.jsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Button, Typography, Paper, Avatar } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -23,7 +22,7 @@ const ManageCrops = () => {
       const response = await api.getCrops();
       setCrops(response.data);
     } catch (error) {
-      console.error("Failed to fetch crops:", error);
+      console.error('Failed to fetch crops:', error);
       Swal.fire('Error', 'Could not fetch crops from the server.', 'error');
     } finally {
       setLoading(false);
@@ -61,25 +60,31 @@ const ManageCrops = () => {
       if (modalMode === 'add') {
         const response = await api.addCrop(formData, token);
         savedItem = response.data;
-        if (imageFile) Swal.fire({ title: 'Step 1/2 Complete', text: 'Crop details saved. Now uploading image...', icon: 'info', timer: 1500, showConfirmButton: false });
+        if (imageFile)
+          Swal.fire({
+            title: 'Step 1/2 Complete',
+            text: 'Crop details saved. Now uploading image...',
+            icon: 'info',
+            timer: 1500,
+            showConfirmButton: false,
+          });
       } else {
         const response = await api.updateCrop(currentCrop._id, formData, token);
         savedItem = response.data;
       }
-      
+
       if (imageFile && savedItem?._id) {
         const uploadFormData = new FormData();
         uploadFormData.append('image', imageFile);
         await api.uploadCropImage(savedItem._id, uploadFormData);
       }
-      
+
       Swal.fire('Success', `Crop ${modalMode === 'add' ? 'created' : 'updated'} successfully!`, 'success');
       handleCloseModal();
       fetchCrops();
-
     } catch (error) {
-      console.error("Failed to save crop:", error);
-      const errorMessage = error.response?.data?.error || "An unexpected error occurred.";
+      console.error('Failed to save crop:', error);
+      const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
       Swal.fire('Error', `Failed to save the crop: ${errorMessage}`, 'error');
     }
   };
@@ -104,17 +109,15 @@ const ManageCrops = () => {
           Swal.fire('Deleted!', 'The crop has been deleted.', 'success');
           fetchCrops();
         } catch (error) {
-          console.error("Failed to delete crop:", error.response?.data?.error || error);
+          console.error('Failed to delete crop:', error.response?.data?.error || error);
           Swal.fire('Error', `Failed to delete the crop: ${error.response?.data?.error || ''}`, 'error');
         }
       }
     });
   };
 
-  // --- THIS IS THE FIX (Part 1) ---
   const cropFields = [
     { name: 'name', label: 'Crop Name', required: true, group: 'Basic Information' },
-    // Add the new field to the form definition
     { name: 'growingDuration', label: 'Growing Duration (Days)', required: true, type: 'number', group: 'Basic Information' },
     { name: 'description', label: 'Main Description', required: true, type: 'textarea', rows: 4, group: 'Basic Information' },
     { name: 'imageUrl', label: 'Image URL', group: 'Basic Information' },
@@ -133,24 +136,18 @@ const ManageCrops = () => {
     { name: 'marketInfo.cookingTips', label: 'Cooking Tips (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
   ];
 
-  // --- THIS IS THE FIX (Part 2) ---
   const columns = [
-    { 
-      field: 'imageUrl', 
-      headerName: 'Image', 
+    {
+      field: 'imageUrl',
+      headerName: 'Image',
       width: 100,
       renderCell: (params) => (
-        <Avatar 
-          src={params.value} 
-          variant="rounded"
-          sx={{ width: 56, height: 56 }} 
-        />
+        <Avatar src={params.value} variant="rounded" sx={{ width: 56, height: 56 }} />
       ),
       sortable: false,
       filterable: false,
     },
     { field: 'name', headerName: 'Crop Name', width: 200 },
-    // Add the new column to the grid display
     { field: 'growingDuration', headerName: 'Duration (Days)', width: 150 },
     { field: 'season', headerName: 'Season', width: 150 },
     { field: 'description', headerName: 'Description', flex: 1 },
@@ -161,21 +158,51 @@ const ManageCrops = () => {
       sortable: false,
       renderCell: (params) => (
         <Box>
-          <Button size="small" variant="outlined" sx={{ mr: 1 }} onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
-          <Button size="small" variant="outlined" color="error" onClick={() => handleDelete(params.row._id)}>Delete</Button>
+          <Button
+            size="small"
+            variant="outlined"
+            sx={{ mr: 1, borderRadius: 2 }}
+            onClick={() => handleOpenEditModal(params.row)}
+          >
+            Edit
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            color="error"
+            sx={{ borderRadius: 2 }}
+            onClick={() => handleDelete(params.row._id)}
+          >
+            Delete
+          </Button>
         </Box>
       ),
     },
   ];
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Manage Crops</Typography>
+    <Box sx={{ p: { xs: 1, md: 3 } }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
+          mb: 2,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Manage Crops
+        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          sx={{ bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)'} }}
+          sx={{
+            bgcolor: 'var(--primary-green)',
+            '&:hover': { bgcolor: 'var(--light-green)' },
+            borderRadius: 2,
+          }}
           onClick={handleOpenAddModal}
         >
           Add New Crop
@@ -188,6 +215,10 @@ const ManageCrops = () => {
           loading={loading}
           getRowId={(row) => row._id}
           rowHeight={70}
+          sx={{
+            '& .MuiDataGrid-cell': { py: 1 },
+            '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f0f4f0' },
+          }}
         />
       </Paper>
       <AdminFormModal
