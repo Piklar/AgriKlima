@@ -5,11 +5,12 @@ const cloudinary = require('../config/cloudinary');
 
 // --- THIS IS THE FIX ---
 module.exports.addCrop = (req, res) => {
-    // Destructure the nested objects from the request body
+    // Destructure the nested objects and the new crucial field
     const { 
         name, 
         description, 
         imageUrl, 
+        growingDuration, // <-- This field was missing
         season, 
         overview, 
         growingGuide, 
@@ -21,6 +22,7 @@ module.exports.addCrop = (req, res) => {
         name,
         description,
         imageUrl,
+        growingDuration, // <-- Add this to the new Crop instance
         season,
         overview: {
             plantingSeason: overview.plantingSeason,
