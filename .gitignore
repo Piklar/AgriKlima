@@ -1,0 +1,57 @@
+# ===================================================================
+# General / System Files
+# ===================================================================
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Ignore IDE and editor configuration files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore temporary files and logs
+*.log
+npm-debug.log*
+yarn-error.log
+*.swp
+
+
+# ===================================================================
+# Backend (AgriKlima-BE - Node.js / Express)
+# ===================================================================
+# Ignore all node_modules folders
+AgriKlima-BE/node_modules/
+
+# Ignore environment files - VERY IMPORTANT FOR SECURITY
+# This file contains your database connection string, JWT secret, and API keys.
+# NEVER commit this file to a public or private repository.
+AgriKlima-BE/.env
+
+# Ignore temporary upload folder used by multer
+AgriKlima-BE/uploads/
+
+# Ignore any potential build output from the backend (e.g., for TypeScript)
+AgriKlima-BE/dist/
+AgriKlima-BE/build/
+
+
+# ===================================================================
+# Frontend (AgriKlima-FE - Vite / React)
+# ===================================================================
+# Ignore all node_modules folders
+AgriKlima-FE/node_modules/
+
+# Ignore environment files for the frontend
+AgriKlima-FE/.env*
+
+# Ignore Vite's build output folder
+AgriKlima-FE/dist/
+
+# Ignore Vite's cache directory
+AgriKlima-FE/.vite/
+
+# Ignore test coverage reports
+AgriKlima-FE/coverage/
