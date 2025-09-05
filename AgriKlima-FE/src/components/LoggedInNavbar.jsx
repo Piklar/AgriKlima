@@ -67,9 +67,10 @@ const LoggedInNavbar = () => {
           </NavLink>
         </Box>
 
-        {/* Navigation Links */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, alignItems: 'center' }}>
+        {/* Navigation Links - CENTERED */}
+        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', gap: 2, alignItems: 'center' }}>
           <NavLink to="/dashboard" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>Home</NavLink>
+          <NavLink to="/my-farm" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>My Farm</NavLink>
           <NavLink to="/about" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>About Us</NavLink>
           <NavLink to="/weather" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>Weather</NavLink>
           <NavLink to="/crops" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>Crops</NavLink>
@@ -78,30 +79,28 @@ const LoggedInNavbar = () => {
           <NavLink to="/news" style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}>News</NavLink>
 
           {user && user.isAdmin && (
-                <Button 
-                    component={NavLink} 
-                    to="/admin/crops"
-                    variant="contained"
-                    size="small"
-                    startIcon={<AdminPanelSettingsIcon />}
-                    sx={{ bgcolor: 'var(--primary-green)', '&:hover': {bgcolor: 'var(--light-green)'}, textTransform: 'none' }}
-                >
-                    Admin Panel
-                </Button>
-            )}
+            <Button 
+              component={NavLink} 
+              to="/admin/crops"
+              variant="contained"
+              size="small"
+              startIcon={<AdminPanelSettingsIcon />}
+              sx={{ bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)' }, textTransform: 'none' }}
+            >
+              Admin Panel
+            </Button>
+          )}
         </Box>
 
         {/* User Profile Section */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', ml: 3 }}>
           <Button onClick={handleMenu} sx={{ textTransform: 'none', borderRadius: '20px', p: 0.5 }}>
-            {/* --- THIS IS THE FIX --- */}
             <Avatar 
-                alt={user?.firstName} 
-                src={user?.profilePictureUrl} 
-                sx={{ width: 32, height: 32, mr: 1, bgcolor: 'var(--primary-green)' }}
+              alt={user?.firstName} 
+              src={user?.profilePictureUrl} 
+              sx={{ width: 32, height: 32, mr: 1, bgcolor: 'var(--primary-green)' }}
             >
-                {/* Fallback icon if there is no picture URL */}
-                {!user?.profilePictureUrl && <AccountCircleIcon />}
+              {!user?.profilePictureUrl && <AccountCircleIcon />}
             </Avatar>
             <Typography sx={{ color: 'var(--dark-text)', display: { xs: 'none', md: 'block' } }}>
               {user ? `${user.firstName} ${user.lastName}` : 'User'}
