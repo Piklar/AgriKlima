@@ -1,78 +1,112 @@
-// AgriKlima-BE/controllers/taskController.js
+// backend/controllers/taskController.js
 
 const Task = require("../models/Task");
+const mongoose = require('mongoose');
+const { addDays, addWeeks, addMonths } = require('date-fns');
 
-// Create Task
+// ADD TASK (Handles frequency for both Admins and Users)
 exports.addTask = async (req, res) => {
     try {
-        const newTask = new Task(req.body);
-        await newTask.save();
-        res.status(201).json(newTask);
+        const { title, description, dueDate, frequency, assignedTo } = req.body;
+        const createdBy = req.user.id; 
+
+        const baseTask = {
+            title,
+            description,
+            dueDate: new Date(dueDate),
+            frequency,
+            createdBy,
+            // Use assignedTo if provided (by admin), otherwise it defaults to the creator
+            assignedTo: assignedTo || createdBy 
+        };
+
+        if (frequency === 'Once' || !frequency) {
+            const newTask = new Task(baseTask);
+            await newTask.save();
+        } else {
+            const tasksToCreate = [];
+            const recurrenceId = new mongoose.Types.ObjectId();
+            let currentDate = new Date(dueDate);
+
+            for (let i = 0; i < 90; i++) {
+                tasksToCreate.push({ ...baseTask, dueDate: currentDate, recurrenceId });
+                if (frequency === 'Daily') currentDate = addDays(currentDate, 1);
+                else if (frequency === 'Weekly') currentDate = addWeeks(currentDate, 1);
+                else if (frequency === 'Monthly') currentDate = addMonths(currentDate, 1);
+                else break;
+            }
+            await Task.insertMany(tasksToCreate);
+        }
+        
+        res.status(201).json({ message: "Task(s) created successfully" });
+
     } catch (err) {
+        console.error("Error creating task:", err);
         res.status(500).json({ error: "Failed to create task", details: err.message });
     }
 };
 
-// Get all tasks assigned to the currently logged-in user (with optional date filter)
+
+// GET MY TASKS (For logged-in USERS)
 exports.getMyTasks = async (req, res) => {
     try {
-        // req.user.id comes from the `verify` middleware
         const { startDate, endDate } = req.query;
-
-        // Build the query object
         const query = { assignedTo: req.user.id };
 
-        // --- CORRECTED DATE LOGIC ---
         if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-
-            // Normalize start date to beginning of the day (UTC)
-            start.setUTCHours(0, 0, 0, 0);
-
-            // Normalize end date to end of the day (UTC)
-            end.setUTCHours(23, 59, 59, 999);
-
             query.dueDate = {
-                $gte: start,
-                $lte: end,
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
             };
         }
-        // --- END OF CORRECTION ---
-
-        const tasks = await Task.find(query);
-
-        if (!tasks) {
-            return res.status(200).json([]); // Return empty array if no tasks
-        }
+        const tasks = await Task.find(query).sort({ dueDate: 'asc' });
         res.status(200).json(tasks);
     } catch (err) {
         res.status(500).json({ error: "Failed to fetch user tasks", details: err.message });
     }
 };
 
-// Get All Tasks
-exports.getAllTasks = async (req, res) => {
+// --- NEW FUNCTION for toggling task status ---
+exports.toggleTaskStatus = async (req, res) => {
     try {
-        const tasks = await Task.find().populate("assignedTo", "firstName lastName email");
-        res.status(200).json(tasks);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to fetch tasks", details: err.message });
-    }
-};
-
-// Get Task by ID
-exports.getTaskById = async (req, res) => {
-    try {
-        const task = await Task.findById(req.params.taskId).populate("assignedTo", "firstName lastName email");
-        if (!task) return res.status(404).json({ error: "Task not found" });
+        const taskId = req.params.taskId;
+        const task = await Task.findById(taskId);
+        if (!task) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+        if (task.assignedTo.toString() !== req.user.id && !req.user.isAdmin) {
+            return res.status(403).json({ error: "Forbidden: You do not have permission to modify this task." });
+        }
+        
+        task.status = task.status === 'pending' ? 'completed' : 'pending';
+        await task.save();
         res.status(200).json(task);
     } catch (err) {
-        res.status(500).json({ error: "Failed to fetch task", details: err.message });
+        console.error("Error toggling task status:", err);
+        res.status(500).json({ error: "Failed to update task status", details: err.message });
     }
 };
 
-// Update Task
+
+// --- ADMIN-ONLY FUNCTIONS ---
+
+// GET ALL TASKS (For ADMINS)
+exports.getAllTasks = async (req, res) => {
+    try {
+        // --- THIS IS THE FIX ---
+        // We fetch all tasks and populate the assignedTo field.
+        // Mongoose is smart enough to not crash if assignedTo is null.
+        const tasks = await Task.find({})
+            .populate("createdBy", "firstName lastName")
+            .populate("assignedTo", "firstName lastName");
+        res.status(200).json(tasks);
+    } catch (err) {
+        console.error("Error fetching all tasks:", err);
+        res.status(500).json({ error: "Failed to fetch all tasks", details: err.message });
+    }
+};
+
+// UPDATE TASK (For ADMINS)
 exports.updateTask = async (req, res) => {
     try {
         const updatedTask = await Task.findByIdAndUpdate(
@@ -87,39 +121,24 @@ exports.updateTask = async (req, res) => {
     }
 };
 
-// Delete Task (Soft Delete)
+// DELETE TASK (For ADMINS)
 exports.deleteTask = async (req, res) => {
     try {
-        const archivedTask = await Task.findByIdAndUpdate(
-            req.params.taskId,
-            { isActive: false },
-            { new: true }
-        );
-        if (!archivedTask) {
-            return res.status(404).json({ error: "Task not found" });
-        }
-        res.status(200).json({ message: "Task archived (soft deleted)", task: archivedTask });
+        const deletedTask = await Task.findByIdAndDelete(req.params.taskId);
+        if (!deletedTask) return res.status(404).json({ error: "Task not found" });
+        res.status(200).json({ message: "Task deleted", task: deletedTask });
     } catch (err) {
-        res.status(500).json({ error: "Error archiving task", details: err });
+        res.status(500).json({ error: "Failed to delete task", details: err.message });
     }
 };
 
-// Archive Task
-exports.archiveTask = async (req, res) => {
+// GET TASK BY ID (Can be used by both, no changes)
+exports.getTaskById = async (req, res) => {
     try {
-        const archivedTask = await Task.findByIdAndUpdate(
-            req.params.taskId,
-            { isActive: false },
-            { new: true }
-        );
-        if (!archivedTask) {
-            return res.status(404).send({ error: "Task not found" });
-        }
-        res.status(200).send({
-            message: "Task archived successfully",
-            archiveTask: archivedTask
-        });
+        const task = await Task.findById(req.params.taskId).populate("assignedTo", "firstName lastName email");
+        if (!task) return res.status(404).json({ error: "Task not found" });
+        res.status(200).json(task);
     } catch (err) {
-        res.status(500).send({ error: "Error archiving task", details: err });
+        res.status(500).json({ error: "Failed to fetch task", details: err.message });
     }
 };

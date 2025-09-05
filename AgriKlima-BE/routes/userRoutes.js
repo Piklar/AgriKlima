@@ -5,7 +5,6 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
 const { verify, verifyAdmin } = require("../auth");
-
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -25,6 +24,10 @@ router.patch('/resetPassword', verify, userController.resetPassword);
 // PUT to update the user's main profile info (firstName, lastName, email)
 router.put("/:userId", verify, userController.updateUser);
 
+// --- USER CROP MANAGEMENT ROUTES ---
+router.post("/my-crops", verify, userController.addUserCrop);
+router.get("/my-crops", verify, userController.getUserCrops);
+router.delete("/my-crops/:userCropId", verify, userController.deleteUserCrop);
 
 // --- ADMIN-ONLY ROUTES ---
 router.get("/all", verify, verifyAdmin, userController.getAllUsers);

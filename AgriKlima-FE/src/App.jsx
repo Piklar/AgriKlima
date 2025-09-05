@@ -23,6 +23,7 @@ import WeatherPage from './pages/WeatherPage';
 import CropsPage from './pages/CropsPage';
 import PestsPage from './pages/PestsPage';
 import CalendarPage from './pages/CalendarPage';
+import MyFarmPage from './pages/MyFarmPage';
 
 // --- ADMIN PAGES ---
 import ManageCrops from './pages/Admin/ManageCrops';
@@ -74,6 +75,7 @@ function App() {
             <Route path="/crops" element={<CropsPage />} />
             <Route path="/pests" element={<PestsPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/my-farm" element={<MyFarmPage />} />
           </Route>
         </Route>
       )}

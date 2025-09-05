@@ -38,7 +38,7 @@ const theme = createTheme({
 const ArticleCard = ({ image, title, description, loading }) => {
   if (loading) {
     return (
-      <Card sx={{ borderRadius: theme.shape.borderRadius, boxShadow: 2, height: '100%', overflow: 'hidden' }}>
+      <Card sx={{ borderRadius: '5px', boxShadow: 2, height: '100%', overflow: 'hidden' }}>
         <Skeleton variant="rectangular" height={200} />
         <CardContent sx={{ pb: 1 }}>
           <Skeleton variant="text" height={30} />
@@ -54,7 +54,7 @@ const ArticleCard = ({ image, title, description, loading }) => {
   }
 
   return (
-    <Card sx={{ borderRadius: theme.shape.borderRadius, boxShadow: 2, height: '100%', overflow: 'hidden' }}>
+    <Card sx={{ borderRadius: '5px', boxShadow: 2, height: '100%', overflow: 'hidden' }}>
       <CardMedia
         component="img"
         height="200"
@@ -437,26 +437,6 @@ const PestsPage = () => {
             )}
           </Container>
         </Box>
-
-        {/* --- Floating Chatbot Icon --- */}
-        <Fab
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            backgroundColor: 'primary.main',
-            color: 'white',
-            width: 60,
-            height: 60,
-            '&:hover': {
-              backgroundColor: 'primary.dark',
-              transform: 'scale(1.1)'
-            },
-            transition: 'all 0.3s ease'
-          }}
-        >
-          <img src={chatbotIcon} alt="Chatbot" style={{ width: '70%', height: '70%' }} />
-        </Fab>
 
       {/* --- Pest Detail Overlay --- */}
       {selectedPest && (

@@ -25,6 +25,9 @@ export const changePassword = (data) => API.patch("/users/change-password", data
 export const resetPassword = (data) => API.patch("/users/resetPassword", data);
 export const getAllUsers = () => API.get("/users/all");
 export const setAsAdmin = (userId) => API.patch(`/users/${userId}/setAsAdmin`);
+export const addUserCrop = (data) => API.post('/users/my-crops', data);
+export const getUserCrops = () => API.get('/users/my-crops');
+export const deleteUserCrop = (userCropId) => API.delete(`/users/my-crops/${userCropId}`);
 
 // ✅ Corrected version: pass `userId` and `data` separately
 export const updateUser = (userId, data) => API.put(`/users/${userId}`, data);
@@ -73,12 +76,13 @@ export const uploadPestImage = (id, formData) => API.patch(`/pests/${id}/upload-
 });
 
 // ---- TASK ROUTES ----
-export const getTasks = () => API.get("/tasks");
-export const getMyTasks = () => API.get("/tasks/my-tasks");
+export const getTasks = () => API.get("/tasks"); // For Admin
+export const getMyTasks = (params) => API.get("/tasks/my-tasks", { params }); // For Users
 export const getTaskById = (id) => API.get(`/tasks/${id}`);
 export const addTask = (data) => API.post("/tasks/add", data);
 export const updateTask = (id, data) => API.put(`/tasks/${id}`, data);
 export const deleteTask = (id) => API.delete(`/tasks/${id}`);
+export const toggleTaskStatus = (id) => API.patch(`/tasks/${id}/toggle`);
 
 // ---- WEATHER ROUTES ----
 export const getWeather = (location) => API.get(`/weather/${location}`);

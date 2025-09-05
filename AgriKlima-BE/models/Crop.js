@@ -4,8 +4,9 @@ const mongoose = require('mongoose');
 const cropSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, required: true },
-    // --- THIS IS THE FIX ---
-    imageUrl: { type: String, required: false }, // Changed from true to false
+    imageUrl: { type: String, required: false },
+    // --- THIS IS THE NEW, CRUCIAL FIELD ---
+    growingDuration: { type: Number, required: true }, // Estimated days from planting to harvest
     season: { type: String, enum: ['All Year', 'Dry Season', 'Wet Season'], default: 'All Year' },
     overview: {
         plantingSeason: String,

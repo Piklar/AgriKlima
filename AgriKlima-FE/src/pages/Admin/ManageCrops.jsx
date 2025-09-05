@@ -64,8 +64,6 @@ const ManageCrops = () => {
         if (imageFile) Swal.fire({ title: 'Step 1/2 Complete', text: 'Crop details saved. Now uploading image...', icon: 'info', timer: 1500, showConfirmButton: false });
       } else {
         const response = await api.updateCrop(currentCrop._id, formData, token);
-        // --- THIS IS THE FIX ---
-        // Axios wraps the response in a `data` object.
         savedItem = response.data;
       }
       
@@ -113,8 +111,11 @@ const ManageCrops = () => {
     });
   };
 
+  // --- THIS IS THE FIX (Part 1) ---
   const cropFields = [
     { name: 'name', label: 'Crop Name', required: true, group: 'Basic Information' },
+    // Add the new field to the form definition
+    { name: 'growingDuration', label: 'Growing Duration (Days)', required: true, type: 'number', group: 'Basic Information' },
     { name: 'description', label: 'Main Description', required: true, type: 'textarea', rows: 4, group: 'Basic Information' },
     { name: 'imageUrl', label: 'Image URL', group: 'Basic Information' },
     { name: 'season', label: 'Season', type: 'select', options: ['All Year', 'Dry Season', 'Wet Season'], defaultValue: 'All Year', group: 'Basic Information' },
@@ -132,6 +133,7 @@ const ManageCrops = () => {
     { name: 'marketInfo.cookingTips', label: 'Cooking Tips (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
   ];
 
+  // --- THIS IS THE FIX (Part 2) ---
   const columns = [
     { 
       field: 'imageUrl', 
@@ -148,6 +150,8 @@ const ManageCrops = () => {
       filterable: false,
     },
     { field: 'name', headerName: 'Crop Name', width: 200 },
+    // Add the new column to the grid display
+    { field: 'growingDuration', headerName: 'Duration (Days)', width: 150 },
     { field: 'season', headerName: 'Season', width: 150 },
     { field: 'description', headerName: 'Description', flex: 1 },
     {

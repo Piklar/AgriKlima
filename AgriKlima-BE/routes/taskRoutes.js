@@ -1,29 +1,20 @@
-//taskRoutes.js
+// backend/routes/taskRoutes.js
+
 const express = require("express");
 const router = express.Router();
-const { verify, verifyAdmin  } = require("../auth");
+const { verify, verifyAdmin } = require("../auth");
 const taskController = require("../controllers/taskController");
 
-// Create Task (admin or user - depending on your requirement)
-router.post("/add", verify, taskController.addTask);
-
-// --- ADD THIS NEW ROUTE for regular users ---
+// --- USER-ACCESSIBLE ROUTES ---
 router.get("/my-tasks", verify, taskController.getMyTasks);
+router.post("/add", verify, taskController.addTask); // Users can add tasks for themselves
+router.patch("/:taskId/toggle", verify, taskController.toggleTaskStatus); // Users can complete their tasks
 
-// Get All Tasks
-router.get("/", verify, taskController.getAllTasks);
-
-// Get Task by ID
-router.get("/:taskId", verify, taskController.getTaskById);
-
-// Update Task
-router.put("/:taskId", verify, taskController.updateTask);
-
-// Delete Task
-router.delete("/:taskId", verify, taskController.deleteTask);
-
-// Archive Task (Admin Only)
-router.put("/:taskId/archive", verify, verifyAdmin, taskController.archiveTask);
+// --- ADMIN-ONLY ROUTES ---
+// Admins use the same addTask controller but can specify 'assignedTo' in the body
+router.get("/", verify, verifyAdmin, taskController.getAllTasks);
+router.get("/:taskId", verify, verifyAdmin, taskController.getTaskById);
+router.put("/:taskId", verify, verifyAdmin, taskController.updateTask);
+router.delete("/:taskId", verify, verifyAdmin, taskController.deleteTask);
 
 module.exports = router;
-
