@@ -1,227 +1,125 @@
 // src/pages/DashboardPage.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
-import Swal from 'sweetalert2'; // <-- 1. IMPORT SWAL
-
-import { 
-  Box,
-  Container,
-  Typography,
-  Button,
-  Grid,
-  Paper,
-  LinearProgress,
-  List,
-  ListItem,
-  ListItemIcon,
-  Checkbox,
-  ListItemText,
-  Divider,
-  Alert,
-} from '@mui/material';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import AddTaskOverlay from '../components/AddTaskOverlay'; 
-import InfoCard from '../components/InfoCard';
+import { Box, Container, Typography, Grid, Stack } from '@mui/material'; // <-- THIS IS THE FIX
 import PageDataLoader from '../components/PageDataLoader';
+import TaskManagementModal from '../components/TaskManagementModal';
+import { isToday } from 'date-fns';
 
-// --- ICONS ---
-import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
-import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
-import GrassOutlinedIcon from '@mui/icons-material/GrassOutlined';
-import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
-import LogoutIcon from '@mui/icons-material/Logout';
-import AddIcon from '@mui/icons-material/Add';
+// Import all the new card components
+import MyCropsCard from '../components/MyCropsCard';
+import WeatherTodayCard from '../components/WeatherTodayCard';
+import TodayTasksCard from '../components/TodayTasksCard';
+import WeatherForecastCard from '../components/WeatherForecastCard';
+import PestAlertCard from '../components/PestAlertCard';
 
 const DashboardPage = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const [weather, setWeather] = useState(null);
-  const [tasks, setTasks] = useState([]);
+  // Single state object for all dashboard data
+  const [dashboardData, setDashboardData] = useState({
+    weather: null,
+    tasks: [],
+    userCrops: [],
+    pests: []
+  });
+  
   const [loading, setLoading] = useState(true);
-  const [isTaskOverlayOpen, setIsTaskOverlayOpen] = useState(false);
   const [error, setError] = useState(null);
-
-  const getNestedValue = (obj, path, fallback = '--') => {
-    try {
-      const value = path.split('.').reduce((acc, part) => acc && acc[part], obj);
-      return value !== undefined && value !== null ? value : fallback;
-    } catch {
-      return fallback;
-    }
-  };
-
-  const safeWeatherValue = (value, fallback = '--') => {
-    if (value === null || value === undefined || value === '' || typeof value === 'object') {
-      return fallback;
-    }
-    return value;
-  };
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
-    if (!user || !user.location) return;
+    if (!user || !user.location) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     setError(null);
     try {
-      const [weatherResponse, tasksResponse] = await Promise.allSettled([
+      const [weatherResponse, tasksResponse, cropsResponse, pestsResponse] = await Promise.all([
         api.getWeather(user.location),
         api.getMyTasks(),
+        api.getUserCrops(),
+        api.getPests(),
       ]);
-      if (weatherResponse.status === 'fulfilled') setWeather(weatherResponse.value?.data || null);
-      else {
-        console.error('Weather fetch failed:', weatherResponse.reason);
-        setError('Failed to load weather data');
-      }
-      if (tasksResponse.status === 'fulfilled') {
-        const tasksData = tasksResponse.value?.data || [];
-        const sortedTasks = (tasksData || []).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-        setTasks(Array.isArray(sortedTasks) ? sortedTasks : []);
-      } else {
-        console.error('Tasks fetch failed:', tasksResponse.reason);
-        setError('Failed to load tasks');
-      }
+      setDashboardData({
+        weather: weatherResponse.data || null,
+        tasks: tasksResponse.data || [],
+        userCrops: cropsResponse.data || [],
+        pests: pestsResponse.data || []
+      });
     } catch (err) {
-      console.error('CRITICAL ERROR in fetchDashboardData:', err);
-      setError('Failed to load dashboard data.');
+      console.error('Failed to load dashboard data:', err);
+      setError('Could not load all dashboard information. Please try again.');
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    }
-  }, [user, fetchDashboardData]);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const handleOpenTaskOverlay = () => setIsTaskOverlayOpen(true);
-  const handleCloseTaskOverlay = () => setIsTaskOverlayOpen(false);
-
-  // --- 2. MODIFIED handleAddTask FUNCTION ---
-  const handleAddTask = async (newTask) => {
+  const handleTaskToggle = async (taskId) => {
     try {
-      await api.addTask(newTask);
-      handleCloseTaskOverlay(); 
+      await api.toggleTaskStatus(taskId);
       fetchDashboardData();
-
-      // Show success popup
-      Swal.fire({
-        title: 'Success!',
-        text: 'Successfully added a new task.',
-        icon: 'success',
-        confirmButtonColor: '#2e7d32', // Custom button color
-        timer: 2000, // Auto-close after 2 seconds
-        timerProgressBar: true,
-      });
-
     } catch (err) {
-      console.error('Failed to add task:', err);
-      
-      // Show error popup
-      Swal.fire({
-        title: 'Error!',
-        text: 'Could not add the task. Please try again.',
-        icon: 'error',
-        confirmButtonColor: '#d32f2f',
-      });
+      console.error("Failed to toggle task:", err);
     }
   };
-  
-  const handleToggleTask = async (taskId) => {
-    try {
-      const task = tasks.find((t) => t._id === taskId);
-      if (task) {
-        const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-        await api.updateTask(taskId, { status: newStatus });
-        fetchDashboardData();
-      }
-    } catch (err) {
-      console.error('Failed to update task:', err);
-    }
-  };
-
-  const weeklyHarvestData = [
-    { day: 'Mon', harvestKg: 35 }, { day: 'Tue', harvestKg: 42 }, { day: 'Wed', harvestKg: 55 },
-    { day: 'Thu', harvestKg: 51 }, { day: 'Fri', harvestKg: 60 }, { day: 'Sat', harvestKg: 75 },
-    { day: 'Sun', harvestKg: 70 },
-  ];
 
   return (
     <PageDataLoader loading={loading} error={error} onRetry={fetchDashboardData}>
       <Box sx={{ backgroundColor: '#f4f6f8', minHeight: '100vh', py: 4 }}>
         <Container maxWidth="xl">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Welcome back, {user?.firstName || 'Farmer'}!</Typography>
-              <Typography color="text.secondary">Here is your farm's overview. {user?.location && `Location: ${user.location}`}</Typography>
-            </Box>
-            <Button variant="contained" onClick={handleLogout} startIcon={<LogoutIcon />} sx={{ backgroundColor: '#2e7d32' }}>Log Out</Button>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+              Welcome back, {user?.firstName || 'Farmer'}!
+            </Typography>
+            <Typography color="text.secondary">
+              Here is your farm's overview for today.
+            </Typography>
           </Box>
 
-          {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
           <Grid container spacing={4}>
-            <Grid item xs={12} sm={6} md={3}><InfoCard title="Weather" value={safeWeatherValue(getNestedValue(weather, 'current.temperature'))} unit="°C" icon={<WbSunnyOutlinedIcon color="warning" />} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><InfoCard title="Humidity" value={safeWeatherValue(getNestedValue(weather, 'current.humidity'))} unit="%" icon={<WaterDropOutlinedIcon color="info" />}><LinearProgress variant="determinate" value={Number(safeWeatherValue(getNestedValue(weather, 'current.humidity'), 0))} sx={{ height: 8, borderRadius: 5, mt: 1 }} /></InfoCard></Grid>
-            <Grid item xs={12} sm={6} md={3}><InfoCard title="UV Index" value={safeWeatherValue(getNestedValue(weather, 'detailed.uvIndex'))} icon={<GrassOutlinedIcon color="success" />} /></Grid>
-            <Grid item xs={12} sm={6} md={3}><InfoCard title="Feels Like" value={safeWeatherValue(getNestedValue(weather, 'detailed.feelsLike'))} unit="°C" icon={<EventAvailableOutlinedIcon color="primary" />} /></Grid>
-          </Grid>
-
-          <Grid container spacing={4} sx={{ mt: 2 }}>
-            <Grid item xs={12} lg={8}>
-              <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: 3, height: '400px' }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Weekly Harvest Forecast (kg)</Typography>
-                <ResponsiveContainer width="100%" height="90%"><BarChart data={weeklyHarvestData}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="day" /><YAxis /><Tooltip /><Legend /><Bar dataKey="harvestKg" fill="#2e7d32" name="Harvest (kg)" barSize={30} radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer>
-              </Paper>
+            {/* Column 1 */}
+            <Grid item xs={12} lg={4}>
+              <Stack spacing={4}>
+                <WeatherTodayCard weather={dashboardData.weather} loading={loading} />
+                <PestAlertCard pests={dashboardData.pests} loading={loading} />
+              </Stack>
             </Grid>
 
-            <Grid item xs={12} lg={4}>
-              <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: 3, height: '400px', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>My Tasks</Typography>
-                  <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={handleOpenTaskOverlay} sx={{ bgcolor: '#2e7d32', borderRadius: '20px', textTransform: 'none', '&:hover': { bgcolor: '#1b5e20' } }}>New Task</Button>
-                </Box>
-                <Divider />
-                <List sx={{ overflowY: 'auto', flexGrow: 1, mt: 1 }}>
-                  {tasks.length > 0 ? (
-                    tasks.map((task) => (
-                      <ListItem key={task._id}>
-                        <ListItemIcon>
-                          <Checkbox edge="start" checked={task.status === 'completed'} onChange={() => handleToggleTask(task._id)} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={task.title}
-                          secondary={task.dueDate ? `Due: ${new Date(task.dueDate).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}` : ''}
-                          sx={{ textDecoration: task.status === 'completed' ? 'line-through' : 'none', color: task.status === 'completed' ? 'text.disabled' : 'inherit' }}
-                        />
-                      </ListItem>
-                    ))
-                  ) : (
-                    <ListItem><ListItemText primary="No tasks yet. Add one!" /></ListItem>
-                  )}
-                </List>
-              </Paper>
+            {/* Column 2 */}
+            <Grid item xs={12} lg={5}>
+                <MyCropsCard userCrops={dashboardData.userCrops} loading={loading} />
+            </Grid>
+
+            {/* Column 3 */}
+            <Grid item xs={12} lg={3}>
+                <Stack spacing={4}>
+                    <TodayTasksCard 
+                        tasks={dashboardData.tasks} 
+                        loading={loading} 
+                        onTaskToggle={handleTaskToggle}
+                        onManageTasks={() => setIsTaskModalOpen(true)}
+                    />
+                    <WeatherForecastCard weather={dashboardData.weather} loading={loading} />
+                </Stack>
             </Grid>
           </Grid>
         </Container>
 
-        {user && <AddTaskOverlay open={isTaskOverlayOpen} onClose={handleCloseTaskOverlay} onAddTask={handleAddTask} />}
+        <TaskManagementModal
+          open={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          selectedDate={new Date()}
+          tasks={dashboardData.tasks.filter(t => isToday(new Date(t.dueDate)))}
+          onTasksUpdate={fetchDashboardData}
+        />
       </Box>
     </PageDataLoader>
   );

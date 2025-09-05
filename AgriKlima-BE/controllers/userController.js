@@ -1,9 +1,11 @@
 // backend/controllers/userController.js
 
 const User = require("../models/User");
+const Crop = require("../models/Crop");
 const bcrypt = require("bcryptjs");
 const auth = require("../auth");
 const cloudinary = require('../config/cloudinary');
+const { add } = require('date-fns');
 
 // --- [CREATE] Register a new user ---
 module.exports.registerUser = async (req, res) => {
@@ -231,4 +233,85 @@ module.exports.deleteUser = (req, res) => {
     User.findByIdAndDelete(req.params.userId)
     .then(() => res.status(200).send({ message: "User deleted successfully" }))
     .catch(err => res.status(500).send({ error: "Failed to delete user" }));
+};
+
+// --- NEW CONTROLLER FUNCTIONS for User's Planted Crops ---
+
+// [CREATE] Add a new crop to the user's farm
+module.exports.addUserCrop = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { cropId, plantingDate } = req.body;
+
+        if (!cropId || !plantingDate) {
+            return res.status(400).send({ error: 'Crop ID and planting date are required.' });
+        }
+
+        const masterCrop = await Crop.findById(cropId);
+        if (!masterCrop || typeof masterCrop.growingDuration !== 'number') {
+            return res.status(404).send({ error: 'Crop not found or is missing a valid growing duration.' });
+        }
+
+        const pDate = new Date(plantingDate);
+        const harvestDate = add(pDate, { days: masterCrop.growingDuration });
+
+        const newUserCrop = {
+            cropId: masterCrop._id,
+            name: masterCrop.name,
+            plantingDate: pDate,
+            estimatedHarvestDate: harvestDate
+        };
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $push: { userCrops: newUserCrop } },
+            { new: true }
+        ).select('-password');
+
+        res.status(200).send({ message: 'Crop added to your farm successfully!', user: updatedUser });
+
+    } catch (error) {
+        console.error("Error adding user crop:", error);
+        res.status(500).send({ error: 'Internal server error.' });
+    }
+};
+
+// [READ] Get all of the logged-in user's planted crops
+module.exports.getUserCrops = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id)
+            .select('userCrops')
+            .populate('userCrops.cropId', 'imageUrl');
+
+        if (!user) {
+            return res.status(404).send({ error: 'User not found' });
+        }
+        res.status(200).send(user.userCrops);
+    } catch (error) {
+        console.error("Error fetching user crops:", error);
+        res.status(500).send({ error: 'Internal server error.' });
+    }
+};
+
+// [DELETE] Remove a crop from the user's farm
+module.exports.deleteUserCrop = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { userCropId } = req.params;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $pull: { userCrops: { _id: userCropId } } },
+            { new: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).send({ error: "User not found." });
+        }
+        res.status(200).send({ message: 'Crop removed from your farm successfully!', user: updatedUser });
+
+    } catch (error) {
+        console.error("Error deleting user crop:", error);
+        res.status(500).send({ error: 'Internal server error.' });
+    }
 };

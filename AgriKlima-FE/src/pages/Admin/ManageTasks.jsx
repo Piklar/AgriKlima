@@ -5,24 +5,28 @@ import { Box, Button, Typography, Paper } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import Swal from 'sweetalert2';
-
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
 
 const ManageTasks = () => {
     const [tasks, setTasks] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
-    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('add');
     const [currentTask, setCurrentTask] = useState(null);
 
-    const fetchTasks = useCallback(async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await api.getTasks();
-            const tasksData = response.data || [];
+            const [tasksResponse, usersResponse] = await Promise.all([
+                api.getTasks(),
+                api.getAllUsers()
+            ]);
             
+            const tasksData = tasksResponse.data || [];
+            // --- THIS IS THE FIX ---
+            // Add a safety check for `task.assignedTo` before accessing its properties.
             const gridTasks = tasksData.map(task => ({
                 id: task._id,
                 ...task,
@@ -30,29 +34,33 @@ const ManageTasks = () => {
             }));
             
             setTasks(gridTasks);
+            setUsers(usersResponse.data?.users || []);
+
         } catch (error) {
-            console.error('Error fetching tasks:', error);
-            Swal.fire('Error', 'Could not fetch tasks from the server.', 'error');
+            console.error('Error fetching data:', error);
+            Swal.fire('Error', 'Could not fetch tasks or users from the server.', 'error');
             setTasks([]);
+            setUsers([]);
         } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
+        fetchData();
+    }, [fetchData]);
 
     const handleFormSubmit = async (formData) => {
         try {
             if (modalMode === 'add') {
                 await api.addTask(formData);
             } else {
-                await api.updateTask(currentTask._id, formData);
+                // When editing, send the whole task object back
+                await api.updateTask(currentTask.id, formData);
             }
             Swal.fire('Success', `Task ${modalMode === 'add' ? 'created' : 'updated'}!`, 'success');
             handleCloseModal();
-            fetchTasks();
+            fetchData();
         } catch (error) {
             console.error('Form submission error:', error);
             Swal.fire('Error', 'Operation failed. Please check the console for details.', 'error');
@@ -73,7 +81,7 @@ const ManageTasks = () => {
                 try {
                     await api.deleteTask(id);
                     Swal.fire('Deleted!', 'The task has been deleted.', 'success');
-                    fetchTasks();
+                    fetchData();
                 } catch (error) {
                     console.error('Delete error:', error);
                     Swal.fire('Error!', 'Could not delete the task.', 'error');
@@ -108,7 +116,6 @@ const ManageTasks = () => {
         { field: 'title', headerName: 'Title', width: 250 },
         { field: 'description', headerName: 'Description', flex: 1 },
         { field: 'status', headerName: 'Status', width: 120 },
-        // --- THIS IS THE FIX ---
         { field: 'dueDate', headerName: 'Due Date', width: 150, valueGetter: (value, row) => row.dueDate ? new Date(row.dueDate).toLocaleDateString() : 'N/A' },
         { field: 'displayAssignedTo', headerName: 'Assigned To', width: 220 },
         {
@@ -130,7 +137,14 @@ const ManageTasks = () => {
         { name: 'description', label: 'Description', type: 'textarea', rows: 4, group: 'Task Details' },
         { name: 'status', label: 'Status', type: 'select', options: ['pending', 'completed'], defaultValue: 'pending', group: 'Task Details' },
         { name: 'dueDate', label: 'Due Date', type: 'date', group: 'Task Details' },
-        { name: 'assignedTo', label: 'Assigned To (User ID)', helperText: 'Enter a valid User ID', group: 'Task Details' },
+        { 
+            name: 'assignedTo', 
+            label: 'Assign To User', 
+            type: 'select', 
+            options: users.map(user => ({ label: `${user.firstName} ${user.lastName}`, value: user._id })),
+            group: 'Task Details' 
+        },
+        { name: 'frequency', label: 'Frequency', type: 'select', options: ['Once', 'Daily', 'Weekly', 'Monthly'], defaultValue: 'Once', group: 'Task Details' },
     ];
 
     return (

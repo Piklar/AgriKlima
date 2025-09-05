@@ -37,7 +37,7 @@ const theme = createTheme({
 const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
   if (loading) {
     return (
-      <Card sx={{ display: 'flex', borderRadius: '20px', boxShadow: 2, mb: 3, overflow: 'hidden' }}>
+      <Card sx={{ display: 'flex', borderRadius: '5px', boxShadow: 2, mb: 3, overflow: 'hidden' }}>
         <Skeleton variant="rectangular" width={151} height={151} />
         <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, p: 2 }}>
           <Skeleton variant="text" width="60%" height={30} />
@@ -53,7 +53,7 @@ const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
       onClick={onClick}
       sx={{
         display: 'flex',
-        borderRadius: theme.shape.borderRadius,
+        borderRadius: '5px',
         boxShadow: 2,
         mb: 3,
         overflow: 'hidden',
@@ -94,7 +94,7 @@ const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
 const ArticleCard = ({ image, title, description, loading }) => {
   if (loading) {
     return (
-      <Card sx={{ borderRadius: theme.shape.borderRadius, boxShadow: 2, height: '100%', overflow: 'hidden' }}>
+      <Card sx={{ borderRadius: '5px', boxShadow: 2, height: '100%', overflow: 'hidden' }}>
         <Skeleton variant="rectangular" height={200} />
         <CardContent sx={{ pb: 1 }}>
           <Skeleton variant="text" height={30} />
@@ -103,14 +103,14 @@ const ArticleCard = ({ image, title, description, loading }) => {
           <Skeleton variant="text" width="60%" height={20} />
         </CardContent>
         <Box sx={{ p: 2, pt: 0 }}>
-          <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '12px' }} />
+          <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '5px' }} />
         </Box>
       </Card>
     );
   }
 
   return (
-    <Card sx={{ borderRadius: theme.shape.borderRadius, boxShadow: 2, height: '100%', overflow: 'hidden' }}>
+    <Card sx={{ bborderRadius: '5px', boxShadow: 2, height: '100%', overflow: 'hidden' }}>
       <CardMedia
         component="img"
         height="200"
@@ -390,26 +390,6 @@ const CropsPage = () => {
               </Box>
             )}
           </Container>
-
-          {/* --- Floating Chatbot Icon --- */}
-          <Fab
-            sx={{
-              position: 'fixed',
-              bottom: 24,
-              right: 24,
-              backgroundColor: 'primary.main',
-              color: 'white',
-              width: 60,
-              height: 60,
-              '&:hover': {
-                backgroundColor: 'primary.dark',
-                transform: 'scale(1.1)'
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <img src={chatbotIcon} alt="Chatbot" style={{ width: '70%', height: '70%' }} />
-          </Fab>
 
           {/* --- Crop Detail Overlay --- */}
           <CropDetailOverlay
