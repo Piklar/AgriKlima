@@ -106,7 +106,7 @@ const fallbackMainArticle = {
   title: "Sec. Francisco Tiu Laurel Jr.: leading PH agriculture to a new, bold direction",
   content: `On November 3, 2023, Francisco P Tiu Laurel, Jr. took his oath as Secretary of the Department of Agriculture, officially accepting the role and its struggles.
   ... (content) ...`,
-  publicationDate: "2023-09-20T20:00:00Z",
+  publicationDate: "2024-09-20T20:00:00Z",
   author: "Department of Agriculture",
   imageUrl: mainNewsImage,
   _id: "static-main",
