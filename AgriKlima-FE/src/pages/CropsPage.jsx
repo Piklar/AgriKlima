@@ -38,7 +38,7 @@ const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
   if (loading) {
     return (
       <Card sx={{ display: 'flex', borderRadius: '5px', boxShadow: 2, mb: 3, overflow: 'hidden' }}>
-        <Skeleton variant="rectangular" width={151} height={151} />
+        <Skeleton variant="rectangular" width={159} height={151} />
         <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, p: 2 }}>
           <Skeleton variant="text" width="60%" height={30} />
           <Skeleton variant="text" width="90%" height={20} />
@@ -53,12 +53,14 @@ const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
       onClick={onClick}
       sx={{
         display: 'flex',
-        borderRadius: '5px',
+        borderRadius: '10px',
         boxShadow: 2,
         mb: 3,
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'all 0.3s ease',
+        width: '180%',
+        maxWidth: 900,
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: 4,
@@ -69,7 +71,7 @@ const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
     >
       <CardMedia
         component="img"
-        sx={{ width: 151, objectFit: 'cover' }}
+        sx={{ width: 200, objectFit: 'cover' }}
         image={image}
         alt={title}
       />
@@ -94,37 +96,105 @@ const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
 const ArticleCard = ({ image, title, description, loading }) => {
   if (loading) {
     return (
-      <Card sx={{ borderRadius: '5px', boxShadow: 2, height: '100%', overflow: 'hidden' }}>
-        <Skeleton variant="rectangular" height={200} />
-        <CardContent sx={{ pb: 1 }}>
+      <Card
+        sx={{
+          borderRadius: '10px',
+          boxShadow: 2,
+          width: '200%',
+          maxWidth: 345,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+      >
+        <Skeleton variant="rectangular" width="200%" height={200} />
+        <CardContent sx={{ flex: 1, pb: 1 }}>
           <Skeleton variant="text" height={30} />
           <Skeleton variant="text" height={20} />
           <Skeleton variant="text" height={20} />
           <Skeleton variant="text" width="60%" height={20} />
         </CardContent>
         <Box sx={{ p: 2, pt: 0 }}>
-          <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '5px' }} />
+          <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '8px' }} />
         </Box>
       </Card>
     );
   }
 
   return (
-    <Card sx={{ bborderRadius: '5px', boxShadow: 2, height: '100%', overflow: 'hidden' }}>
-      <CardMedia
-        component="img"
-        height="200"
-        image={image}
-        alt={title}
-        sx={{ transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }}
-      />
-      <CardContent sx={{ pb: 1 }}>
-        <Typography gutterBottom variant="h6" component="div" sx={{ fontWeight: 600, lineHeight: 1.3, minHeight: '48px' }}>
-          {title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {description.substring(0, 100)}...
-        </Typography>
+    <Card
+      sx={{
+        borderRadius: '10px',
+        boxShadow: 2,
+        width: '100%',
+        maxWidth: 345,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          height: 200,
+          flexShrink: 0,
+          overflow: 'hidden'
+        }}
+      >
+        <CardMedia
+          component="img"
+          src={image}
+          alt={title}
+          sx={{
+            width: '100%',
+            height: '200%',
+            objectFit: 'cover'
+          }}
+        />
+      </Box>
+      <CardContent
+        sx={{
+          flex: 1,
+          pb: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
+        }}
+      >
+        <Box>
+          <Typography
+            gutterBottom
+            variant="h6"
+            component="div"
+            sx={{
+              fontWeight: 600,
+              lineHeight: 1.3,
+              minHeight: '48px',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}
+          >
+            {title}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              mb: 2,
+              minHeight: '40px',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}
+          >
+            {description}
+          </Typography>
+        </Box>
       </CardContent>
       <Box sx={{ p: 2, pt: 0 }}>
         <Button
@@ -140,7 +210,7 @@ const ArticleCard = ({ image, title, description, loading }) => {
             boxShadow: '0 3px 5px 2px rgba(139, 195, 74, .2)',
             '&:hover': {
               background: 'linear-gradient(45deg, #7CB342 30%, #C0CA33 90%)',
-              boxShadow: '0 4px 8px 2px rgba(139, 195, 74, .3)',
+              boxShadow: '0 4px 8px 2px rgba(139, 195, 74, .3)'
             }
           }}
         >
@@ -153,8 +223,6 @@ const ArticleCard = ({ image, title, description, loading }) => {
 
 const CropsPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  // --- STATE FOR LIVE DATA & OVERLAY CONTROL ---
   const [crops, setCrops] = useState([]);
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -205,21 +273,16 @@ const CropsPage = () => {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
       `}
       </style>
-
       <PageDataLoader loading={loading} error={error} onRetry={fetchPageData}>
         <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-          {/* --- Section 1: Recommended Crops (NOW DYNAMIC) --- */}
-          <Container maxWidth="lg" sx={{ py: 6 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-              <EmojiNature sx={{ color: 'primary.main', fontSize: 30, mr: 2 }} />
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+          <Container maxWidth={false} sx={{ py: 6, px: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2, mt: -2 }}>
+              <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'text.primary', textAlign: 'center', width: '100%' }}>
                 Recommended Crop this season!
               </Typography>
             </Box>
-
-            <Grid container spacing={4}>
-              {/* --- Featured Crop --- */}
-              <Grid item xs={12} md={7}>
+            <Grid container spacing={4} justifyContent="center" alignItems="center">
+              <Grid item xs={12} md={7} sx={{ display: 'flex', justifyContent: 'center' }}>
                 {featuredCrop ? (
                   <Card
                     onClick={() => handleOpenOverlay(featuredCrop)}
@@ -234,7 +297,8 @@ const CropsPage = () => {
                       '&:hover': {
                         transform: 'translateY(-4px)',
                         boxShadow: 5,
-                      }
+                      },
+                      maxWidth: 900
                     }}
                   >
                     <Box sx={{ position: 'relative' }}>
@@ -243,6 +307,7 @@ const CropsPage = () => {
                         height="350"
                         image={featuredCrop.imageUrl}
                         alt={featuredCrop.name}
+                        sx={{ objectFit: 'cover', width: '100%' }}
                       />
                       <Chip
                         icon={<TrendingUp />}
@@ -282,7 +347,7 @@ const CropsPage = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <Card sx={{ borderRadius: theme.shape.borderRadius, p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Card sx={{ borderRadius: theme.shape.borderRadius, p: 2, height: '100%', display: 'flex', flexDirection: 'column', maxWidth: 600 }}>
                     <Skeleton variant="rectangular" height={350} sx={{ borderRadius: '16px', mb: 2 }} />
                     <Skeleton variant="text" height={60} width="80%" sx={{ alignSelf: 'center', mb: 2 }} />
                     <Skeleton variant="text" height={25} width="90%" sx={{ alignSelf: 'center', mb: 1 }} />
@@ -291,17 +356,28 @@ const CropsPage = () => {
                   </Card>
                 )}
               </Grid>
-
-              {/* Secondary Crops List */}
-              <Grid item xs={12} md={5}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: 'text.secondary', display: 'flex', alignItems: 'center' }}>
+              <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    mb: 2,
+                    color: 'text.secondary',
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '200%'
+                  }}
+                >
                   <CalendarMonth sx={{ mr: 1, color: 'primary.main' }} />
                   Other Seasonal Crops
                 </Typography>
-
                 {loading ? (
                   [...Array(4)].map((_, index) => (
-                    <SecondaryCropCard key={index} loading={true} />
+                    <SecondaryCropCard
+                      key={index}
+                      loading={true}
+                      sx={{ width: '200%' }}
+                    />
                   ))
                 ) : (
                   secondaryCrops.map(crop => (
@@ -311,18 +387,14 @@ const CropsPage = () => {
                       description={crop.description}
                       image={crop.imageUrl}
                       onClick={() => handleOpenOverlay(crop)}
+                      sx={{ width: '200%' }}
                     />
                   ))
                 )}
               </Grid>
             </Grid>
           </Container>
-
-          {/* --- Section 2: Learn About Crops --- */}
-          <Box sx={{
-            backgroundColor: 'rgba(46, 125, 50, 0.05)',
-            py: 8,
-          }}>
+          <Box sx={{ backgroundColor: 'rgba(46, 125, 50, 0.05)', py: 8 }}>
             <Container maxWidth="lg">
               <Grid container spacing={5} alignItems="center" direction={isMobile ? "column-reverse" : "row"}>
                 <Grid item xs={12} md={7}>
@@ -352,8 +424,6 @@ const CropsPage = () => {
               </Grid>
             </Container>
           </Box>
-
-          {/* --- Section 3: Articles (NOW DYNAMIC) --- */}
           <Container maxWidth="lg" sx={{ py: 8 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
               <Article sx={{ color: 'primary.main', fontSize: 36, mr: 2 }} />
@@ -361,7 +431,6 @@ const CropsPage = () => {
                 Latest Articles
               </Typography>
             </Box>
-
             <Grid container spacing={4}>
               {loading ? (
                 [...Array(3)].map((_, index) => (
@@ -381,7 +450,6 @@ const CropsPage = () => {
                 ))
               )}
             </Grid>
-
             {!loading && articles.length === 0 && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="h6" color="text.secondary">
@@ -390,8 +458,6 @@ const CropsPage = () => {
               </Box>
             )}
           </Container>
-
-          {/* --- Crop Detail Overlay --- */}
           <CropDetailOverlay
             open={isOverlayOpen}
             onClose={handleCloseOverlay}

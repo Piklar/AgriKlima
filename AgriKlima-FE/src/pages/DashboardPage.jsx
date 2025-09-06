@@ -1,31 +1,49 @@
 // src/pages/DashboardPage.jsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
-import { Box, Container, Typography, Grid, Stack } from '@mui/material'; // <-- THIS IS THE FIX
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Stack,
+  createTheme,
+  ThemeProvider
+} from '@mui/material';
 import PageDataLoader from '../components/PageDataLoader';
 import TaskManagementModal from '../components/TaskManagementModal';
 import { isToday } from 'date-fns';
 
-// Import all the new card components
 import MyCropsCard from '../components/MyCropsCard';
 import WeatherTodayCard from '../components/WeatherTodayCard';
 import TodayTasksCard from '../components/TodayTasksCard';
 import WeatherForecastCard from '../components/WeatherForecastCard';
 import PestAlertCard from '../components/PestAlertCard';
 
+const theme = createTheme({
+  palette: {
+    primary: { main: '#2e7d32', light: '#4caf50', dark: '#1b5e20' },
+    secondary: { main: '#ffa000', light: '#ffc107', dark: '#ff8f00' },
+    background: { default: '#f8f9f8' },
+  },
+  typography: {
+    fontFamily: ['Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'].join(','),
+    h4: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2.2rem' },
+    body1: { fontSize: '1.1rem', lineHeight: 1.7 },
+    body2: { fontSize: '1rem', lineHeight: 1.6 },
+  },
+  shape: { borderRadius: 12 },
+});
+
 const DashboardPage = () => {
   const { user } = useAuth();
-
-  // Single state object for all dashboard data
   const [dashboardData, setDashboardData] = useState({
     weather: null,
     tasks: [],
     userCrops: [],
     pests: []
   });
-  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -67,61 +85,82 @@ const DashboardPage = () => {
       await api.toggleTaskStatus(taskId);
       fetchDashboardData();
     } catch (err) {
-      console.error("Failed to toggle task:", err);
+      console.error('Failed to toggle task:', err);
     }
   };
 
   return (
-    <PageDataLoader loading={loading} error={error} onRetry={fetchDashboardData}>
-      <Box sx={{ backgroundColor: '#f4f6f8', minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="xl">
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+    <ThemeProvider theme={theme}>
+      <style>
+        {`
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+        `}
+      </style>
+
+      <PageDataLoader loading={loading} error={error} onRetry={fetchDashboardData}>
+        <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', py: { xs: 4, md: 6 } }}>
+          <Container maxWidth="xl">
+           {/* Header */}
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontFamily: '"Playfair Display", serif',
+                fontWeight: 700,
+                color: 'black',
+                fontSize: { xs: '2rem', md: '2.8rem' }, // match NewsPage h3/h4 scale
+                lineHeight: 1.2,
+              }}
+            >
               Welcome back, {user?.firstName || 'Farmer'}!
             </Typography>
-            <Typography color="text.secondary">
-              Here is your farm's overview for today.
+            <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+              Here’s your farm’s overview for today.
             </Typography>
           </Box>
 
-          <Grid container spacing={4}>
-            {/* Column 1 */}
-            <Grid item xs={12} lg={4}>
-              <Stack spacing={4}>
-                <WeatherTodayCard weather={dashboardData.weather} loading={loading} />
-                <PestAlertCard pests={dashboardData.pests} loading={loading} />
-              </Stack>
-            </Grid>
-
-            {/* Column 2 */}
-            <Grid item xs={12} lg={5}>
-                <MyCropsCard userCrops={dashboardData.userCrops} loading={loading} />
-            </Grid>
-
-            {/* Column 3 */}
-            <Grid item xs={12} lg={3}>
-                <Stack spacing={4}>
-                    <TodayTasksCard 
-                        tasks={dashboardData.tasks} 
-                        loading={loading} 
-                        onTaskToggle={handleTaskToggle}
-                        onManageTasks={() => setIsTaskModalOpen(true)}
-                    />
-                    <WeatherForecastCard weather={dashboardData.weather} loading={loading} />
+            {/* Dashboard Grid */}
+            <Grid container spacing={3}>
+              {/* Left Column */}
+              <Grid item xs={12} md={4}>
+                <Stack spacing={3}>
+                  <WeatherTodayCard weather={dashboardData.weather} loading={loading} />
+                  <PestAlertCard pests={dashboardData.pests} loading={loading} />
                 </Stack>
-            </Grid>
-          </Grid>
-        </Container>
+              </Grid>
 
-        <TaskManagementModal
-          open={isTaskModalOpen}
-          onClose={() => setIsTaskModalOpen(false)}
-          selectedDate={new Date()}
-          tasks={dashboardData.tasks.filter(t => isToday(new Date(t.dueDate)))}
-          onTasksUpdate={fetchDashboardData}
-        />
-      </Box>
-    </PageDataLoader>
+              {/* Middle Column */}
+              <Grid item xs={12} md={4}>
+                <Stack spacing={3}>
+                  <MyCropsCard userCrops={dashboardData.userCrops} loading={loading} />
+                </Stack>
+              </Grid>
+
+              {/* Right Column */}
+              <Grid item xs={12} md={4}>
+                <Stack spacing={3}>
+                  <TodayTasksCard
+                    tasks={dashboardData.tasks}
+                    loading={loading}
+                    onTaskToggle={handleTaskToggle}
+                    onManageTasks={() => setIsTaskModalOpen(true)}
+                  />
+                  <WeatherForecastCard weather={dashboardData.weather} loading={loading} />
+                </Stack>
+              </Grid>
+            </Grid>
+          </Container>
+
+          <TaskManagementModal
+            open={isTaskModalOpen}
+            onClose={() => setIsTaskModalOpen(false)}
+            selectedDate={new Date()}
+            tasks={dashboardData.tasks.filter(t => isToday(new Date(t.dueDate)))}
+            onTasksUpdate={fetchDashboardData}
+          />
+        </Box>
+      </PageDataLoader>
+    </ThemeProvider>
   );
 };
 

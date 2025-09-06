@@ -1,16 +1,15 @@
 // src/pages/NewsPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import { 
   Container, Grid, Typography, Box, CardMedia, Divider, Button, 
   Paper, Card, useMediaQuery, ThemeProvider
 } from '@mui/material';
-import { createTheme } from '@mui/material/styles';
-import { styled } from '@mui/material/styles';
+import { createTheme, styled } from '@mui/material/styles';
 import * as api from '../services/api';
 import NewsSummaryOverlay from '../components/NewsSummaryOverlay';
 import mainNewsImage from '../assets/images/news-main.jpg';
 
+// --- THEME (USING MyFarmPage FONTS) ---
 const theme = createTheme({
   palette: {
     primary: { main: '#2e7d32', light: '#4caf50', dark: '#1b5e20' },
@@ -22,15 +21,25 @@ const theme = createTheme({
     h1: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '3.5rem', lineHeight: 1.2 },
     h2: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '3rem', lineHeight: 1.2 },
     h3: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2.8rem', lineHeight: 1.2 },
-    h4: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2.2rem' },
-    h5: { fontFamily: '"Playfair Display", serif', fontWeight: 600, fontSize: '1.8rem' },
-    h6: { fontWeight: 600, fontSize: '1.2rem' },
+    h4: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2.2rem', lineHeight: 1.2 },
+    h5: { fontFamily: '"Playfair Display", serif', fontWeight: 600, fontSize: '1.8rem', lineHeight: 1.3 },
+    h6: { fontWeight: 600, fontSize: '1.2rem', lineHeight: 1.3 },
     body1: { fontSize: '1.1rem', lineHeight: 1.7 },
     body2: { fontSize: '1rem', lineHeight: 1.6 },
   },
-  shape: { borderRadius: 5 },
+  shape: { borderRadius: '10px' },
 });
 
+// Import fonts
+const Fonts = () => (
+  <style>
+    {`
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+    `}
+  </style>
+);
+
+// --- STYLED COMPONENTS ---
 const AgricultureCard = styled(Card)(({ theme }) => ({
   borderRadius: '10px',
   overflow: 'hidden',
@@ -49,73 +58,54 @@ const GradientDivider = styled(Divider)(({ theme }) => ({
   borderRadius: '2px',
 }));
 
-// --- THIS IS THE FIX (Part 1) ---
-// Add the `onClick` prop to the function arguments
-const MoreNewsCard = ({ title, author, image, date, onClick }) => {
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
-  return (
-    // Add the onClick handler here and make the card clickable
-    <AgricultureCard 
-      onClick={onClick}
-      sx={{ 
-        mb: 2, 
-        backgroundColor: '#fffde7',
-        border: '1px solid #f0f4c3',
-        cursor: 'pointer' // Add cursor to show it's interactive
-      }}
-    >
-      <Box display="flex" p={1.5}>
-        <CardMedia
-          component="img"
+// --- MORE NEWS CARD ---
+const MoreNewsCard = ({ title, author, image, date, onClick }) => (
+  <AgricultureCard 
+    onClick={onClick}
+    sx={{ 
+      mb: 2, 
+      backgroundColor: '#fffde7',
+      border: '1px solid #f0f4c3',
+      cursor: 'pointer'
+    }}
+  >
+    <Box display="flex" p={1.5}>
+      <CardMedia
+        component="img"
+        sx={{ 
+          width: 100, 
+          height: 80, 
+          marginRight: 2, 
+          borderRadius: '10px',
+          objectFit: 'cover'
+        }}
+        image={image || "https://via.placeholder.com/100x80?text=Agriculture"}
+        alt={title}
+      />
+      <Box sx={{ overflow: 'hidden' }}>
+        <Typography 
+          variant="body2" 
           sx={{ 
-            width: 100, 
-            height: 80, 
-            marginRight: 2, 
-            borderRadius: '8px',
-            objectFit: 'cover'
+            fontWeight: 600, 
+            lineHeight: 1.4,
+            color: theme.palette.text.primary,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden'
           }}
-          image={image || "https://via.placeholder.com/100x80?text=Agriculture"}
-          alt={title}
-        />
-        <Box sx={{ overflow: 'hidden' }}>
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              fontWeight: 600, 
-              lineHeight: 1.4,
-              color: theme.palette.text.primary,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
-            }}
-          >
-            {title}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {author || "Department of Agriculture"} • {date ? new Date(date).toLocaleDateString() : "Recent"}
-          </Typography>
-        </Box>
+        >
+          {title}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {author || "Department of Agriculture"} • {date ? new Date(date).toLocaleDateString() : "Recent"}
+        </Typography>
       </Box>
-    </AgricultureCard>
-  );
-};
+    </Box>
+  </AgricultureCard>
+);
 
-const fallbackMainArticle = {
-  title: "Sec. Francisco Tiu Laurel Jr.: leading PH agriculture to a new, bold direction",
-  content: `On November 3, 2023, Francisco P Tiu Laurel, Jr. took his oath as Secretary of the Department of Agriculture, officially accepting the role and its struggles.
-  ... (content) ...`,
-  publicationDate: "2024-09-20T20:00:00Z",
-  author: "Department of Agriculture",
-  imageUrl: mainNewsImage,
-  _id: "static-main",
-};
-
-const fallbackMoreNews = [
-  // ... (fallback news data)
-];
-
+// --- MAIN COMPONENT ---
 const NewsPage = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -130,7 +120,7 @@ const NewsPage = () => {
         setArticles(response.data);
       } catch (error) {
         console.error("Failed to fetch news:", error);
-        setArticles([]); 
+        setArticles([]);
       } finally {
         setLoading(false);
       }
@@ -148,17 +138,36 @@ const NewsPage = () => {
     setSelectedArticle(null); 
   };
 
-  const mainArticle = !loading && articles.length > 0 ? articles[0] : fallbackMainArticle;
-  const moreNewsData = !loading && articles.length > 1 ? articles.slice(1, 6) : fallbackMoreNews;
+  const mainArticle = !loading && articles.length > 0 ? articles[0] : {
+    title: "Sec. Francisco Tiu Laurel Jr.: leading PH agriculture to a new, bold direction",
+    content: `On November 3, 2023, Francisco P Tiu Laurel, Jr. took his oath as Secretary of the Department of Agriculture, officially accepting the role and its struggles.`,
+    publicationDate: "2024-09-20T20:00:00Z",
+    author: "Department of Agriculture",
+    imageUrl: mainNewsImage,
+    _id: "static-main",
+  };
+
+  const moreNewsData = !loading && articles.length > 1 ? articles.slice(1, 6) : [
+    {
+      _id: "more-1",
+      title: "Agriculture Summit Highlights Climate-Smart Techniques",
+      author: "DA Newsroom",
+      imageUrl: "",
+      publicationDate: "2024-09-18T08:00:00Z",
+    },
+    {
+      _id: "more-2",
+      title: "Pampanga Farmers Embrace Modern Irrigation Methods",
+      author: "DA Newsroom",
+      imageUrl: "",
+      publicationDate: "2024-09-15T09:00:00Z",
+    },
+  ];
 
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
-        <style>
-          {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
-          `}
-        </style>
+        <Fonts />
         <Container sx={{ padding: '40px 0', textAlign: 'center' }}>
           <Typography variant="h5" color="primary">
             Loading Agricultural News...
@@ -170,104 +179,42 @@ const NewsPage = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <style>
-        {`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
-      `}
-      </style>
-      
-      <Box sx={{ 
-        backgroundColor: 'background.default',
-        minHeight: '100vh',
-        py: 4
-      }}>
-        <Container maxWidth="lg">
-          <Box sx={{ 
-            textAlign: 'center', 
-            maxWidth: '800px', 
-            mx: 'auto',
-            mb: 6,
-            padding: 3,
-            borderRadius: 2,
-            backgroundColor: 'rgba(46, 125, 50, 0.05)'
-          }}>
-            <Typography 
-              variant="h3" 
-              component="h1" 
-              sx={{ 
-                fontWeight: 'bold',
-                color: 'primary.main',
-                mb: 1
-              }}
-            >
-              Agriculture News
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Latest updates from the Department of Agriculture
-            </Typography>
-          </Box>
+      <Fonts />
+      <Container maxWidth="lg" sx={{ py: 4, backgroundColor: 'background.default' }}>
+        {/* HEADER */}
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography variant="h3" component="h1" sx={{ fontWeight: 'bold', color: 'black', mb: 1 }}>
+            Agriculture News
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Latest updates from the Department of Agriculture
+          </Typography>
+        </Box>
 
-          <Grid container spacing={4}>
-            {/* Main News Article Column */}
-            <Grid item xs={12} lg={8}>
+        {/* MAIN CONTENT */}
+        <Grid container spacing={4}>
+          <Grid item xs={12} lg={8}>
+           {/* MAIN ARTICLE */}
               <Paper 
                 elevation={0} 
-                sx={{ 
-                  borderRadius: theme.shape.borderRadius, 
-                  overflow: 'hidden', 
-                  border: '1px solid #e0e0e0',
-                  backgroundColor: 'white'
-                }}
+                sx={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid #e0e0e0', backgroundColor: 'white' }}
               >
                 <Box sx={{ p: 4 }}>
-                  <Typography 
-                    variant="h4" 
-                    component="h1" 
-                    sx={{ 
-                      fontWeight: 'bold',
-                      color: 'primary.dark',
-                      mb: 2
-                    }}
-                  >
+                  <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.dark', mb: 2 }}>
                     {mainArticle.title}
                   </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    {mainArticle.publicationDate
+                      ? new Date(mainArticle.publicationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                      : "Recent"}{mainArticle.author ? ` • By ${mainArticle.author}` : ""}
+                  </Typography>
                   
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    mb: 3,
-                    flexWrap: 'wrap'
-                  }}>
-                    <Box sx={{
-                      backgroundColor: 'primary.main',
-                      color: 'white',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      mr: 2,
-                      mb: 1
-                    }}>
-                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                        FEATURED
-                      </Typography>
-                    </Box>
-                    
-                    <Typography variant="body2" color="text.secondary">
-                      {mainArticle.publicationDate
-                        ? new Date(mainArticle.publicationDate).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })
-                        : "Recent"}{mainArticle.author ? ` • By ${mainArticle.author}` : ""}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ position: 'relative', mb: 4, borderRadius: 2, overflow: 'hidden' }}>
+                  {/* Updated height */}
+                  <Box sx={{ position: 'relative', mb: 4, borderRadius: '10px', overflow: 'hidden', maxHeight: 350 }}>
                     <img
                       src={mainArticle.imageUrl || mainNewsImage}
                       alt={mainArticle.title}
-                      style={{ width: '100%', display: 'block' }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                     />
                     <Button
                       variant="contained"
@@ -277,8 +224,8 @@ const NewsPage = () => {
                         bottom: 16,
                         left: 16,
                         backgroundColor: 'secondary.main',
-                        color: 'rgba(0, 0, 0, 0.87)',
-                        borderRadius: theme.shape.borderRadius,
+                        color: 'rgba(0,0,0,0.87)',
+                        borderRadius: '10px',
                         textTransform: 'none',
                         fontSize: '1rem',
                         px: 3,
@@ -290,70 +237,25 @@ const NewsPage = () => {
                         },
                       }}
                     >
-                      <Box sx={{ mr: 1, display: 'flex' }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          <polyline points="14 2 14 8 20 8"></polyline>
-                          <line x1="16" y1="13" x2="8" y2="13"></line>
-                          <line x1="16" y1="17" x2="8" y2="17"></line>
-                          <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                      </Box>
                       Get Summary
                     </Button>
                   </Box>
 
-                  <Typography
-                    variant="body1"
-                    sx={{ 
-                      lineHeight: 1.8, 
-                      whiteSpace: 'pre-wrap',
-                      color: 'text.primary',
-                      fontSize: '1.1rem'
-                    }}
-                    component="div"
-                  >
+                  <Typography variant="body1" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap', color: 'text.primary', fontSize: '1.1rem' }}>
                     {mainArticle.content}
                   </Typography>
-                  
-                  {mainArticle.source && (
-                    <Box sx={{ 
-                      mt: 4, 
-                      p: 2, 
-                      backgroundColor: '#f1f8e9',
-                      borderRadius: 2,
-                      borderLeft: '4px solid',
-                      borderColor: 'secondary.main'
-                    }}>
-                      <Typography variant="subtitle1" sx={{ fontStyle: 'italic' }}>
-                        Source: {mainArticle.source}
-                      </Typography>
-                    </Box>
-                  )}
                 </Box>
               </Paper>
-            </Grid>
 
-            {/* More News Sidebar Column */}
-            <Grid item xs={12} lg={4}>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 3, 
-                  borderRadius: theme.shape.borderRadius,
-                  backgroundColor: 'white',
-                  border: '1px solid #e0e0e0'
-                }}
-              >
+            {/* MORE NEWS */}
+            <Box sx={{ mt: 4 }}>
+              <Paper sx={{ p: 3, borderRadius: theme.shape.borderRadius, backgroundColor: 'white', border: '1px solid #e0e0e0' }}>
                 <Box sx={{ textAlign: 'center', mb: 3 }}>
-                  <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                  <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
                     More Agriculture News
                   </Typography>
                 </Box>
-                
                 <GradientDivider />
-                
-                {/* --- THIS IS THE FIX (Part 2) --- */}
                 {moreNewsData.map((item, index) => (
                   <MoreNewsCard
                     key={item._id || index}
@@ -361,11 +263,9 @@ const NewsPage = () => {
                     author={item.author}
                     image={item.imageUrl}
                     date={item.publicationDate}
-                    // Pass the handler to the onClick prop
                     onClick={() => handleOpenSummary(item)}
                   />
                 ))}
-                
                 <Button 
                   fullWidth 
                   variant="outlined" 
@@ -374,26 +274,23 @@ const NewsPage = () => {
                     color: 'primary.main',
                     borderColor: 'primary.main',
                     borderRadius: theme.shape.borderRadius,
-                    '&:hover': {
-                      borderColor: 'primary.dark',
-                      backgroundColor: 'rgba(46, 125, 50, 0.04)'
-                    }
+                    '&:hover': { borderColor: 'primary.dark', backgroundColor: 'rgba(46,125,50,0.04)' }
                   }}
                 >
                   View All News
                 </Button>
               </Paper>
-            </Grid>
+            </Box>
           </Grid>
-        </Container>
+        </Grid>
 
-        {/* --- RENDER THE OVERLAY COMPONENT --- */}
+        {/* NEWS SUMMARY OVERLAY */}
         <NewsSummaryOverlay
           open={isSummaryOpen}
           onClose={handleCloseSummary}
           articleData={selectedArticle || mainArticle}
         />
-      </Box>
+      </Container>
     </ThemeProvider>
   );
 };

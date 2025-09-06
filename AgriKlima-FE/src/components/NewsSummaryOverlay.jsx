@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Box, Typography, Button, Paper, Chip, List, ListItem, ListItemIcon } from '@mui/material';
+import { Modal, Box, Typography, Button, Paper, List, ListItem, ListItemIcon, Divider } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // Reusable Quote component
 const QuoteItem = ({ text }) => (
-  <Paper elevation={0} sx={{ backgroundColor: '#f5f5f5', p: 2, borderRadius: '16px', mb: 2 }}>
+  <Paper
+    elevation={0}
+    sx={{ backgroundColor: '#f5f5f5', p: 2, borderRadius: '10px', mb: 2 }}
+  >
     <Typography>"{text}"</Typography>
   </Paper>
 );
 
+// Tab Button
 const TabButton = ({ label, activeTab, setActiveTab }) => {
   const isActive = activeTab === label;
   return (
@@ -19,7 +23,7 @@ const TabButton = ({ label, activeTab, setActiveTab }) => {
         px: 3,
         py: 1,
         textTransform: 'none',
-        fontSize: '1rem',
+        fontSize: '0.95rem',
         fontWeight: 600,
         backgroundColor: isActive ? 'var(--primary-green)' : '#e0e0e0',
         color: isActive ? 'white' : 'var(--dark-text)',
@@ -45,10 +49,15 @@ const NewsSummaryOverlay = ({ open, onClose, articleData }) => {
       case 'Key Points':
         return (
           <>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>Key Highlights</Typography>
-            <List>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Key Highlights</Typography>
+            <List disablePadding>
               {(articleData.summary?.keyPoints || []).map((point, i) => (
-                <ListItem key={i}><ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>{point}</ListItem>
+                <ListItem key={i} sx={{ mb: 1 }}>
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <CheckCircleIcon color="success" />
+                  </ListItemIcon>
+                  <Typography>{point}</Typography>
+                </ListItem>
               ))}
             </List>
           </>
@@ -56,16 +65,18 @@ const NewsSummaryOverlay = ({ open, onClose, articleData }) => {
       case 'Quotes':
         return (
           <>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>Notable Quotes</Typography>
-            {(articleData.summary?.quotes || []).map((quote, i) => <QuoteItem key={i} text={quote} />)}
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Notable Quotes</Typography>
+            {(articleData.summary?.quotes || []).map((quote, i) => (
+              <QuoteItem key={i} text={quote} />
+            ))}
           </>
         );
       case 'Impact':
         return (
           <>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>Expected Impact</Typography>
-            <Paper elevation={0} sx={{ bgcolor: '#f5f5f5', p: 3, borderRadius: '16px' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>Agricultural Impact</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Expected Impact</Typography>
+            <Paper elevation={0} sx={{ bgcolor: '#f5f5f5', p: 3, borderRadius: '10px' }}>
+              <Typography sx={{ fontWeight: 600, mb: 1 }}>Agricultural Impact</Typography>
               <Typography>{articleData.summary?.impact || 'No impact analysis available.'}</Typography>
             </Paper>
           </>
@@ -74,7 +85,7 @@ const NewsSummaryOverlay = ({ open, onClose, articleData }) => {
       default:
         return (
           <>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>Full Article</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>Full Article</Typography>
             <Typography sx={{ whiteSpace: 'pre-wrap' }}>{articleData.content}</Typography>
           </>
         );
@@ -83,44 +94,52 @@ const NewsSummaryOverlay = ({ open, onClose, articleData }) => {
 
   return (
     <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Paper sx={{ position: 'relative', width: '85%', maxWidth: '1100px', height: '85vh', borderRadius: '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {/* --- Green Header Section --- */}
-        <Box sx={{ bgcolor: '#81c784', p: 4, color: '#1b5e20' }}>
-          <Typography variant="h2" sx={{ fontWeight: 'bold', color: 'black' }}>{articleData.title}</Typography>
-          <Typography sx={{ color: '#212121' }}>
-            {articleData.publicationDate ? new Date(articleData.publicationDate).toLocaleDateString() : ''}{articleData.author ? ` • ${articleData.author}` : ''}
+      <Paper
+        elevation={1}
+        sx={{
+          p: 3,
+          borderRadius: '10px',
+          width: '85%',
+          maxWidth: '1000px',
+          height: '85vh',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+          backgroundColor: (theme) => theme.palette.background.paper
+        }}
+      >
+        {/* Header */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+            {articleData.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {articleData.publicationDate ? new Date(articleData.publicationDate).toLocaleDateString() : ''}
+            {articleData.author ? ` • ${articleData.author}` : ''}
           </Typography>
         </Box>
-        {/* --- Main Content Section --- */}
-        <Box sx={{ flexGrow: 1, p: 4, overflowY: 'auto' }}>
-          {/* Tab Navigation */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 4, flexWrap: 'wrap' }}>
-            <TabButton label="Full Article" activeTab={activeTab} setActiveTab={setActiveTab} />
-            <TabButton label="Key Points" activeTab={activeTab} setActiveTab={setActiveTab} />
-            <TabButton label="Quotes" activeTab={activeTab} setActiveTab={setActiveTab} />
-            <TabButton label="Impact" activeTab={activeTab} setActiveTab={setActiveTab} />
-          </Box>
-          {/* Tab Content */}
+
+        <Divider sx={{ mb: 3 }} />
+
+        {/* Tabs */}
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap' }}>
+          <TabButton label="Full Article" activeTab={activeTab} setActiveTab={setActiveTab} />
+          <TabButton label="Key Points" activeTab={activeTab} setActiveTab={setActiveTab} />
+          <TabButton label="Quotes" activeTab={activeTab} setActiveTab={setActiveTab} />
+          <TabButton label="Impact" activeTab={activeTab} setActiveTab={setActiveTab} />
+        </Box>
+
+        {/* Content */}
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 1 }}>
           {renderContent()}
         </Box>
-        {/* --- Close Button --- */}
+
+        {/* Close Button */}
         <Button
+          variant="contained"
+          color="primary"
           onClick={onClose}
-          sx={{
-            position: 'absolute',
-            bottom: 24,
-            right: 24,
-            borderRadius: '30px',
-            backgroundColor: '#424242',
-            color: 'white',
-            textTransform: 'none',
-            fontSize: '1rem',
-            px: 3,
-            py: 1,
-            '&:hover': {
-              backgroundColor: '#616161'
-            }
-          }}
+          sx={{ mt: 3, alignSelf: 'flex-end', textTransform: 'none', fontWeight: 600 }}
         >
           Close Article
         </Button>
