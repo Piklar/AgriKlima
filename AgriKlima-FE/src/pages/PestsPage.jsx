@@ -32,19 +32,26 @@ const theme = createTheme({
     body1: { fontSize: '1.1rem', lineHeight: 1.7 },
     body2: { fontSize: '1rem', lineHeight: 1.6 },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: '10px' },
 });
 
 const ArticleCard = ({ image, title, description, loading }) => {
   if (loading) {
     return (
-      <Card sx={{ borderRadius: '5px', boxShadow: 2, height: '100%', overflow: 'hidden' }}>
-        <Skeleton variant="rectangular" height={200} />
-        <CardContent sx={{ pb: 1 }}>
-          <Skeleton variant="text" height={30} />
-          <Skeleton variant="text" height={20} />
-          <Skeleton variant="text" height={20} />
-          <Skeleton variant="text" width="60%" height={20} />
+      <Card sx={{ 
+        borderRadius: theme.shape.borderRadius, 
+        boxShadow: 2, 
+        height: '100%', 
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <Skeleton variant="rectangular" height={250} />
+        <CardContent sx={{ pb: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <Skeleton variant="text" height={30} sx={{ mb: 1 }} />
+          <Skeleton variant="text" height={20} sx={{ mb: 1 }} />
+          <Skeleton variant="text" height={20} sx={{ mb: 1 }} />
+          <Skeleton variant="text" width="60%" height={20} sx={{ mt: 'auto' }} />
         </CardContent>
         <Box sx={{ p: 2, pt: 0 }}>
           <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '12px' }} />
@@ -54,19 +61,36 @@ const ArticleCard = ({ image, title, description, loading }) => {
   }
 
   return (
-    <Card sx={{ borderRadius: '5px', boxShadow: 2, height: '100%', overflow: 'hidden' }}>
+    <Card sx={{ 
+      borderRadius: theme.shape.borderRadius, 
+      boxShadow: 2, 
+      height: '100%', 
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'transform 0.3s, box-shadow 0.3s',
+      '&:hover': {
+        transform: 'translateY(-5px)',
+        boxShadow: '0 8px 20px rgba(0,0,0,0.12)'
+      }
+    }}>
       <CardMedia
         component="img"
-        height="200"
+        height="250"
         image={image}
         alt={title}
-        sx={{ transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }}
+        sx={{ 
+          transition: 'transform 0.5s', 
+          '&:hover': { transform: 'scale(1.05)' },
+          width: '100%',
+          objectFit: 'cover'
+        }}
       />
-      <CardContent sx={{ pb: 1 }}>
+      <CardContent sx={{ pb: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Typography gutterBottom variant="h6" component="div" sx={{ fontWeight: 600, lineHeight: 1.3, minHeight: '48px' }}>
           {title}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flex: 1 }}>
           {description.substring(0, 100)}...
         </Typography>
       </CardContent>
@@ -76,7 +100,7 @@ const ArticleCard = ({ image, title, description, loading }) => {
           fullWidth
           endIcon={<ChevronRight />}
           sx={{
-            borderRadius: '12px',
+            borderRadius: theme.shape.borderRadius,
             textTransform: 'none',
             py: 1,
             fontWeight: 600,
@@ -100,7 +124,7 @@ const InfoModal = ({ open, handleClose, content }) => (
       width: '90%',
       maxWidth: 500,
       bgcolor: 'background.paper',
-      borderRadius: '16px',
+      borderRadius: theme.shape.borderRadius,
       boxShadow: 24,
       p: 3,
     }}>
@@ -284,7 +308,7 @@ const PestsPage = () => {
           </Container>
         </Box>
 
-        {/* --- Featured Pests Section (NOW DYNAMIC) --- */}
+        {/* --- Featured Pests Section --- */}
         <Container maxWidth="lg" sx={{ py: 8 }}>
           <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto', mb: 6 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
@@ -299,11 +323,17 @@ const PestsPage = () => {
           </Box>
 
           {loading ? (
-            <Grid container spacing={4}>
+            <Grid container spacing={4} justifyContent="center">
               {[...Array(6)].map((_, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Card sx={{ borderRadius: theme.shape.borderRadius, boxShadow: 2, overflow: 'hidden' }}>
-                    <Skeleton variant="rectangular" height={200} />
+                <Grid item xs={12} sm={6} md={4} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
+                  <Card sx={{ 
+                    borderRadius: theme.shape.borderRadius, 
+                    boxShadow: 2, 
+                    overflow: 'hidden',
+                    width: '100%',
+                    maxWidth: '350px'
+                  }}>
+                    <Skeleton variant="rectangular" height={250} />
                     <CardContent>
                       <Skeleton variant="text" height={40} />
                       <Skeleton variant="text" height={25} />
@@ -314,30 +344,37 @@ const PestsPage = () => {
               ))}
             </Grid>
           ) : pests.length > 0 ? (
-            <Grid container spacing={4}>
+            <Grid container spacing={4} justifyContent="center">
               {pests.map(pest => (
-                <Grid item xs={12} sm={6} md={4} key={pest._id}>
+                <Grid item xs={12} sm={6} md={4} key={pest._id} sx={{ display: 'flex', justifyContent: 'center' }}>
                   <Card
                     onClick={() => handleOpenOverlay(pest)}
                     sx={{
-                      borderRadius: '10px',
+                      borderRadius: theme.shape.borderRadius,
                       boxShadow: 2,
                       cursor: 'pointer',
                       overflow: 'hidden',
                       transition: 'all 0.3s ease',
+                      width: '100%',
+                      maxWidth: '350px',
                       '&:hover': {
-                        transform: 'translateY(-8px)',
-                        boxShadow: 4,
+                        transform: 'translateY(-5px)',
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
                       }
                     }}
                   >
                     <Box sx={{ position: 'relative' }}>
                       <CardMedia
                         component="img"
-                        height="200"
+                        height="250"
                         image={pest.imageUrl}
                         alt={pest.name}
-                        sx={{ transition: 'transform 0.5s', '&:hover': { transform: 'scale(1.05)' } }}
+                        sx={{ 
+                          transition: 'transform 0.5s', 
+                          '&:hover': { transform: 'scale(1.05)' },
+                          width: '100%',
+                          objectFit: 'cover'
+                        }}
                       />
                       <Chip
                         label="Pest Alert"
@@ -347,15 +384,16 @@ const PestsPage = () => {
                           right: 16,
                           background: theme.palette.error.main,
                           color: 'white',
-                          fontWeight: 600
+                          fontWeight: 600,
+                          borderRadius: theme.shape.borderRadius
                         }}
                       />
                     </Box>
                     <CardContent>
-                      <Typography gutterBottom variant="h5" component="div" sx={{ fontWeight: 600, color: 'primary.dark' }}>
+                      <Typography gutterBottom variant="h5" component="div" sx={{ fontWeight: 600, color: 'primary.dark', mb: 2 }}>
                         {pest.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3, minHeight: '60px' }}>
                         {pest.overview?.description ? pest.overview.description.substring(0, 100) + '...' : 'No description available.'}
                       </Typography>
                       <Button
@@ -368,7 +406,7 @@ const PestsPage = () => {
                           borderRadius: theme.shape.borderRadius,
                           '&:hover': {
                             borderColor: 'primary.dark',
-                            backgroundColor: 'rgba(104, 159, 56, 0.1)'
+                            backgroundColor: 'rgba(46, 125, 50, 0.1)'
                           }
                         }}
                       >
@@ -389,66 +427,149 @@ const PestsPage = () => {
           )}
         </Container>
 
-        {/* --- Articles Section (NOW DYNAMIC) --- */}
-        <Box sx={{
-          backgroundColor: 'rgba(46, 125, 50, 0.05)',
-          py: 8,
-        }}>
-          <Container maxWidth="lg" sx={{ position: 'relative' }}>
-            <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto', mb: 6 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                <Article sx={{ color: 'primary.main', fontSize: 36, mr: 2 }} />
-                <Typography variant="h3" component="h2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                  Related Articles
-                </Typography>
-              </Box>
-              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                Stay informed with the latest pest management research and techniques
-              </Typography>
+        {/* --- Articles Section --- */}
+            <Box sx={{
+              backgroundColor: 'rgba(46, 125, 50, 0.05)',
+              py: 8,
+            }}>
+              <Container maxWidth="lg">
+                <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto', mb: 6 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+                    <Article sx={{ color: 'primary.main', fontSize: 36, mr: 2 }} />
+                    <Typography variant="h3" component="h2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                      Related Articles
+                    </Typography>
+                  </Box>
+                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                    Stay informed with the latest pest management research and techniques
+                  </Typography>
+                </Box>
+
+                {loading ? (
+                  <Grid container spacing={4} justifyContent="center">
+                    {[...Array(3)].map((_, index) => (
+                      <Grid item xs={12} md={4} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <Card sx={{ 
+                          borderRadius: theme.shape.borderRadius, 
+                          boxShadow: 2, 
+                          height: '100%', 
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          width: '100%',
+                          maxWidth: '350px'
+                        }}>
+                          <Skeleton variant="rectangular" height={250} />
+                          <CardContent sx={{ pb: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <Skeleton variant="text" height={30} sx={{ mb: 1 }} />
+                            <Skeleton variant="text" height={20} sx={{ mb: 1 }} />
+                            <Skeleton variant="text" height={20} sx={{ mb: 1 }} />
+                            <Skeleton variant="text" width="60%" height={20} sx={{ mt: 'auto' }} />
+                          </CardContent>
+                          <Box sx={{ p: 2, pt: 0 }}>
+                            <Skeleton variant="rectangular" height={40} sx={{ borderRadius: '12px' }} />
+                          </Box>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : articles.length > 0 ? (
+                  <Grid container spacing={4} justifyContent="center">
+                    {articles.map(article => (
+                      <Grid item xs={12} md={4} key={article._id} sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <Card sx={{ 
+                          borderRadius: theme.shape.borderRadius, 
+                          boxShadow: 2, 
+                          height: '100%', 
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          width: '100%',
+                          maxWidth: '350px',
+                          transition: 'transform 0.3s, box-shadow 0.3s',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 8px 20px rgba(0,0,0,0.12)'
+                          }
+                        }}>
+                          <CardMedia
+                            component="img"
+                            height="250"
+                            image={article.imageUrl}
+                            alt={article.title}
+                            sx={{ 
+                              transition: 'transform 0.5s', 
+                              '&:hover': { transform: 'scale(1.05)' },
+                              width: '100%',
+                              height: '250px',
+                              objectFit: 'cover'
+                            }}
+                          />
+                          <CardContent sx={{ pb: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <Typography gutterBottom variant="h6" component="div" sx={{ 
+                              fontWeight: 600, 
+                              lineHeight: 1.3, 
+                              minHeight: '48px',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden'
+                            }}>
+                              {article.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ 
+                              mb: 2, 
+                              flex: 1,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 3,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden'
+                            }}>
+                              {article.content?.substring(0, 100) || 'No description available.'}...
+                            </Typography>
+                          </CardContent>
+                          <Box sx={{ p: 2, pt: 0 }}>
+                            <Button
+                              variant="contained"
+                              fullWidth
+                              endIcon={<ChevronRight />}
+                              sx={{
+                                borderRadius: theme.shape.borderRadius,
+                                textTransform: 'none',
+                                py: 1,
+                                fontWeight: 600,
+                                fontSize: '1rem',
+                              }}
+                            >
+                              Read More
+                            </Button>
+                          </Box>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Article sx={{ fontSize: 48, mb: 2, color: 'text.secondary' }} />
+                    <Typography variant="h6" color="text.secondary">
+                      No articles available at the moment
+                    </Typography>
+                  </Box>
+                )}
+              </Container>
             </Box>
 
-            {loading ? (
-              <Grid container spacing={4}>
-                {[...Array(3)].map((_, index) => (
-                  <Grid item xs={12} md={4} key={index}>
-                    <ArticleCard loading={true} />
-                  </Grid>
-                ))}
-              </Grid>
-            ) : articles.length > 0 ? (
-              <Grid container spacing={4}>
-                {articles.map(article => (
-                  <Grid item xs={12} md={4} key={article._id}>
-                    <ArticleCard
-                      image={article.imageUrl}
-                      title={article.title}
-                      description={article.content || ''}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Article sx={{ fontSize: 48, mb: 2, color: 'text.secondary' }} />
-                <Typography variant="h6" color="text.secondary">
-                  No articles available at the moment
-                </Typography>
-              </Box>
-            )}
-          </Container>
-        </Box>
+        {/* --- Pest Detail Overlay --- */}
+        {selectedPest && (
+          <PestDetailOverlay open={isOverlayOpen} onClose={handleCloseOverlay} pestData={selectedPest} />
+        )}
 
-      {/* --- Pest Detail Overlay --- */}
-      {selectedPest && (
-        <PestDetailOverlay open={isOverlayOpen} onClose={handleCloseOverlay} pestData={selectedPest} />
-      )}
-
-      {/* --- RENDER THE NEW INFO MODAL --- */}
-      <InfoModal
-        open={isInfoModalOpen}
-        handleClose={handleCloseInfoModal}
-        content={modalContent}
-      />
+        {/* --- Info Modal --- */}
+        <InfoModal
+          open={isInfoModalOpen}
+          handleClose={handleCloseInfoModal}
+          content={modalContent}
+        />
       </Box>
     </ThemeProvider>
   );

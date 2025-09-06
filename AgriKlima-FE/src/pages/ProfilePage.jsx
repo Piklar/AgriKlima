@@ -1,4 +1,3 @@
-// src/pages/ProfilePage.jsx
 import React, { useState } from 'react';
 import {
   Container, Box, Typography, Avatar, Paper, List, ListItem,
@@ -33,6 +32,14 @@ const ProfilePage = () => {
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
 
+  // Light / Dark mode state
+  const [darkMode, setDarkMode] = useState(false);
+
+  const handleThemeToggle = () => {
+    setDarkMode((prev) => !prev);
+    document.body.setAttribute('data-theme', !darkMode ? 'dark' : 'light');
+  };
+
   const handleClosePictureModal = (wasUpdateSuccessful) => {
     setIsPictureModalOpen(false);
     if (wasUpdateSuccessful) {
@@ -51,7 +58,7 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', fontFamily: 'inherit' }}>
         <CircularProgress />
       </Box>
     );
@@ -61,9 +68,9 @@ const ProfilePage = () => {
 
   return (
     <>
-      <Container maxWidth="sm" sx={{ py: 6 }}>
+      <Container maxWidth="sm" sx={{ py: 6, fontFamily: 'inherit' }}>
         {/* Profile Header */}
-        <Paper elevation={4} sx={{ borderRadius: '24px', p: 3, textAlign: 'center', mb: 4 }}>
+        <Paper elevation={4} sx={{ borderRadius: '24px', p: 3, textAlign: 'center', mb: 4, fontFamily: 'inherit' }}>
           <Box sx={{ position: 'relative', width: 120, height: 120, margin: '0 auto 16px' }}>
             <Avatar
               src={user.profilePictureUrl}
@@ -83,77 +90,85 @@ const ProfilePage = () => {
               <AddAPhotoIcon />
             </IconButton>
           </Box>
-          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h5" sx={{ fontWeight: 'bold', fontFamily: 'inherit' }}>
             {displayName}
           </Typography>
           <Box
             sx={{
               display: 'flex', justifyContent: 'center', alignItems: 'center',
-              color: 'text.secondary', mt: 1
+              color: 'text.secondary', mt: 1, fontFamily: 'inherit'
             }}
           >
             <LocationOnOutlinedIcon fontSize="small" />
-            <Typography sx={{ ml: 1 }}>{user.location || 'Location not set'}</Typography>
+            <Typography sx={{ ml: 1, fontFamily: 'inherit' }}>{user.location || 'Location not set'}</Typography>
           </Box>
         </Paper>
 
         {/* General Settings */}
-        <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid #eee' }}>
+        <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid #eee', fontFamily: 'inherit' }}>
           <List>
             <ListItemButton onClick={() => setEditModalOpen(true)}>
               <ListItemIcon><EditOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Edit profile information" />
+              <ListItemText primary="Edit profile information" sx={{ fontFamily: 'inherit' }} />
             </ListItemButton>
             <ListItem>
               <ListItemIcon><NotificationsOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Notifications" />
+              <ListItemText primary="Notifications" sx={{ fontFamily: 'inherit' }} />
               <Switch defaultChecked color="success" />
             </ListItem>
             <ListItem>
               <ListItemIcon><LanguageOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Language" />
-              <Typography color="text.secondary">{user.language || 'English'}</Typography>
+              <ListItemText primary="Language" sx={{ fontFamily: 'inherit' }} />
+              <Typography color="text.secondary" sx={{ fontFamily: 'inherit' }}>{user.language || 'English'}</Typography>
             </ListItem>
           </List>
         </Paper>
 
         {/* Security and Theme */}
-        <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid #eee' }}>
+        <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid #eee', fontFamily: 'inherit' }}>
           <List>
             <ListItem>
               <ListItemIcon><SecurityOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Security" />
+              <ListItemText primary="Security" sx={{ fontFamily: 'inherit' }} />
             </ListItem>
 
-            {/* --- THIS BUTTON IS NOW RESTORED --- */}
             <ListItemButton onClick={() => setPasswordModalOpen(true)}>
               <ListItemIcon><LockResetOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Change Password" />
+              <ListItemText primary="Change Password" sx={{ fontFamily: 'inherit' }} />
             </ListItemButton>
 
             <Divider component="li" sx={{ mx: 2 }} />
+
+            {/* Theme toggle */}
             <ListItem>
               <ListItemIcon><PaletteOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Theme" />
-              <Typography color="text.secondary">Light mode</Typography>
+              <ListItemText primary="Theme" sx={{ fontFamily: 'inherit' }} />
+              <Typography color="text.secondary" sx={{ mr: 1, fontFamily: 'inherit' }}>
+                {darkMode ? 'Dark mode' : 'Light mode'}
+              </Typography>
+              <Switch
+                checked={darkMode}
+                onChange={handleThemeToggle}
+                color="success"
+              />
             </ListItem>
           </List>
         </Paper>
 
         {/* Help & Support */}
-        <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, border: '1px solid #eee' }}>
+        <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, border: '1px solid #eee', fontFamily: 'inherit' }}>
           <List>
             <ListItemButton>
               <ListItemIcon><HelpOutlineOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Help & Support" />
+              <ListItemText primary="Help & Support" sx={{ fontFamily: 'inherit' }} />
             </ListItemButton>
             <ListItemButton>
               <ListItemIcon><ContactSupportOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Contact us" />
+              <ListItemText primary="Contact us" sx={{ fontFamily: 'inherit' }} />
             </ListItemButton>
             <ListItemButton>
               <ListItemIcon><PrivacyTipOutlinedIcon /></ListItemIcon>
-              <ListItemText primary="Privacy policy" />
+              <ListItemText primary="Privacy policy" sx={{ fontFamily: 'inherit' }} />
             </ListItemButton>
           </List>
         </Paper>

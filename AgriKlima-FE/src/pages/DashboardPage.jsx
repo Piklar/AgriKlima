@@ -98,31 +98,53 @@ const DashboardPage = () => {
       </style>
 
       <PageDataLoader loading={loading} error={error} onRetry={fetchDashboardData}>
-        <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', py: { xs: 4, md: 6 } }}>
-          <Container maxWidth="xl">
-           {/* Header */}
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontFamily: '"Playfair Display", serif',
-                fontWeight: 700,
-                color: 'black',
-                fontSize: { xs: '2rem', md: '2.8rem' }, // match NewsPage h3/h4 scale
-                lineHeight: 1.2,
-              }}
-            >
-              Welcome back, {user?.firstName || 'Farmer'}!
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
-              Here’s your farm’s overview for today.
-            </Typography>
-          </Box>
+        <Box
+          sx={{
+            backgroundColor: theme.palette.background.default,
+            minHeight: '100vh',
+            py: { xs: 4, md: 6 },
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start',
+          }}
+        >
+          <Container
+            maxWidth="xl"
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            {/* Header */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: '"Playfair Display", serif',
+                  fontWeight: 700,
+                  color: 'black',
+                  fontSize: { xs: '2rem', md: '2.8rem' },
+                  lineHeight: 1.2,
+                }}
+              >
+                Welcome back, {user?.firstName || 'Farmer'}!
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+                Here’s your farm’s overview for today.
+              </Typography>
+            </Box>
 
             {/* Dashboard Grid */}
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={4}
+              justifyContent="center"
+              sx={{ width: '100%', maxWidth: 1600 }}
+            >
               {/* Left Column */}
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={6} sx={{ maxWidth: 550 }}>
                 <Stack spacing={3}>
                   <WeatherTodayCard weather={dashboardData.weather} loading={loading} />
                   <PestAlertCard pests={dashboardData.pests} loading={loading} />
@@ -130,14 +152,14 @@ const DashboardPage = () => {
               </Grid>
 
               {/* Middle Column */}
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={6} sx={{ maxWidth: 550 }}>
                 <Stack spacing={3}>
                   <MyCropsCard userCrops={dashboardData.userCrops} loading={loading} />
                 </Stack>
               </Grid>
 
               {/* Right Column */}
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={6} sx={{ maxWidth: 550 }}>
                 <Stack spacing={3}>
                   <TodayTasksCard
                     tasks={dashboardData.tasks}

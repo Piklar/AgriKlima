@@ -1,8 +1,8 @@
 // src/pages/WeatherPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Container, Box, Grid, Paper, InputBase, Fab, Typography, 
-  ThemeProvider 
+import {
+  Container, Box, Grid, Paper, InputBase, Typography,
+  ThemeProvider
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import * as api from '../services/api';
@@ -10,13 +10,11 @@ import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 import { createTheme } from '@mui/material/styles';
 
-// Import the new components
 import CurrentWeather from '../components/weather/CurrentWeather';
 import HourlyForecast from '../components/weather/HourlyForecast';
 import DailyForecast from '../components/weather/DailyForecast';
 import DetailedWeatherOverlay from '../components/DetailedWeatherOverlay';
 
-// Create the same custom theme as AboutUs Page
 const theme = createTheme({
   palette: {
     primary: { main: '#2e7d32', light: '#4caf50', dark: '#1b5e20' },
@@ -45,14 +43,10 @@ const WeatherPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // Set the initial location from the user's profile
   useEffect(() => {
-    if (user?.location) {
-      setLocation(user.location);
-    }
+    if (user?.location) setLocation(user.location);
   }, [user]);
 
-  // Fetch weather data whenever the location state changes
   const fetchWeather = useCallback(async () => {
     if (!location) return;
     setLoading(true);
@@ -61,7 +55,7 @@ const WeatherPage = () => {
       setWeatherData(response.data);
     } catch (error) {
       console.error('Failed to fetch weather:', error);
-      setWeatherData(null); // Clear old data on error
+      setWeatherData(null);
       Swal.fire({
         icon: 'error',
         title: 'Location Not Found',
@@ -72,48 +66,24 @@ const WeatherPage = () => {
     }
   }, [location]);
 
-  useEffect(() => {
-    fetchWeather();
-  }, [fetchWeather]);
+  useEffect(() => { fetchWeather(); }, [fetchWeather]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery) {
-      setLocation(searchQuery);
-    }
+    if (searchQuery) setLocation(searchQuery);
   };
 
   return (
     <ThemeProvider theme={theme}>
       <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
-        `}
+        {`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');`}
       </style>
 
-      <Box
-        sx={{
-          py: 4,
-          px: { xs: 2, md: 6 },
-          minHeight: '100vh',
-          backgroundColor: 'background.default',
-        }}
-      >
+      <Box sx={{ py: 4, px: { xs: 2, md: 6 }, minHeight: '100vh', backgroundColor: 'background.default' }}>
         <Container maxWidth="xl">
-          {/* Header Section */}
-          <Box
-            sx={{
-              textAlign: 'center',
-              maxWidth: '800px',
-              mx: 'auto',
-              mb: 6,
-            }}
-          >
-            <Typography
-              variant="h3"
-              component="h1"
-              sx={{ fontWeight: 'bold', color: 'text.primary', mb: 2 }}
-            >
+          {/* Header */}
+          <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto', mb: 6 }}>
+            <Typography variant="h3" component="h1" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 2 }}>
               Weather Forecast
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary' }}>
@@ -121,62 +91,32 @@ const WeatherPage = () => {
             </Typography>
           </Box>
 
-          {/* Search Section */}
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              mb: 6,
-              position: 'relative',
-            }}
-          >
-            <Paper
-              component="form"
-              onSubmit={handleSearch}
-              sx={{
-                p: '2px 4px',
-                display: 'flex',
-                alignItems: 'center',
-                width: '100%',
-                maxWidth: '600px',
-                borderRadius: theme.shape.borderRadius,
-                boxShadow: 2,
-              }}
-            >
+          {/* Search */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 6 }}>
+            <Paper component="form" onSubmit={handleSearch} sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: '100%', maxWidth: 600, borderRadius: theme.shape.borderRadius, boxShadow: 2 }}>
               <SearchIcon sx={{ p: '10px', color: 'grey.700' }} />
-              <InputBase
-                sx={{ ml: 1, flex: 1 }}
-                placeholder="Search Municipality (e.g., Mexico, Pampanga)"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+              <InputBase sx={{ ml: 1, flex: 1 }} placeholder="Search Municipality (e.g., Mexico, Pampanga)" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </Paper>
           </Box>
 
           {/* Weather Data */}
-          <Grid container spacing={3} justifyContent="center">
+          <Grid container spacing={4} justifyContent="center">
             <Grid item xs={12} lg={7}>
-              <CurrentWeather
-                weather={weatherData}
-                loading={loading}
-                onOpenDetail={() => setIsDetailOpen(true)}
-              />
+              <CurrentWeather weather={weatherData} loading={loading} onOpenDetail={() => setIsDetailOpen(true)} />
             </Grid>
-            <Grid item xs={12} lg={5}>
-              <DailyForecast weather={weatherData} loading={loading} />
-            </Grid>
-            <Grid item xs={12}>
+
+            <Grid item xs={12} md={8} lg={5}>
               <HourlyForecast weather={weatherData} loading={loading} />
+            </Grid>
+
+            <Grid item xs={12} md={8} lg={5}>
+              <DailyForecast weather={weatherData} loading={loading} />
             </Grid>
           </Grid>
 
+          {/* Detail Overlay */}
           {weatherData && (
-            <DetailedWeatherOverlay
-              open={isDetailOpen}
-              onClose={() => setIsDetailOpen(false)}
-              weatherData={weatherData} // Pass the real data
-            />
+            <DetailedWeatherOverlay open={isDetailOpen} onClose={() => setIsDetailOpen(false)} weatherData={weatherData} />
           )}
         </Container>
       </Box>

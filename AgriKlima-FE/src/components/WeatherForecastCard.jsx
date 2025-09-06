@@ -14,11 +14,11 @@ const WeatherForecastCard = ({ weather, loading }) => {
     const lower = condition.toLowerCase();
 
     if (lower.includes('sun'))
-      return <WbSunnyOutlinedIcon sx={{ color: (theme) => theme.palette.secondary.main, fontSize: 32 }} />;
+      return <WbSunnyOutlinedIcon sx={{ color: '#CDDC39', fontSize: 32 }} />;
     if (lower.includes('rain'))
-      return <GrainIcon sx={{ color: (theme) => theme.palette.primary.light, fontSize: 32 }} />;
+      return <GrainIcon sx={{ color: '#8BC34A', fontSize: 32 }} />;
     if (lower.includes('cloud'))
-      return <WbCloudyOutlinedIcon sx={{ color: (theme) => theme.palette.text.secondary, fontSize: 32 }} />;
+      return <WbCloudyOutlinedIcon sx={{ color: '#A5D6A7', fontSize: 32 }} />;
 
     return <WbCloudyOutlinedIcon color="action" sx={{ fontSize: 32 }} />;
   };
@@ -28,12 +28,12 @@ const WeatherForecastCard = ({ weather, loading }) => {
       elevation={1}
       sx={{
         p: 3,
-        borderRadius: '10px',
+        borderRadius: '12px',
         boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: (theme) => theme.palette.background.paper,
+        background: 'linear-gradient(145deg, #f1f8e9, #e8f5e9)',
         transition: 'transform 0.3s, box-shadow 0.3s',
         '&:hover': {
           transform: 'translateY(-3px)',
@@ -42,13 +42,13 @@ const WeatherForecastCard = ({ weather, loading }) => {
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <EventIcon sx={{ mr: 1.5, fontSize: '2rem', color: (theme) => theme.palette.secondary.main }} />
+        <EventIcon sx={{ mr: 1.5, fontSize: '2rem', color: '#2e7d32' }} />
         <Typography
           variant="h6"
           sx={{
             fontFamily: '"Playfair Display", serif',
             fontWeight: 700,
-            color: (theme) => theme.palette.primary.main,
+            color: '#2e7d32',
           }}
         >
           7-Day Forecast
@@ -77,8 +77,8 @@ const WeatherForecastCard = ({ weather, loading }) => {
               sx={{
                 p: 2,
                 textAlign: 'center',
-                borderRadius: '10px',
-                bgcolor: (theme) => theme.palette.action.hover,
+                borderRadius: '12px',
+                background: 'rgba(139, 195, 74, 0.1)',
                 minWidth: 90,
               }}
             >
