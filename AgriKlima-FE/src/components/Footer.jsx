@@ -14,14 +14,14 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 const Footer = () => {
   return (
-    <Box sx={{ backgroundColor: '#222', color: 'white', padding: '60px 5%' }}>
+    <Box sx={{ backgroundColor: '#000000ff', color: 'white', padding: '60px 5%', fontFamily: 'inherit' }}>
       <Container maxWidth="lg">
         <Grid container spacing={5}>
 
           {/* Column 1: Logo and Text */}
           <Grid item xs={12} md={4}>
             <img src={logo} alt="AgriKlima Logo" style={{ height: '45px', marginBottom: '15px' }} />
-            <Typography variant="body2" color="lightgray">
+            <Typography sx={{ color: 'lightgray', fontFamily: 'inherit' }}>
               There are many variations of passages offered which are available, but the majority suffered.
             </Typography>
             <Box mt={2}>
@@ -37,21 +37,20 @@ const Footer = () => {
              {/* You can add more navigation links here if you want */}
           </Grid>
 
-
           {/* Column 3: Contact Info */}
           <Grid item xs={12} md={4}>
-            <Typography variant="h6" gutterBottom>Contact</Typography>
+            <Typography sx={{ fontFamily: 'inherit', fontWeight: 'bold', mb: 2 }}>Contact</Typography>
             <Box display="flex" alignItems="center" mb={1}>
               <PhoneIcon sx={{ mr: 1, color: 'var(--primary-green)' }} />
-              <Typography variant="body2">0921245546</Typography>
+              <Typography sx={{ fontFamily: 'inherit' }}>0921245546</Typography>
             </Box>
             <Box display="flex" alignItems="center" mb={1}>
               <EmailIcon sx={{ mr: 1, color: 'var(--primary-green)' }} />
-              <Typography variant="body2">AgriKlima@gmail.com</Typography>
+              <Typography sx={{ fontFamily: 'inherit' }}>AgriKlima@gmail.com</Typography>
             </Box>
             <Box display="flex" alignItems="center">
               <LocationOnIcon sx={{ mr: 1, color: 'var(--primary-green)' }} />
-              <Typography variant="body2">Mexico, Pampanga</Typography>
+              <Typography sx={{ fontFamily: 'inherit' }}>Mexico, Pampanga</Typography>
             </Box>
           </Grid>
 
@@ -60,12 +59,12 @@ const Footer = () => {
         <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.2)' }} />
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-          <Typography variant="body2" color="lightgray">
+          <Typography sx={{ color: 'lightgray', fontFamily: 'inherit' }}>
             © All Copyright 2025
           </Typography>
           <Box>
-            <Link to="/terms" style={{ color: 'lightgray', textDecoration: 'none', marginRight: '15px' }}>Terms of Use</Link>
-            <Link to="/privacy" style={{ color: 'lightgray', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/terms" style={{ color: 'lightgray', textDecoration: 'none', marginRight: '15px', fontFamily: 'inherit' }}>Terms of Use</Link>
+            <Link to="/privacy" style={{ color: 'lightgray', textDecoration: 'none', fontFamily: 'inherit' }}>Privacy Policy</Link>
           </Box>
         </Box>
 

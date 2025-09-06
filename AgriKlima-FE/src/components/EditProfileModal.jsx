@@ -8,7 +8,6 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '' });
 
   useEffect(() => {
-    // --- Only update the form if the user prop exists ---
     if (user) {
       setFormData({
         firstName: user.firstName || '',
@@ -16,7 +15,7 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
         email: user.email || '',
       });
     }
-  }, [user, open]); // Re-run when modal opens or user data changes
+  }, [user, open]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,7 +28,6 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
       return;
     }
     try {
-      // ✅ Correct API call: updateUser(userId, formData)
       await api.updateUser(user._id, formData);
 
       Swal.fire({
@@ -40,8 +38,8 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
         timerProgressBar: true
       });
 
-      onUpdate(); // refresh user data in parent
-      onClose();  // close modal
+      onUpdate();
+      onClose();
     } catch (error) {
       console.error('Failed to update profile:', error);
       Swal.fire('Error', error.response?.data?.error || 'Failed to update profile.', 'error');
@@ -49,17 +47,25 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Edit Profile Information</DialogTitle>
-      <form onSubmit={handleSubmit}>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      sx={{ fontFamily: 'inherit' }} // ⬅️ all children inherit this font
+    >
+      <DialogTitle sx={{ fontFamily: 'inherit' }}>Edit Profile Information</DialogTitle>
+      <form onSubmit={handleSubmit} style={{ fontFamily: 'inherit' }}>
+        <DialogContent sx={{ fontFamily: 'inherit' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1, fontFamily: 'inherit' }}>
             <TextField
               label="First Name"
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
               required
+              fullWidth
+              sx={{ fontFamily: 'inherit' }}
             />
             <TextField
               label="Last Name"
@@ -67,6 +73,8 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
               value={formData.lastName}
               onChange={handleChange}
               required
+              fullWidth
+              sx={{ fontFamily: 'inherit' }}
             />
             <TextField
               label="Email Address"
@@ -75,12 +83,14 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
               value={formData.email}
               onChange={handleChange}
               required
+              fullWidth
+              sx={{ fontFamily: 'inherit' }}
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: '16px 24px' }}>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained">Save Changes</Button>
+        <DialogActions sx={{ p: '16px 24px', fontFamily: 'inherit' }}>
+          <Button onClick={onClose} sx={{ fontFamily: 'inherit' }}>Cancel</Button>
+          <Button type="submit" variant="contained" sx={{ fontFamily: 'inherit' }}>Save Changes</Button>
         </DialogActions>
       </form>
     </Dialog>

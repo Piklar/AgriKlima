@@ -202,14 +202,13 @@ const ArticleCard = ({ image, title, description, loading }) => {
           fullWidth
           endIcon={<ChevronRight />}
           sx={{
-            background: 'linear-gradient(45deg, #8BC34A 30%, #CDDC39 90%)',
+            background: 'green)',
             borderRadius: '12px',
             textTransform: 'none',
             py: 1,
             fontWeight: 600,
             boxShadow: '0 3px 5px 2px rgba(139, 195, 74, .2)',
             '&:hover': {
-              background: 'linear-gradient(45deg, #7CB342 30%, #C0CA33 90%)',
               boxShadow: '0 4px 8px 2px rgba(139, 195, 74, .3)'
             }
           }}
