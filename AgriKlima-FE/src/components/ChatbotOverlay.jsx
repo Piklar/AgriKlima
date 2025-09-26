@@ -8,14 +8,15 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import * as api from '../services/api';
 
 const ChatbotOverlay = ({ open, onClose }) => {
+    // State now follows the Gemini API format: { role: 'user'/'model', parts: [{ text: '...' }] }
     const [messages, setMessages] = useState([
-        { sender: 'bot', text: 'Hello! I am KlimaBot. How can I help you with your farming needs today?' }
+        { role: 'model', parts: [{ text: 'Hello! I am KlimaBot. How can I help you with your farming needs today?' }] }
     ]);
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
 
-    // Auto-scroll to the latest message
+    // Effect to auto-scroll to the newest message
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
@@ -23,19 +24,36 @@ const ChatbotOverlay = ({ open, onClose }) => {
     const handleSend = async () => {
         if (!inputValue.trim()) return;
 
-        const userMessage = { sender: 'user', text: inputValue };
-        setMessages(prev => [...prev, userMessage]);
+        const userMessageText = inputValue;
+        const newUserMessage = { role: 'user', parts: [{ text: userMessageText }] };
+
+        // Add user's message to UI and clear input field
+        setMessages(prev => [...prev, newUserMessage]);
         setInputValue('');
         setIsLoading(true);
 
+        // --- THE CONVERSATION HISTORY FIX ---
+        // We prepare the history by taking the current message list.
+        // We slice(1) to remove the initial "Hello!" message from the context, keeping it clean.
+        const chatHistory = messages.slice(1).map(msg => ({
+            role: msg.role,
+            parts: msg.parts,
+        }));
+
         try {
-            const response = await api.sendMessageToBot({ message: inputValue });
-            const botMessage = { sender: 'bot', text: response.data.response };
+            const response = await api.sendMessageToBot({
+                message: userMessageText,
+                history: chatHistory
+            });
+
+            const botMessage = { role: 'model', parts: [{ text: response.data.response }] };
             setMessages(prev => [...prev, botMessage]);
+
         } catch (error) {
-            const errorMessage = { sender: 'bot', text: 'Sorry, I am having trouble connecting. Please try again.' };
+            const errorMessageText = error.response?.data?.error || 'Sorry, I am having trouble connecting. Please try again later.';
+            const errorMessage = { role: 'model', parts: [{ text: errorMessageText }] };
             setMessages(prev => [...prev, errorMessage]);
-            console.error("Chatbot error:", error);
+            console.error("Chatbot API error:", error);
         } finally {
             setIsLoading(false);
         }
@@ -44,7 +62,7 @@ const ChatbotOverlay = ({ open, onClose }) => {
     if (!open) return null;
 
     return (
-        <Paper 
+        <Paper
             elevation={8}
             sx={{
                 position: 'fixed',
@@ -58,10 +76,9 @@ const ChatbotOverlay = ({ open, onClose }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
-                zIndex: 1300 // Ensure it's above other elements
+                zIndex: 1300
             }}
         >
-            {/* Header */}
             <Box sx={{ p: 2, bgcolor: 'var(--primary-green)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <SmartToyIcon /> KlimaBot
@@ -69,21 +86,21 @@ const ChatbotOverlay = ({ open, onClose }) => {
                 <IconButton onClick={onClose} sx={{ color: 'white' }}><CloseIcon /></IconButton>
             </Box>
 
-            {/* Messages Area */}
             <Box sx={{ flexGrow: 1, p: 2, overflowY: 'auto', bgcolor: '#f9fafb' }}>
                 {messages.map((msg, index) => (
-                    <Box key={index} sx={{ mb: 2, display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <Box key={index} sx={{ mb: 2, display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                         <Paper
                             elevation={1}
                             sx={{
                                 p: 1.5,
                                 borderRadius: '16px',
-                                bgcolor: msg.sender === 'user' ? 'primary.main' : 'grey.200',
-                                color: msg.sender === 'user' ? 'white' : 'black',
-                                maxWidth: '80%'
+                                bgcolor: msg.role === 'user' ? 'primary.main' : 'grey.200',
+                                color: msg.role === 'user' ? 'white' : 'black',
+                                maxWidth: '80%',
+                                whiteSpace: 'pre-wrap' // Ensures proper line breaks from AI
                             }}
                         >
-                            {msg.text}
+                            {msg.parts[0].text}
                         </Paper>
                     </Box>
                 ))}
@@ -91,7 +108,6 @@ const ChatbotOverlay = ({ open, onClose }) => {
                 <div ref={messagesEndRef} />
             </Box>
 
-            {/* Input Area */}
             <Box component="form" onSubmit={(e) => { e.preventDefault(); handleSend(); }} sx={{ p: 1, display: 'flex', gap: 1, borderTop: '1px solid #eee' }}>
                 <TextField fullWidth variant="outlined" size="small" placeholder="Ask about crops, pests..." value={inputValue} onChange={(e) => setInputValue(e.target.value)} />
                 <Button type="submit" variant="contained" endIcon={<SendIcon />} disabled={isLoading}>Send</Button>
