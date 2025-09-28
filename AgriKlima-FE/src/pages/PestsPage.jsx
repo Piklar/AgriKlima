@@ -14,6 +14,7 @@ import * as api from '../services/api';
 import pestsHero from '../assets/images/pests-hero.jpg';
 import PestDetailOverlay from '../components/PestDetailOverlay';
 import NewsSummaryOverlay from '../components/NewsSummaryOverlay';
+import ViewAllOverlay from '../components/ViewAllOverlay'; 
 
 const theme = createTheme({
   palette: {
@@ -153,6 +154,9 @@ const PestsPage = () => {
   const [isNewsOverlayOpen, setIsNewsOverlayOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
 
+  // State for View All overlay (pests)
+  const [isViewAllOpen, setIsViewAllOpen] = useState(false);
+
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', description: '' });
 
@@ -199,6 +203,9 @@ const PestsPage = () => {
   };
   const handleCloseInfoModal = () => setIsInfoModalOpen(false);
 
+  // Calculate displayed pests and remaining pests for "View All"
+  const displayedPests = pests.slice(0, 6); // Show first 6 pests
+  const remainingPests = pests.length > 6 ? pests.slice(6) : []; // Pests beyond the first 6
   const articles = news.length > 0 ? news.slice(0, 3) : [];
 
   if (error) { 
@@ -342,79 +349,108 @@ const PestsPage = () => {
               ))}
             </Grid>
           ) : pests.length > 0 ? ( 
-            <Grid container spacing={4} justifyContent="center">
-              {pests.map(pest => ( 
-                <Grid item xs={12} sm={6} md={4} key={pest._id} sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Card 
-                    onClick={() => handleOpenPestOverlay(pest)} 
+            <>
+              <Grid container spacing={4} justifyContent="center">
+                {displayedPests.map(pest => ( 
+                  <Grid item xs={12} sm={6} md={4} key={pest._id} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Card 
+                      onClick={() => handleOpenPestOverlay(pest)} 
+                      sx={{ 
+                        borderRadius: theme.shape.borderRadius, 
+                        boxShadow: 2, 
+                        cursor: 'pointer', 
+                        overflow: 'hidden', 
+                        transition: 'all 0.3s ease', 
+                        width: '100%', 
+                        maxWidth: '350px', 
+                        '&:hover': { 
+                          transform: 'translateY(-5px)', 
+                          boxShadow: '0 8px 20px rgba(0,0,0,0.12)', 
+                        } 
+                      }}
+                    >
+                      <Box sx={{ position: 'relative' }}>
+                        <CardMedia 
+                          component="img" 
+                          height="250" 
+                          image={pest.imageUrl} 
+                          alt={pest.name} 
+                          sx={{ 
+                            transition: 'transform 0.5s', 
+                            '&:hover': { transform: 'scale(1.05)' }, 
+                            width: '100%', 
+                            objectFit: 'cover' 
+                          }} 
+                        />
+                        <Chip 
+                          label="Pest Alert" 
+                          sx={{ 
+                            position: 'absolute', 
+                            top: 16, 
+                            right: 16, 
+                            background: theme.palette.error.main, 
+                            color: 'white', 
+                            fontWeight: 600, 
+                            borderRadius: theme.shape.borderRadius 
+                          }} 
+                        />
+                      </Box>
+                      <CardContent>
+                        <Typography gutterBottom variant="h5" component="div" sx={{ fontWeight: 600, color: 'primary.dark', mb: 2 }}>
+                          {pest.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, minHeight: '60px' }}>
+                          {pest.overview?.description ? pest.overview.description.substring(0, 100) + '...' : 'No description available.'}
+                        </Typography>
+                        <Button 
+                          variant="outlined" 
+                          fullWidth 
+                          endIcon={<ChevronRight />} 
+                          sx={{ 
+                            borderColor: 'primary.main', 
+                            color: 'primary.main', 
+                            borderRadius: theme.shape.borderRadius, 
+                            '&:hover': { 
+                              borderColor: 'primary.dark', 
+                              backgroundColor: 'rgba(46, 125, 50, 0.1)' 
+                            } 
+                          }}
+                        >
+                          Learn More
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+              
+              {/* View All Button for pests (shows when 7 or more pests exist) */}
+              {pests.length >= 7 && (
+                <Box sx={{ textAlign: 'center', mt: 6 }}>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    onClick={() => setIsViewAllOpen(true)}
+                    endIcon={<ChevronRight />}
                     sx={{ 
-                      borderRadius: theme.shape.borderRadius, 
-                      boxShadow: 2, 
-                      cursor: 'pointer', 
-                      overflow: 'hidden', 
-                      transition: 'all 0.3s ease', 
-                      width: '100%', 
-                      maxWidth: '350px', 
-                      '&:hover': { 
-                        transform: 'translateY(-5px)', 
-                        boxShadow: '0 8px 20px rgba(0,0,0,0.12)', 
-                      } 
+                      borderColor: 'primary.main', 
+                      color: 'primary.main',
+                      borderRadius: theme.shape.borderRadius,
+                      px: 4,
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      '&:hover': {
+                        borderColor: 'primary.dark', 
+                        backgroundColor: 'rgba(46, 125, 50, 0.1)'
+                      }
                     }}
                   >
-                    <Box sx={{ position: 'relative' }}>
-                      <CardMedia 
-                        component="img" 
-                        height="250" 
-                        image={pest.imageUrl} 
-                        alt={pest.name} 
-                        sx={{ 
-                          transition: 'transform 0.5s', 
-                          '&:hover': { transform: 'scale(1.05)' }, 
-                          width: '100%', 
-                          objectFit: 'cover' 
-                        }} 
-                      />
-                      <Chip 
-                        label="Pest Alert" 
-                        sx={{ 
-                          position: 'absolute', 
-                          top: 16, 
-                          right: 16, 
-                          background: theme.palette.error.main, 
-                          color: 'white', 
-                          fontWeight: 600, 
-                          borderRadius: theme.shape.borderRadius 
-                        }} 
-                      />
-                    </Box>
-                    <CardContent>
-                      <Typography gutterBottom variant="h5" component="div" sx={{ fontWeight: 600, color: 'primary.dark', mb: 2 }}>
-                        {pest.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3, minHeight: '60px' }}>
-                        {pest.overview?.description ? pest.overview.description.substring(0, 100) + '...' : 'No description available.'}
-                      </Typography>
-                      <Button 
-                        variant="outlined" 
-                        fullWidth 
-                        endIcon={<ChevronRight />} 
-                        sx={{ 
-                          borderColor: 'primary.main', 
-                          color: 'primary.main', 
-                          borderRadius: theme.shape.borderRadius, 
-                          '&:hover': { 
-                            borderColor: 'primary.dark', 
-                            backgroundColor: 'rgba(46, 125, 50, 0.1)' 
-                          } 
-                        }}
-                      >
-                        Learn More
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+                    View All Pests ({pests.length})
+                  </Button>
+                </Box>
+              )}
+            </>
           ) : ( 
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <BugReport sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
@@ -462,6 +498,18 @@ const PestsPage = () => {
         <PestDetailOverlay open={isPestOverlayOpen} onClose={handleClosePestOverlay} pestData={selectedPest} />
         <NewsSummaryOverlay open={isNewsOverlayOpen} onClose={handleCloseNewsOverlay} articleData={selectedArticle} />
         <InfoModal open={isInfoModalOpen} handleClose={handleCloseInfoModal} content={modalContent} />
+        
+        {/* View All Overlay for Pests */}
+        <ViewAllOverlay
+          open={isViewAllOpen}
+          onClose={() => setIsViewAllOpen(false)}
+          title="All Available Pests"
+          items={pests}
+          onItemClick={(item) => {
+            setIsViewAllOpen(false);
+            setTimeout(() => handleOpenPestOverlay(item), 300);
+          }}
+        />
       </Box>
     </ThemeProvider>
   );
