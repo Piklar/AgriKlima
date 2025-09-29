@@ -3,14 +3,13 @@
 const Crop = require('../models/Crop');
 const cloudinary = require('../config/cloudinary');
 
-// --- THIS IS THE FIX ---
+// --- [CREATE] Add a new crop ---
 module.exports.addCrop = (req, res) => {
-    // Destructure the nested objects and the new crucial field
     const { 
         name, 
         description, 
         imageUrl, 
-        growingDuration, // <-- This field was missing
+        growingDuration, // <-- Fix: ensure this field is included
         season, 
         overview, 
         growingGuide, 
@@ -22,27 +21,27 @@ module.exports.addCrop = (req, res) => {
         name,
         description,
         imageUrl,
-        growingDuration, // <-- Add this to the new Crop instance
+        growingDuration,
         season,
         overview: {
-            plantingSeason: overview.plantingSeason,
-            harvestTime: overview.harvestTime
+            plantingSeason: overview?.plantingSeason,
+            harvestTime: overview?.harvestTime
         },
         growingGuide: {
-            climate: growingGuide.climate,
-            soilType: growingGuide.soilType,
-            waterNeeds: growingGuide.waterNeeds,
-            fertilizer: growingGuide.fertilizer
+            climate: growingGuide?.climate,
+            soilType: growingGuide?.soilType,
+            waterNeeds: growingGuide?.waterNeeds,
+            fertilizer: growingGuide?.fertilizer
         },
         healthCare: {
-            commonDiseases: healthCare.commonDiseases,
-            pestControl: healthCare.pestControl,
-            nutritionalValue: healthCare.nutritionalValue
+            commonDiseases: healthCare?.commonDiseases,
+            pestControl: healthCare?.pestControl,
+            nutritionalValue: healthCare?.nutritionalValue
         },
         marketInfo: {
-            priceRange: marketInfo.priceRange,
-            storageMethod: marketInfo.storageMethod,
-            cookingTips: marketInfo.cookingTips
+            priceRange: marketInfo?.priceRange,
+            storageMethod: marketInfo?.storageMethod,
+            cookingTips: marketInfo?.cookingTips
         }
     });
 
@@ -54,6 +53,7 @@ module.exports.addCrop = (req, res) => {
         });
 };
 
+// --- [UPDATE] Update crop image ---
 module.exports.updateCropImage = async (req, res) => {
     try {
         if (!req.file) {
@@ -61,16 +61,19 @@ module.exports.updateCropImage = async (req, res) => {
         }
         const fileBase64 = req.file.buffer.toString('base64');
         const fileUri = `data:${req.file.mimetype};base64,${fileBase64}`;
+
         const result = await cloudinary.uploader.upload(fileUri, {
             folder: "agriklima_crops",
             public_id: req.params.cropId,
             overwrite: true,
         });
+
         const updatedCrop = await Crop.findByIdAndUpdate(
             req.params.cropId,
             { $set: { imageUrl: result.secure_url } },
             { new: true }
         );
+
         if (!updatedCrop) {
             return res.status(404).send({ error: 'Crop not found' });
         }
@@ -81,11 +84,36 @@ module.exports.updateCropImage = async (req, res) => {
     }
 };
 
-module.exports.getAllCrops = (req, res) => {
-    Crop.find({})
-        .then(crops => res.status(200).send(crops))
-        .catch(err => res.status(500).send({ error: "Failed to fetch crops", details: err.message }));
+// --- [READ] Get all crops (with search + pagination) ---
+module.exports.getAllCrops = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || "";
+
+        const query = {
+            name: { $regex: search, $options: "i" }
+        };
+
+        const totalCrops = await Crop.countDocuments(query);
+        const totalPages = Math.ceil(totalCrops / limit);
+
+        const crops = await Crop.find(query)
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        res.status(200).send({
+            crops,
+            totalPages,
+            currentPage: page,
+            totalCrops
+        });
+    } catch (err) {
+        res.status(500).send({ error: "Failed to fetch crops", details: err.message });
+    }
 };
+
+// --- [READ] Get a single crop by ID ---
 module.exports.getCropById = (req, res) => {
     Crop.findById(req.params.cropId)
         .then(crop => {
@@ -94,6 +122,8 @@ module.exports.getCropById = (req, res) => {
         })
         .catch(err => res.status(500).send({ error: "Failed to fetch crop", details: err.message }));
 };
+
+// --- [UPDATE] Update a crop's information ---
 module.exports.updateCrop = (req, res) => {
     Crop.findByIdAndUpdate(
         req.params.cropId,
@@ -106,6 +136,8 @@ module.exports.updateCrop = (req, res) => {
     })
     .catch(err => res.status(500).send({ error: "Failed to update crop", details: err.message }));
 };
+
+// --- [DELETE] Delete a crop ---
 module.exports.deleteCrop = (req, res) => {
     Crop.findByIdAndDelete(req.params.cropId)
     .then(crop => {

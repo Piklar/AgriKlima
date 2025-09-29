@@ -8,9 +8,13 @@ import {
   Switch,
   Tooltip,
   Avatar,
+  TextField,
+  InputAdornment,
+  Pagination,
   useMediaQuery
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+import SearchIcon from '@mui/icons-material/Search';
 import Swal from 'sweetalert2';
 
 import * as api from '../../services/api';
@@ -20,19 +24,24 @@ const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const { token } = useAuth();
-
-  // ✅ for responsiveness
   const isSmall = useMediaQuery('(max-width:600px)');
+
+  // --- NEW STATE for search and pagination ---
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
 
   const fetchUsers = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const response = await api.getAllUsers();
+      const response = await api.getAllUsers({ search, page, limit: 10 });
       if (response.data && response.data.users) {
         setUsers(response.data.users);
+        setTotalPages(response.data.totalPages);
       } else {
         setUsers([]);
+        setTotalPages(0);
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -40,11 +49,18 @@ const ManageUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, search, page]);
 
   useEffect(() => {
-    fetchUsers();
+    const handler = setTimeout(() => {
+      fetchUsers();
+    }, 500); // debounce
+    return () => clearTimeout(handler);
   }, [fetchUsers]);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
 
   const handleSetAdmin = async (id, newIsAdmin) => {
     Swal.fire({
@@ -62,7 +78,6 @@ const ManageUsers = () => {
             Swal.fire('Success!', 'User has been promoted to Admin.', 'success');
             fetchUsers();
           } else {
-            // This would require a new backend endpoint to set isAdmin to false
             Swal.fire('Info', 'Demoting users from admin status is not yet supported.', 'info');
           }
         } catch (error) {
@@ -115,16 +130,49 @@ const ManageUsers = () => {
         Manage Users
       </Typography>
 
-      <Paper sx={{ height: '75vh', width: '100%' }}>
+      {/* --- NEW SEARCH BAR --- */}
+      <Paper sx={{ mb: 2, p: 2 }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search by name or email..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Paper>
+
+      <Paper sx={{ height: '70vh', width: '100%' }}>
         <DataGrid
           rows={users}
           columns={columns}
           loading={loading}
           getRowId={(row) => row._id}
           rowHeight={isSmall ? 60 : 70}
-          autoHeight={false}
+          paginationMode="server"
+          rowCount={totalPages * 10}
+          hideFooter
         />
       </Paper>
+
+      {/* --- NEW PAGINATION CONTROLS --- */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2 }}>
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={handlePageChange}
+          color="primary"
+        />
+      </Box>
     </Box>
   );
 };

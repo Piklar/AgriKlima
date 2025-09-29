@@ -1,8 +1,9 @@
 // src/pages/Admin/ManageCrops.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, Paper, Avatar } from '@mui/material';
+import { Box, Button, Typography, Paper, Avatar, TextField, InputAdornment, Pagination } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import Swal from 'sweetalert2';
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
@@ -16,22 +17,35 @@ const ManageCrops = () => {
   const [modalMode, setModalMode] = useState('add');
   const [currentCrop, setCurrentCrop] = useState(null);
 
+  // --- NEW STATE for search and pagination ---
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+
   const fetchCrops = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.getCrops();
-      setCrops(response.data);
+      const response = await api.getCrops({ search, page, limit: 10 });
+      setCrops(response.data.crops);
+      setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error('Failed to fetch crops:', error);
       Swal.fire('Error', 'Could not fetch crops from the server.', 'error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [search, page]);
 
   useEffect(() => {
-    fetchCrops();
+    const handler = setTimeout(() => {
+      fetchCrops();
+    }, 500); // debounce search
+    return () => clearTimeout(handler);
   }, [fetchCrops]);
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
 
   const handleOpenAddModal = () => {
     setModalMode('add');
@@ -60,7 +74,7 @@ const ManageCrops = () => {
       if (modalMode === 'add') {
         const response = await api.addCrop(formData, token);
         savedItem = response.data;
-        if (imageFile)
+        if (imageFile) {
           Swal.fire({
             title: 'Step 1/2 Complete',
             text: 'Crop details saved. Now uploading image...',
@@ -68,6 +82,7 @@ const ManageCrops = () => {
             timer: 1500,
             showConfirmButton: false,
           });
+        }
       } else {
         const response = await api.updateCrop(currentCrop._id, formData, token);
         savedItem = response.data;
@@ -182,6 +197,7 @@ const ManageCrops = () => {
 
   return (
     <Box sx={{ p: { xs: 1, md: 3 } }}>
+      {/* Header */}
       <Box
         sx={{
           display: 'flex',
@@ -208,19 +224,52 @@ const ManageCrops = () => {
           Add New Crop
         </Button>
       </Box>
-      <Paper sx={{ height: '75vh', width: '100%' }}>
+
+      {/* Search Bar */}
+      <Paper sx={{ mb: 2, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search by crop name..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Paper>
+
+      {/* Data Table */}
+      <Paper sx={{ height: '70vh', width: '100%' }}>
         <DataGrid
           rows={crops}
           columns={columns}
           loading={loading}
           getRowId={(row) => row._id}
           rowHeight={70}
+          paginationMode="server"
+          rowCount={totalPages * 10}
+          hideFooter
           sx={{
             '& .MuiDataGrid-cell': { py: 1 },
             '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f0f4f0' },
           }}
         />
       </Paper>
+
+      {/* Pagination */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2 }}>
+        <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
+      </Box>
+
+      {/* Modal */}
       <AdminFormModal
         open={isModalOpen}
         onClose={handleCloseModal}
