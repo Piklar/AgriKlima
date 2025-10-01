@@ -78,36 +78,7 @@ module.exports.updateProfilePicture = async (req, res) => {
         if (!req.file) {
             return res.status(400).send({ error: 'No file uploaded.' });
         }
-        const fileBase64 = req.file.buffer.toString('base64');
-        const fileUri = `data:${req.file.mimetype};base64,${fileBase64}`;
-        const result = await cloudinary.uploader.upload(fileUri, {
-            folder: "agriklima_profiles",
-            public_id: req.user.id,
-            overwrite: true,
-            transformation: [ { width: 300, height: 300, gravity: "face", crop: "fill" } ]
-        });
-        const updatedUser = await User.findByIdAndUpdate(
-            req.user.id,
-            { $set: { profilePictureUrl: result.secure_url } },
-            { new: true }
-        );
-        if (!updatedUser) { return res.status(404).send({ error: 'User not found' }); }
-        res.status(200).send({ message: 'Profile picture updated successfully.', user: updatedUser });
-    } catch (error) {
-        console.error('Error updating profile picture:', error);
-        res.status(500).send({ error: 'Internal server error.' });
-    }
-};
 
-// --- [REWRITTEN FUNCTION for file uploads] ---
-module.exports.updateProfilePicture = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).send({ error: 'No file uploaded.' });
-        }
-
-        // Multer's memory storage gives us a buffer. We need to convert it to a
-        // base64 string for Cloudinary to process.
         const fileBase64 = req.file.buffer.toString('base64');
         const fileUri = `data:${req.file.mimetype};base64,${fileBase64}`;
 
@@ -177,7 +148,6 @@ module.exports.resetPassword = async (req, res) => {
   }
 };
 
-
 // --- [UPDATE] Update a user's profile information ---
 module.exports.updateUser = async (req, res) => {
     try {
@@ -210,17 +180,41 @@ module.exports.updateUser = async (req, res) => {
     }
 };
 
-
 // === ADMIN-ONLY FUNCTIONS ===
-module.exports.getAllUsers = (req, res) => {
-    User.find({}).select('-password')
-    .then(users => {
-        return res.status(200).send({ users: users });
-    })
-    .catch(err => {
+// UPGRADED getAllUsers with search + pagination
+module.exports.getAllUsers = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || "";
+
+        const query = {
+            $or: [
+                { firstName: { $regex: search, $options: "i" } },
+                { lastName: { $regex: search, $options: "i" } },
+                { email: { $regex: search, $options: "i" } }
+            ]
+        };
+
+        const totalUsers = await User.countDocuments(query);
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        const users = await User.find(query)
+            .select('-password')
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        res.status(200).send({
+            users,
+            totalPages,
+            currentPage: page,
+            totalUsers
+        });
+
+    } catch (err) {
         console.error("Error in getAllUsers:", err);
         return res.status(500).send({ error: 'Failed to fetch users' });
-    });
+    }
 };
 
 module.exports.setAsAdmin = (req, res) => {
@@ -236,8 +230,6 @@ module.exports.deleteUser = (req, res) => {
 };
 
 // --- NEW CONTROLLER FUNCTIONS for User's Planted Crops ---
-
-// [CREATE] Add a new crop to the user's farm
 module.exports.addUserCrop = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -276,7 +268,6 @@ module.exports.addUserCrop = async (req, res) => {
     }
 };
 
-// [READ] Get all of the logged-in user's planted crops
 module.exports.getUserCrops = async (req, res) => {
     try {
         const user = await User.findById(req.user.id)
@@ -293,7 +284,6 @@ module.exports.getUserCrops = async (req, res) => {
     }
 };
 
-// [DELETE] Remove a crop from the user's farm
 module.exports.deleteUserCrop = async (req, res) => {
     try {
         const userId = req.user.id;
