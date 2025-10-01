@@ -1,4 +1,3 @@
-// src/pages/CropsPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Box, Typography, Grid, Card, CardContent, CardMedia,
@@ -147,16 +146,25 @@ const CropsPage = () => {
     setLoading(true);
     setError(null);
     try {
+      // Assuming api.getCrops() fetches from your `getAllCrops` endpoint
+      // and api.getNews() fetches news articles
       const [cropsResponse, newsResponse] = await Promise.all([api.getCrops(), api.getNews()]);
-      setCrops(cropsResponse.data || []);
-      setNews(newsResponse.data || []);
+
+      // --- THIS IS THE FIX ---
+      // We now get the 'crops' array from the response data object
+      setCrops(cropsResponse.data.crops || []); 
+      
+      // Assuming newsResponse.data is still an array
+      setNews(newsResponse.data || []); 
+
     } catch (err) {
       console.error("Failed to fetch page data:", err);
-      setError("Failed to load crops. Please try again later.");
+      setError("Failed to load page data. Please try again later.");
     } finally {
       setLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     fetchPageData();
