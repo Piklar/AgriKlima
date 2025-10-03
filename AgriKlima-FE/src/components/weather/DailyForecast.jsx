@@ -1,141 +1,104 @@
 // src/components/weather/DailyForecast.jsx
-import React, { useState, useEffect } from 'react';
-import {
-  Paper,
-  Box,
-  Typography,
-  Skeleton,
-  Grid,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  useTheme,
-} from '@mui/material';
-import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
-import WbCloudyOutlinedIcon from '@mui/icons-material/WbCloudyOutlined';
-import GrainIcon from '@mui/icons-material/Grain';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
-const getWeatherIcon = (condition, theme) => {
-  if (!condition) return <WbCloudyOutlinedIcon sx={{ fontSize: 28, color: '#555' }} />;
-  const lowerCaseCondition = condition.toLowerCase();
-  if (lowerCaseCondition.includes('sun'))
-    return <WbSunnyOutlinedIcon sx={{ color: theme.palette.warning.main, fontSize: 28 }} />;
-  if (lowerCaseCondition.includes('rain'))
-    return <GrainIcon sx={{ color: theme.palette.info.main, fontSize: 28 }} />;
-  return <WbCloudyOutlinedIcon sx={{ fontSize: 28, color: '#555' }} />;
+import React from 'react';
+import { Paper, Box, Typography, Skeleton, Divider } from '@mui/material';
+import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
+import CloudIcon from '@mui/icons-material/Cloud';
+import GrainIcon from '@mui/icons-material/Grain';
+import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
+import AcUnitIcon from '@mui/icons-material/AcUnit';
+
+const getWeatherIcon = (icon, size = '2.5rem') => {
+  if (!icon) return <CloudIcon sx={{ fontSize: size, color: '#90caf9' }} />;
+  
+  const iconCode = icon.substring(0, 2);
+  const commonStyle = { fontSize: size };
+  
+  switch(iconCode) {
+    case '01': return <WbSunnyOutlinedIcon sx={{ ...commonStyle, color: '#ffa000' }} />;
+    case '02': 
+    case '03': 
+    case '04': return <CloudIcon sx={{ ...commonStyle, color: '#90caf9' }} />;
+    case '09': 
+    case '10': return <GrainIcon sx={{ ...commonStyle, color: '#64b5f6' }} />;
+    case '11': return <ThunderstormIcon sx={{ ...commonStyle, color: '#7e57c2' }} />;
+    case '13': return <AcUnitIcon sx={{ ...commonStyle, color: '#81d4fa' }} />;
+    default: return <CloudIcon sx={{ ...commonStyle, color: '#90caf9' }} />;
+  }
 };
 
-const DailyForecast = ({ weather, loading }) => {
-  const theme = useTheme();
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (date) =>
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-  const formatDate = (date) =>
-    date.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
-
-  const forecast = weather?.daily?.slice(0, 5) || [];
-  const playfairFont = { fontFamily: '"Playfair Display", serif' };
-
-  const paperStyle = {
-    p: 3,
-    borderRadius: '10px',
-    backgroundColor: '#ffffff',
-    color: '#000',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.1)', // added subtle shadow
-    ...playfairFont,
-  };
-
+const DailyForecast = ({ forecast, loading }) => {
   return (
-    <Grid container spacing={3}>
-      {/* 5-Day Forecast */}
-      <Grid item xs={12}>
-        <Paper elevation={0} sx={paperStyle}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <CalendarTodayIcon sx={{ mr: 1.5, fontSize: 26, color: '#000' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#000', ...playfairFont }}>
-              5-Day Forecast
-            </Typography>
-          </Box>
+    <Paper elevation={3} sx={{ p: 3, borderRadius: 4 }}>
+      <Typography variant="h5" gutterBottom fontWeight="600" color="primary">
+        7-Day Forecast
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
+      <Box sx={{ mt: 2 }}>
+        {loading
+          ? Array.from({ length: 7 }).map((_, i) => (
+              <Box key={i} sx={{ mb: 2 }}>
+                <Skeleton width="100%" height={100} sx={{ borderRadius: 2 }} />
+              </Box>
+            ))
+          : forecast.map((day, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2.5,
+                  mb: 1.5,
+                  borderRadius: 3,
+                  bgcolor: index === 0 ? 'primary.light' : 'background.default',
+                  color: index === 0 ? 'white' : 'inherit',
+                  border: index === 0 ? '2px solid #2e7d32' : '1px solid #e0e0e0',
+                  transition: 'all 0.2s',
+                  '&:hover': { 
+                    bgcolor: index === 0 ? 'primary.main' : '#f5f5f5',
+                    transform: 'translateX(8px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <Box sx={{ flex: 1, minWidth: '100px' }}>
+                  <Typography variant="h6" fontWeight="bold">
+                    {day.day}
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: index === 0 ? 0.9 : 0.7 }}>
+                    {day.date}
+                  </Typography>
+                </Box>
 
-          <List>
-            {loading
-              ? [...Array(5)].map((_, i) => (
-                  <ListItem key={i}>
-                    <Skeleton variant="text" width="100%" height={30} />
-                  </ListItem>
-                ))
-              : forecast.length > 0
-              ? forecast.map((item) => (
-                  <ListItem
-                    key={item.day}
-                    disablePadding
-                    sx={{ justifyContent: 'space-between' }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <ListItemIcon sx={{ minWidth: 40, color: '#000' }}>
-                        {getWeatherIcon(item.condition, theme)}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={item.day}
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: '#000',
-                          ...playfairFont,
-                        }}
-                      />
-                    </Box>
-                    <Typography
-                      sx={{
-                        fontWeight: 'bold',
-                        fontSize: '1.5rem',
-                        color: '#000',
-                        ...playfairFont,
-                      }}
-                    >
-                      {Math.round(item.temperature)}°C
-                    </Typography>
-                  </ListItem>
-                ))
-              : (
-                <Typography sx={{ p: 2, color: '#000', ...playfairFont }}>
-                  5-day forecast not available.
-                </Typography>
-              )}
-          </List>
-        </Paper>
-      </Grid>
+                <Box sx={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  {getWeatherIcon(day.icon)}
+                  <Typography variant="body2" fontWeight="500" sx={{ mt: 1 }}>
+                    {day.condition}
+                  </Typography>
+                </Box>
 
-      {/* Current Time */}
-      <Grid item xs={12}>
-        <Paper elevation={0} sx={{ ...paperStyle, textAlign: 'center' }}>
-          <Typography
-            sx={{
-              fontSize: '4.5rem',
-              fontWeight: 'bold',
-              lineHeight: 1.2,
-              color: '#000',
-              ...playfairFont,
-            }}
-          >
-            {formatTime(currentTime)}
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{ fontSize: '1.25rem', color: '#000', ...playfairFont }}
-          >
-            {formatDate(currentTime)}
-          </Typography>
-        </Paper>
-      </Grid>
-    </Grid>
+                <Box sx={{ flex: 1, textAlign: 'center' }}>
+                  <Typography variant="body2" sx={{ mb: 0.5, opacity: index === 0 ? 0.9 : 0.7 }}>
+                    💧 {day.humidity}% humidity
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: index === 0 ? 0.9 : 0.7 }}>
+                    🌧️ {Math.round(day.precipitation)}% rain
+                  </Typography>
+                </Box>
+
+                <Box sx={{ flex: 1, textAlign: 'right' }}>
+                  <Typography variant="h5" fontWeight="bold">
+                    {day.high}°
+                  </Typography>
+                  <Typography variant="body1" sx={{ opacity: index === 0 ? 0.9 : 0.6 }}>
+                    {day.low}°
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+      </Box>
+    </Paper>
   );
 };
 

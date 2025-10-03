@@ -11,6 +11,7 @@ const cropRoutes = require("./routes/cropRoutes");
 const pestRoutes = require("./routes/pestRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
+const weatherRulesRoutes = require('./routes/weatherRulesRoutes');
 const taskRoutes = require("./routes/taskRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 
@@ -36,6 +37,7 @@ app.use("/news", newsRoutes);
 app.use("/weather", weatherRoutes);
 app.use("/tasks", taskRoutes); 
 app.use("/chat", chatRoutes);
+app.use('/api/weather-rules', weatherRulesRoutes);
 
 app.listen(PORT, () => {
     console.log(`API is now online on port ${PORT}`);
