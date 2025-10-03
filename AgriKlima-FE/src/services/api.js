@@ -90,5 +90,10 @@ export const addWeather = (data) => API.post("/weather", data);
 export const updateWeather = (location, data) => API.patch(`/weather/${location}`, data);
 export const deleteWeather = (id) => API.delete(`/weather/${id}`);
 
+// Weather Rules
+export const getWeatherRules = () => axios.get(`${API_URL}/weather-rules`);
+export const updateWeatherRules = (rules) => axios.put(`${API_URL}/weather-rules`, rules);
+export const resetWeatherRules = () => axios.post(`${API_URL}/weather-rules/reset`);
+
 // ---- CHATBOT ROUTE ----
 export const sendMessageToBot = (data) => API.post("/chat/send", data);

@@ -1,109 +1,156 @@
 // src/components/weather/CurrentWeather.jsx
 
 import React from 'react';
-import { Paper, Box, Typography, Grid, Skeleton, ButtonBase } from '@mui/material';
+import { Paper, Box, Typography, Grid, Skeleton } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import WbCloudyOutlinedIcon from '@mui/icons-material/WbCloudyOutlined';
+import CloudIcon from '@mui/icons-material/Cloud';
 import GrainIcon from '@mui/icons-material/Grain';
-import AirIcon from '@mui/icons-material/Air';
+import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
+import AcUnitIcon from '@mui/icons-material/AcUnit';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SpeedIcon from '@mui/icons-material/Speed';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import AirIcon from '@mui/icons-material/Air';
 
-const theme = createTheme({
-  palette: {
-    primary: { main: '#2e7d32', light: '#4caf50', dark: '#1b5e20' },
-    secondary: { main: '#ffa000', light: '#ffc107', dark: '#ff8f00' },
-    background: { default: '#f8f9f8' },
-  },
-  typography: {
-    fontFamily: '"Playfair Display", serif',
-    h1: { fontWeight: 700, fontSize: '6rem' },
-    h2: { fontWeight: 700, fontSize: '3rem' },
-    h3: { fontWeight: 700, fontSize: '2.2rem' },
-    h5: { fontWeight: 600, fontSize: '1.8rem' },
-    body1: { fontSize: '1.1rem', lineHeight: 1.7 },
-    body2: { fontSize: '1rem', lineHeight: 1.6 },
-    caption: { fontSize: '0.85rem' },
-  },
-  shape: { borderRadius: '16px' },
-});
-
-const getWeatherIcon = (condition, size = '6rem') => {
-  if (!condition) return <WbCloudyOutlinedIcon sx={{ fontSize: size, color: 'rgba(255,255,255,0.8)' }} />;
-  const lowerCaseCondition = condition.toLowerCase();
-  if (lowerCaseCondition.includes('sun')) return <WbSunnyOutlinedIcon sx={{ fontSize: size, color: '#ffc107' }} />;
-  if (lowerCaseCondition.includes('rain')) return <GrainIcon sx={{ fontSize: size, color: '#90caf9' }} />;
-  return <WbCloudyOutlinedIcon sx={{ fontSize: size, color: 'rgba(255,255,255,0.8)' }} />;
+const getWeatherIcon = (icon, size = '6rem') => {
+  if (!icon) return <WbCloudyOutlinedIcon sx={{ fontSize: size, color: '#90caf9' }} />;
+  
+  // OpenWeather icon codes
+  const iconCode = icon.substring(0, 2);
+  const commonStyle = { fontSize: size };
+  
+  switch(iconCode) {
+    case '01': return <WbSunnyOutlinedIcon sx={{ ...commonStyle, color: '#ffa000' }} />;
+    case '02': 
+    case '03': 
+    case '04': return <CloudIcon sx={{ ...commonStyle, color: '#90caf9' }} />;
+    case '09': 
+    case '10': return <GrainIcon sx={{ ...commonStyle, color: '#64b5f6' }} />;
+    case '11': return <ThunderstormIcon sx={{ ...commonStyle, color: '#7e57c2' }} />;
+    case '13': return <AcUnitIcon sx={{ ...commonStyle, color: '#81d4fa' }} />;
+    default: return <WbCloudyOutlinedIcon sx={{ ...commonStyle, color: '#90caf9' }} />;
+  }
 };
 
 const Metric = ({ icon, value, unit, label, loading }) => (
-  <Grid item xs={6} sm={3} sx={{ textAlign: 'center' }}>
+  <Box sx={{ textAlign: 'center' }}>
     {loading ? (
-      <Skeleton width={60} height={40} sx={{ mx: 'auto', bgcolor: 'rgba(255,255,255,0.3)' }} />
+      <Skeleton variant="rectangular" width={100} height={80} sx={{ borderRadius: 2 }} />
     ) : (
       <>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-          {icon}
-          <Typography sx={{ fontWeight: 600, fontFamily: '"Playfair Display", serif' }}>{value}{unit}</Typography>
-        </Box>
-        <Typography variant="caption" sx={{ opacity: 0.8, fontFamily: '"Playfair Display", serif' }}>{label}</Typography>
+        <Box sx={{ color: 'primary.main', mb: 1 }}>{icon}</Box>
+        <Typography variant="h6" fontWeight="bold">
+          {value}{unit}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {label}
+        </Typography>
       </>
     )}
-  </Grid>
+  </Box>
 );
 
-const CurrentWeather = ({ weather, loading, onOpenDetail }) => {
+const CurrentWeather = ({ weather, loading }) => {
   return (
-    <ThemeProvider theme={theme}>
-      <ButtonBase 
-        onClick={onOpenDetail}
-        sx={{ 
-            width: '100%', borderRadius: '10px', textAlign: 'left',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-            transition: 'transform 0.3s ease',
-            '&:hover': { transform: 'scale(1.02)' }
-        }}
-      >
-        <Paper elevation={0} sx={{ 
-            width: '100%', p: { xs: 2, md: 4 }, borderRadius: '10px', 
-            background: 'linear-gradient(135deg, #2e7d32 30%, #ffc107 90%)', color: 'white' 
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <LocationOnIcon />
-            <Typography variant="h5" sx={{ ml: 1, fontWeight: 600, fontFamily: '"Playfair Display", serif' }}>
-              {loading ? <Skeleton width={200} sx={{ bgcolor: 'rgba(255,255,255,0.3)' }} /> : weather?.location}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', my: 3 }}>
-            {loading ? (
-              <Skeleton variant="circular" width={100} height={100} sx={{ bgcolor: 'rgba(255,255,255,0.3)' }} />
-            ) : (
-              getWeatherIcon(weather?.current?.condition)
-            )}
-            <Typography variant="h1" sx={{ fontWeight: 'bold', fontSize: { xs: '5rem', md: '7rem' }, fontFamily: '"Playfair Display", serif' }}>
-              {loading ? <Skeleton width={120} sx={{ bgcolor: 'rgba(255,255,255,0.3)' }} /> : `${Math.round(weather?.current?.temperature || 0)}°`}
-            </Typography>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography sx={{ fontWeight: 600, fontFamily: '"Playfair Display", serif' }}>
-                {loading ? <Skeleton width={80} sx={{ bgcolor: 'rgba(255,255,255,0.3)' }} /> : weather?.current?.condition}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8, fontFamily: '"Playfair Display", serif' }}>
-                {loading ? <Skeleton width={60} sx={{ bgcolor: 'rgba(255,255,255,0.3)' }} /> : `Feels like ${weather?.detailed?.feelsLike || '--'}°`}
-              </Typography>
-            </Box>
-          </Box>
-          <Grid container spacing={1}>
-            <Metric loading={loading} icon={<WaterDropIcon fontSize="small"/>} value={weather?.current?.humidity} unit="%" label="Humidity" />
-            <Metric loading={loading} icon={<VisibilityIcon fontSize="small"/>} value={weather?.current?.visibility} unit="km" label="Visibility" />
-            <Metric loading={loading} icon={<SpeedIcon fontSize="small"/>} value={weather?.current?.airPressure} unit="hPa" label="Pressure" />
-            <Metric loading={loading} icon={<AirIcon fontSize="small"/>} value={weather?.current?.windSpeed} unit="km/h" label="Wind" />
-          </Grid>
-        </Paper>
-      </ButtonBase>
-    </ThemeProvider>
+    <Paper
+      elevation={3}
+      sx={{
+        p: 4,
+        borderRadius: 4,
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white'
+      }}
+    >
+      <Box sx={{ textAlign: 'center' }}>
+        {/* Location */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+          <LocationOnIcon sx={{ mr: 1 }} />
+          {loading ? (
+            <Skeleton width={200} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
+          ) : (
+            <Typography variant="h4">{weather?.location}</Typography>
+          )}
+        </Box>
+
+        {/* Weather Icon */}
+        <Box sx={{ my: 3 }}>
+          {loading ? (
+            <Skeleton variant="circular" width={100} height={100} sx={{ mx: 'auto', bgcolor: 'rgba(255,255,255,0.2)' }} />
+          ) : (
+            getWeatherIcon(weather?.current?.icon)
+          )}
+        </Box>
+
+        {/* Temperature */}
+        {loading ? (
+          <Skeleton width={150} height={80} sx={{ mx: 'auto', bgcolor: 'rgba(255,255,255,0.2)' }} />
+        ) : (
+          <Typography variant="h1" fontWeight="bold">
+            {Math.round(weather?.current?.temperature || 0)}°
+          </Typography>
+        )}
+
+        {/* Condition */}
+        {loading ? (
+          <Skeleton width={120} sx={{ mx: 'auto', bgcolor: 'rgba(255,255,255,0.2)' }} />
+        ) : (
+          <Typography variant="h5" sx={{ mb: 1 }}>
+            {weather?.current?.condition}
+          </Typography>
+        )}
+
+        {/* Feels Like */}
+        {loading ? (
+          <Skeleton width={100} sx={{ mx: 'auto', bgcolor: 'rgba(255,255,255,0.2)' }} />
+        ) : (
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            Feels like {weather?.current?.feelsLike || '--'}°
+          </Typography>
+        )}
+      </Box>
+
+      {/* Metrics */}
+      <Grid container spacing={2} sx={{ mt: 4 }}>
+        <Grid item xs={6} sm={3}>
+          <Metric
+            icon={<WaterDropIcon />}
+            value={weather?.current?.humidity}
+            unit="%"
+            label="Humidity"
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <Metric
+            icon={<AirIcon />}
+            value={weather?.current?.windSpeed}
+            unit=" km/h"
+            label="Wind Speed"
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <Metric
+            icon={<VisibilityIcon />}
+            value={weather?.current?.visibility}
+            unit=" km"
+            label="Visibility"
+            loading={loading}
+          />
+        </Grid>
+        <Grid item xs={6} sm={3}>
+          <Metric
+            icon={<SpeedIcon />}
+            value={weather?.current?.airPressure}
+            unit=" hPa"
+            label="Pressure"
+            loading={loading}
+          />
+        </Grid>
+      </Grid>
+    </Paper>
   );
 };
 

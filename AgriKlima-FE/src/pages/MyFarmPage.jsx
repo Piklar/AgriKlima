@@ -1,14 +1,19 @@
 // src/pages/MyFarmPage.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Container, Box, Typography, Grid, Card, CardContent, Button, 
-  LinearProgress, Paper, ThemeProvider 
+import {
+  Container, Box, Typography, Grid, Card, CardContent, Button,
+  LinearProgress, Paper, ThemeProvider, Dialog, DialogTitle,
+  DialogContent, DialogActions, TextField, Select, MenuItem,
+  FormControl, InputLabel
 } from '@mui/material';
 import * as api from '../services/api';
 import Swal from 'sweetalert2';
 import PageDataLoader from '../components/PageDataLoader';
 import { format, differenceInDays } from 'date-fns';
 import { createTheme } from '@mui/material/styles';
+import AddTaskIcon from '@mui/icons-material/AddTask';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 
 const theme = createTheme({
   palette: {
@@ -26,11 +31,17 @@ const theme = createTheme({
   shape: { borderRadius: 12 },
 });
 
-const CropProgressCard = ({ crop, onDelete }) => {
+// Define more minimal crop colors
+const cropColors = [
+  '#7986CB', '#64B5F6', '#4DB6AC', '#81C784', '#AED581',
+  '#FFD54F', '#FFB74D', '#FF8A65', '#E57373', '#F06292',
+  '#BA68C8', '#9575CD', '#90A4AE', '#A1887F', '#4FC3F7'
+];
+
+const CropProgressCard = ({ crop, onDelete, onAddTask, onManageTasks }) => {
   const today = new Date();
   const startDate = new Date(crop.plantingDate);
   const endDate = new Date(crop.estimatedHarvestDate);
-
   const totalDuration = differenceInDays(endDate, startDate);
   const daysPassed = differenceInDays(today, startDate);
   const progress = Math.min(Math.max((daysPassed / totalDuration) * 100, 0), 100);
@@ -52,83 +63,383 @@ const CropProgressCard = ({ crop, onDelete }) => {
   };
 
   return (
-    <Card sx={{ 
-      borderRadius: '10px', 
-      boxShadow: 3, 
-      width: '100%',
-      maxWidth: { xs: '100%', sm: 360 }, // full width on xs, fixed on sm+
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'transform 0.3s, box-shadow 0.3s',
-      '&:hover': {
-        transform: 'translateY(-5px)',
-        boxShadow: '0 8px 20px rgba(0,0,0,0.12)'
-      }
-    }}>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.dark', mb: 1 }}>
+    <Card
+      elevation={3}
+      sx={{
+        borderRadius: 4,
+        overflow: 'hidden',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 12px 24px rgba(0,0,0,0.1)',
+        },
+        borderLeft: `4px solid ${crop.color || '#2e7d32'}`,
+      }}
+    >
+      <CardContent>
+        <Typography variant="h5" gutterBottom color="primary" fontWeight="bold">
           {crop.name}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Planted on: {format(startDate, 'MMMM d, yyyy')}
         </Typography>
-
-        <Box sx={{ mb: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2">Progress</Typography>
-            <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-              {Math.round(progress)}%
-            </Typography>
-          </Box>
-          <LinearProgress 
-            variant="determinate" 
-            value={progress} 
-            sx={{ 
-              height: 10, 
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Progress
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{
+              height: 10,
               borderRadius: 5,
-              backgroundColor: 'rgba(46, 125, 50, 0.2)',
+              backgroundColor: 'rgba(46, 125, 50, 0.1)',
               '& .MuiLinearProgress-bar': {
-                backgroundColor: 'primary.main'
+                borderRadius: 5,
+                backgroundColor: crop.color || '#2e7d32',
               }
-            }} 
+            }}
           />
+          <Typography variant="body2" color="primary" fontWeight="bold" sx={{ mt: 0.5 }}>
+            {Math.round(progress)}%
+          </Typography>
         </Box>
-        
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
-          Estimated Harvest: <strong style={{ color: 'primary.dark' }}>{format(endDate, 'MMMM d, yyyy')}</strong>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Estimated Harvest: {format(endDate, 'MMMM d, yyyy')}
         </Typography>
-
-        <Button 
-          variant="contained" 
-          onClick={handleDelete}
-          fullWidth
-          sx={{ 
-            mt: 3, 
-            borderRadius: '10px',
-            py: 1.5,
-            fontSize: '1rem',
-            fontWeight: 600
-          }}
-        >
-          Mark as Harvested
-        </Button>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            startIcon={<AddTaskIcon />}
+            onClick={() => onAddTask(crop)}
+            fullWidth
+          >
+            Add Task
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            startIcon={<ManageSearchIcon />}
+            onClick={() => onManageTasks(crop)}
+            fullWidth
+          >
+            Manage Crop Tasks
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            size="small"
+            onClick={handleDelete}
+            fullWidth
+          >
+            Mark as Harvested
+          </Button>
+        </Box>
       </CardContent>
     </Card>
   );
 };
 
+const CropTaskDialog = ({ open, onClose, crop, onSave }) => {
+  const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
+  const [taskDueDate, setTaskDueDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [taskFrequency, setTaskFrequency] = useState('Once');
+
+  useEffect(() => {
+    if (open && crop) {
+      setTaskTitle(`${crop.name} - `);
+      setTaskDescription('');
+      setTaskDueDate(format(new Date(), 'yyyy-MM-dd'));
+      setTaskFrequency('Once');
+    }
+  }, [open, crop]);
+
+  const handleSave = () => {
+    if (!taskTitle.trim()) {
+      Swal.fire('Error', 'Please enter a task title', 'error');
+      return;
+    }
+
+    onSave({
+      title: taskTitle,
+      description: taskDescription,
+      dueDate: taskDueDate,
+      frequency: taskFrequency,
+      cropId: crop.cropId._id,
+      color: crop.color
+    });
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        Add Task for {crop?.name}
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+          <TextField
+            label="Task Title"
+            value={taskTitle}
+            onChange={(e) => setTaskTitle(e.target.value)}
+            fullWidth
+            required
+          />
+          <TextField
+            label="Description"
+            value={taskDescription}
+            onChange={(e) => setTaskDescription(e.target.value)}
+            fullWidth
+            multiline
+            rows={3}
+          />
+          <TextField
+            label="Due Date"
+            type="date"
+            value={taskDueDate}
+            onChange={(e) => setTaskDueDate(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+            required
+          />
+          <FormControl fullWidth>
+            <InputLabel>Frequency</InputLabel>
+            <Select
+              value={taskFrequency}
+              onChange={(e) => setTaskFrequency(e.target.value)}
+              label="Frequency"
+            >
+              <MenuItem value="Once">Once</MenuItem>
+              <MenuItem value="Daily">Daily</MenuItem>
+              <MenuItem value="Weekly">Weekly</MenuItem>
+              <MenuItem value="Monthly">Monthly</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSave} variant="contained" color="primary">
+          Create Task
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+const ManageCropTasksDialog = ({ open, onClose, crop, tasks, onTasksUpdate }) => {
+  const [loading, setLoading] = useState(false);
+
+  // Add null check for crop
+  if (!crop) {
+    return null;
+  }
+
+  // Filter tasks by the actual crop's master crop ID (cropId._id)
+  const cropTasks = tasks.filter(task => {
+    if (!task.cropId) return false;
+    
+    // Check if task's cropId matches the master crop ID
+    const taskCropId = typeof task.cropId === 'object' ? task.cropId._id : task.cropId;
+    const masterCropId = crop.cropId?._id || crop.cropId;
+    
+    return taskCropId === masterCropId;
+  });
+
+  const handleToggleStatus = async (taskId) => {
+    setLoading(true);
+    try {
+      await api.toggleTaskStatus(taskId);
+      onTasksUpdate();
+    } catch (error) {
+      Swal.fire('Error', 'Could not update task status.', 'error');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteTask = async (task) => {
+    // FIX: Temporarily hide the dialog to ensure SweetAlert appears on top
+    const hasRecurrence = task.recurrenceId;
+
+    // Configure SweetAlert with higher z-index
+    const swalConfig = {
+      title: 'Delete this task?',
+      text: `"${task.title}" will be permanently deleted.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+      customClass: {
+        container: 'swal-high-z-index'
+      },
+      backdrop: true
+    };
+
+    // If recurring task, give option to delete all
+    if (hasRecurrence) {
+      swalConfig.title = 'Delete recurring task';
+      swalConfig.text = `"${task.title}" is a recurring task. What would you like to delete?`;
+      swalConfig.showDenyButton = true;
+      swalConfig.confirmButtonText = 'Delete all future occurrences';
+      swalConfig.denyButtonText = 'Delete only this one';
+      swalConfig.cancelButtonText = 'Cancel';
+      swalConfig.denyButtonColor = '#ff9800';
+    }
+
+    Swal.fire(swalConfig).then(async (result) => {
+      if (result.isConfirmed || result.isDenied) {
+        setLoading(true);
+        try {
+          const deleteAll = hasRecurrence && result.isConfirmed;
+          await api.deleteTask(task._id, deleteAll);
+          
+          Swal.fire({
+            title: 'Deleted!',
+            text: deleteAll ? 'All future recurring tasks have been deleted.' : 'The task has been deleted.',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          
+          onTasksUpdate();
+        } catch (error) {
+          Swal.fire('Error', 'Could not delete the task.', 'error');
+          console.error("Failed to delete task", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
+
+  return (
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth
+      sx={{
+        '& .MuiDialog-container': {
+          '& .MuiPaper-root': {
+            zIndex: 1300
+          }
+        }
+      }}
+    >
+      <DialogTitle>
+        Manage Tasks for {crop.name}
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ mt: 2 }}>
+          {cropTasks.length > 0 ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {cropTasks.map(task => (
+                <Card 
+                  key={task._id} 
+                  variant="outlined"
+                  sx={{ 
+                    borderLeft: `3px solid ${crop.color}`,
+                    backgroundColor: task.status === 'completed' ? '#f1f8f4' : '#fafafa'
+                  }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" fontWeight="bold">
+                          {task.title}
+                        </Typography>
+                        {task.description && (
+                          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            {task.description}
+                          </Typography>
+                        )}
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                          Due: {format(new Date(task.dueDate), 'MMM d, yyyy')}
+                        </Typography>
+                        <Box
+                          component="span"
+                          sx={{ 
+                            mt: 0.5, 
+                            display: 'inline-block',
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1,
+                            fontSize: '0.75rem',
+                            backgroundColor: task.status === 'completed' ? '#e8f5e9' : '#fff3e0',
+                            color: task.status === 'completed' ? '#2e7d32' : '#f57c00'
+                          }}
+                        >
+                          {task.status === 'completed' ? '✓ Completed' : '⏳ Pending'}
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: '90px' }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color={task.status === 'completed' ? 'warning' : 'success'}
+                          onClick={() => handleToggleStatus(task._id)}
+                          disabled={loading}
+                          fullWidth
+                        >
+                          {task.status === 'completed' ? 'Undo' : 'Complete'}
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          onClick={() => handleDeleteTask(task)}
+                          disabled={loading}
+                          fullWidth
+                        >
+                          Delete
+                        </Button>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+              No tasks found for this crop.
+            </Typography>
+          )}
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant="contained">
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 const MyFarmPage = () => {
   const [userCrops, setUserCrops] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [manageTasksDialogOpen, setManageTasksDialogOpen] = useState(false);
+  const [selectedCrop, setSelectedCrop] = useState(null);
 
   const fetchUserCrops = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await api.getUserCrops();
-      setUserCrops(response.data || []);
+      // Assign colors to crops
+      const cropsWithColors = (response.data || []).map((crop, index) => ({
+        ...crop,
+        color: cropColors[index % cropColors.length]
+      }));
+      setUserCrops(cropsWithColors);
     } catch (err) {
       console.error("Failed to fetch user crops:", err);
       setError("Could not load your farm data.");
@@ -137,9 +448,19 @@ const MyFarmPage = () => {
     }
   }, []);
 
+  const fetchTasks = useCallback(async () => {
+    try {
+      const response = await api.getMyTasks();
+      setTasks(response.data || []);
+    } catch (err) {
+      console.error("Failed to fetch tasks:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUserCrops();
-  }, [fetchUserCrops]);
+    fetchTasks();
+  }, [fetchUserCrops, fetchTasks]);
 
   const handleDeleteCrop = async (userCropId) => {
     try {
@@ -152,71 +473,100 @@ const MyFarmPage = () => {
     }
   };
 
+  const handleAddTask = (crop) => {
+    setSelectedCrop(crop);
+    setTaskDialogOpen(true);
+  };
+
+  const handleManageTasks = (crop) => {
+    setSelectedCrop(crop);
+    setManageTasksDialogOpen(true);
+  };
+
+  const handleSaveTask = async (taskData) => {
+    try {
+      await api.addTask(taskData);
+      Swal.fire('Success!', 'Task has been added to the calendar.', 'success');
+      setTaskDialogOpen(false);
+      setSelectedCrop(null);
+      fetchTasks();
+    } catch (err) {
+      console.error("Failed to add task:", err);
+      Swal.fire('Error', 'Could not add the task.', 'error');
+    }
+  };
+
+  const handleTasksUpdate = () => {
+    fetchTasks();
+  };
+
   return (
     <ThemeProvider theme={theme}>
-      <style>
-        {`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
-        `}
-      </style>
-      
-      <PageDataLoader loading={loading} error={error} onRetry={fetchUserCrops}>
-        <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh', py: 4 }}>
-          <Container maxWidth="lg">
-            <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto', mb: 6 }}>
-              <Typography variant="h3" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 2 }}>
-                My Farm Overview
-              </Typography>
-              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                Track the progress of your crops and manage your farming activities
-              </Typography>
-            </Box>
+      <PageDataLoader loading={loading} error={error}>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Paper elevation={0} sx={{ p: 4, backgroundColor: 'transparent' }}>
+            <Typography variant="h3" gutterBottom color="primary">
+              My Farm Overview
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              Track the progress of your crops and manage your farming activities
+            </Typography>
 
             {userCrops.length > 0 ? (
-              <Grid 
-                container 
-                spacing={4} 
-                justifyContent="center" // center cards
-              >
+              <Grid container spacing={3}>
                 {userCrops.map(crop => (
-                  <Grid 
-                    item 
-                    xs={12} sm={6} md={4} 
-                    key={crop._id} 
-                    sx={{ display: 'flex', justifyContent: 'center' }}
-                  >
-                    <CropProgressCard crop={crop} onDelete={handleDeleteCrop} />
+                  <Grid item xs={12} sm={6} md={4} key={crop._id}>
+                    <CropProgressCard
+                      crop={crop}
+                      onDelete={handleDeleteCrop}
+                      onAddTask={handleAddTask}
+                      onManageTasks={handleManageTasks}
+                    />
                   </Grid>
                 ))}
               </Grid>
             ) : (
-              <Paper sx={{ 
-                p: 6, 
-                textAlign: 'center', 
-                borderRadius: '10px',
-                backgroundColor: 'white',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                maxWidth: '500px',
-                mx: 'auto'
-              }}>
-                <Typography variant="h5" sx={{ mb: 2, color: 'text.primary' }}>
+              <Paper sx={{ p: 4, textAlign: 'center', mt: 4 }}>
+                <Typography variant="h6" gutterBottom>
                   Your farm is empty!
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" paragraph>
                   Go to the 'Crops' page to add your first planted crop.
                 </Typography>
-                <Button 
-                  variant="contained" 
-                  sx={{ borderRadius: theme.shape.borderRadius }}
+                <Button
+                  variant="contained"
+                  color="primary"
                   onClick={() => window.location.href = '/crops'}
+                  sx={{ mt: 2 }}
                 >
                   Browse Crops
                 </Button>
               </Paper>
             )}
-          </Container>
-        </Box>
+          </Paper>
+        </Container>
       </PageDataLoader>
+
+      <CropTaskDialog
+        open={taskDialogOpen}
+        onClose={() => setTaskDialogOpen(false)}
+        crop={selectedCrop}
+        onSave={handleSaveTask}
+      />
+
+      <ManageCropTasksDialog
+        open={manageTasksDialogOpen}
+        onClose={() => setManageTasksDialogOpen(false)}
+        crop={selectedCrop}
+        tasks={tasks}
+        onTasksUpdate={handleTasksUpdate}
+      />
+
+      <style jsx global>{`
+        .swal-high-z-index {
+          z-index: 9999 !important;
+        }
+      `}</style>
     </ThemeProvider>
   );
 };

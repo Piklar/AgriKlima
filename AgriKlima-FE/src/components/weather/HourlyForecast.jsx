@@ -1,105 +1,87 @@
 // src/components/weather/HourlyForecast.jsx
+
 import React from 'react';
-import { Paper, Box, Typography, Skeleton, Stack, useTheme } from '@mui/material';
+import { Paper, Box, Typography, Skeleton, Divider } from '@mui/material';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
-import WbCloudyOutlinedIcon from '@mui/icons-material/WbCloudyOutlined';
+import CloudIcon from '@mui/icons-material/Cloud';
 import GrainIcon from '@mui/icons-material/Grain';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
 
-const playfairFont = { fontFamily: '"Playfair Display", serif' };
-
-const HourlyItem = ({ time, icon, temp, loading }) => (
-  <Paper
-    elevation={0}
-    sx={{
-      p: 2,
-      textAlign: 'center',
-      borderRadius: '10px',
-      minWidth: 100,
-      backgroundColor: '#ffffff', // light background
-      color: '#000',
-      flexShrink: 0,
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)', // subtle shadow for each item
-    }}
-  >
-    {loading ? (
-      <Stack alignItems="center" spacing={1}>
-        <Skeleton variant="text" width={40} height={20} />
-        <Skeleton variant="circular" width={36} height={36} />
-        <Skeleton variant="text" width={40} height={30} />
-      </Stack>
-    ) : (
-      <>
-        <Typography variant="body2" sx={{ fontWeight: 600, ...playfairFont, color: '#000' }}>
-          {time}
-        </Typography>
-        <Box my={1} sx={{ fontSize: 28 }}>{icon}</Box>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 'bold',
-            ...playfairFont,
-            fontSize: '1.25rem',
-            color: '#000',
-          }}
-        >
-          {temp}°
-        </Typography>
-      </>
-    )}
-  </Paper>
-);
-
-const getWeatherIcon = (condition, theme) => {
-  if (!condition) return <WbCloudyOutlinedIcon sx={{ fontSize: 28, color: '#555' }} />;
-  const lowerCaseCondition = condition.toLowerCase();
-  if (lowerCaseCondition.includes('sun'))
-    return <WbSunnyOutlinedIcon sx={{ color: theme.palette.warning.main, fontSize: 28 }} />;
-  if (lowerCaseCondition.includes('rain'))
-    return <GrainIcon sx={{ color: theme.palette.info.main, fontSize: 28 }} />;
-  return <WbCloudyOutlinedIcon sx={{ fontSize: 28, color: '#555' }} />;
+const getWeatherIcon = (icon, size = '2.5rem') => {
+  if (!icon) return <CloudIcon sx={{ fontSize: size, color: '#90caf9' }} />;
+  
+  const iconCode = icon.substring(0, 2);
+  const commonStyle = { fontSize: size };
+  
+  switch(iconCode) {
+    case '01': return <WbSunnyOutlinedIcon sx={{ ...commonStyle, color: '#ffa000' }} />;
+    case '02': 
+    case '03': 
+    case '04': return <CloudIcon sx={{ ...commonStyle, color: '#90caf9' }} />;
+    case '09': 
+    case '10': return <GrainIcon sx={{ ...commonStyle, color: '#64b5f6' }} />;
+    case '11': return <ThunderstormIcon sx={{ ...commonStyle, color: '#7e57c2' }} />;
+    default: return <CloudIcon sx={{ ...commonStyle, color: '#90caf9' }} />;
+  }
 };
 
-const HourlyForecast = ({ weather, loading }) => {
-  const theme = useTheme();
-  const forecast = weather?.hourly || [];
-
+const HourlyForecast = ({ forecast, loading }) => {
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3,
-        borderRadius: '10px',
-        backgroundColor: '#ffffff', // simple white background
-        color: '#000',
-        width: '100%',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)', // subtle shadow for the whole block
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <AccessTimeIcon sx={{ mr: 1.5, fontSize: 26, color: '#000' }} />
-        <Typography variant="h6" sx={{ fontWeight: 600, ...playfairFont, color: '#000' }}>
-          Hourly Forecast
-        </Typography>
-      </Box>
-
-      <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>
+    <Paper elevation={3} sx={{ p: 3, borderRadius: 4 }}>
+      <Typography variant="h5" gutterBottom fontWeight="600" color="primary">
+        Hourly Forecast
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          overflowX: 'auto',
+          py: 2,
+          '&::-webkit-scrollbar': { height: 10 },
+          '&::-webkit-scrollbar-track': { bgcolor: 'background.default', borderRadius: 5 },
+          '&::-webkit-scrollbar-thumb': { bgcolor: 'primary.light', borderRadius: 5, '&:hover': { bgcolor: 'primary.main' } }
+        }}
+      >
         {loading
-          ? [...Array(6)].map((_, i) => <HourlyItem key={i} loading={true} />)
-          : forecast.length > 0
-          ? forecast.map((item, index) => (
-              <HourlyItem
-                key={index}
-                time={item.time}
-                icon={getWeatherIcon(item.condition, theme)}
-                temp={Math.round(item.temperature)}
-              />
+          ? Array.from({ length: 8 }).map((_, i) => (
+              <Box key={i} sx={{ minWidth: 120, textAlign: 'center' }}>
+                <Skeleton width={100} sx={{ mx: 'auto' }} />
+                <Skeleton variant="circular" width={50} height={50} sx={{ mx: 'auto', my: 1 }} />
+                <Skeleton width={80} sx={{ mx: 'auto' }} />
+              </Box>
             ))
-          : (
-            <Typography sx={{ p: 2, ...playfairFont, color: '#000' }}>
-              Hourly data not available.
-            </Typography>
-          )}
+          : forecast.map((hour, index) => (
+              <Box
+                key={index}
+                sx={{
+                  minWidth: 120,
+                  textAlign: 'center',
+                  p: 2.5,
+                  borderRadius: 3,
+                  bgcolor: 'background.default',
+                  border: '1px solid #e0e0e0',
+                  transition: 'all 0.2s',
+                  '&:hover': { 
+                    transform: 'translateY(-8px)', 
+                    bgcolor: 'primary.light', 
+                    color: 'white',
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.15)'
+                  }
+                }}
+              >
+                <Typography variant="body1" fontWeight="bold" sx={{ mb: 1 }}>
+                  {hour.time}
+                </Typography>
+                <Box sx={{ my: 1.5 }}>{getWeatherIcon(hour.icon)}</Box>
+                <Typography variant="h6" fontWeight="bold">
+                  {hour.temperature}°
+                </Typography>
+                <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.8 }}>
+                  {hour.condition}
+                </Typography>
+              </Box>
+            ))}
       </Box>
     </Paper>
   );

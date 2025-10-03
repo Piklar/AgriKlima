@@ -1,104 +1,153 @@
 // src/components/WeatherForecastCard.jsx
+
 import React from 'react';
-import { Box, Typography, Paper, Skeleton, Stack, Divider } from '@mui/material';
-import EventIcon from '@mui/icons-material/Event';
-import WbCloudyOutlinedIcon from '@mui/icons-material/WbCloudyOutlined';
+import { Paper, Box, Typography, Grid, Skeleton } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
-import GrainIcon from '@mui/icons-material/Grain'; // For rain
+import CloudIcon from '@mui/icons-material/Cloud';
+import GrainIcon from '@mui/icons-material/Grain';
+
+const getWeatherIcon = (icon, size = '2rem') => {
+  if (!icon) return <CloudIcon sx={{ fontSize: size, color: '#90caf9' }} />;
+  
+  const iconCode = icon.substring(0, 2);
+  const commonStyle = { fontSize: size };
+  
+  switch(iconCode) {
+    case '01': return <WbSunnyOutlinedIcon sx={{ ...commonStyle, color: '#ffa000' }} />;
+    case '09': 
+    case '10': return <GrainIcon sx={{ ...commonStyle, color: '#64b5f6' }} />;
+    default: return <CloudIcon sx={{ ...commonStyle, color: '#90caf9' }} />;
+  }
+};
 
 const WeatherForecastCard = ({ weather, loading }) => {
-  const forecast = weather?.daily?.slice(0, 7) || [];
+  const navigate = useNavigate();
 
-  const getWeatherIcon = (condition) => {
-    if (!condition) return <WbCloudyOutlinedIcon color="action" sx={{ fontSize: 32 }} />;
-    const lower = condition.toLowerCase();
-
-    if (lower.includes('sun'))
-      return <WbSunnyOutlinedIcon sx={{ color: '#CDDC39', fontSize: 32 }} />;
-    if (lower.includes('rain'))
-      return <GrainIcon sx={{ color: '#8BC34A', fontSize: 32 }} />;
-    if (lower.includes('cloud'))
-      return <WbCloudyOutlinedIcon sx={{ color: '#A5D6A7', fontSize: 32 }} />;
-
-    return <WbCloudyOutlinedIcon color="action" sx={{ fontSize: 32 }} />;
+  const handleViewForecast = () => {
+    navigate('/weather');
   };
 
+  if (loading) {
+    return (
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 3, 
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column',
+          borderRadius: 3
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <CalendarMonthIcon color="primary" />
+          <Skeleton width={150} />
+        </Box>
+        <Skeleton width="100%" height={200} />
+      </Paper>
+    );
+  }
+
+  // Check if we have forecast data
+  const hasForecast = weather && weather.daily && weather.daily.length > 0;
+
   return (
-    <Paper
-      elevation={1}
-      sx={{
-        p: 3,
-        borderRadius: '12px',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
-        height: '100%',
-        display: 'flex',
+    <Paper 
+      elevation={3} 
+      sx={{ 
+        p: 3, 
+        height: '100%', 
+        display: 'flex', 
         flexDirection: 'column',
-        background: 'linear-gradient(145deg, #f1f8e9, #e8f5e9)',
-        transition: 'transform 0.3s, box-shadow 0.3s',
+        borderRadius: 3,
+        cursor: 'pointer',
+        transition: 'all 0.2s',
         '&:hover': {
-          transform: 'translateY(-3px)',
-          boxShadow: '0 10px 28px rgba(0,0,0,0.1)',
-        },
+          transform: 'translateY(-4px)',
+          boxShadow: '0 12px 24px rgba(0,0,0,0.15)'
+        }
       }}
+      onClick={handleViewForecast}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <EventIcon sx={{ mr: 1.5, fontSize: '2rem', color: '#2e7d32' }} />
-        <Typography
-          variant="h6"
-          sx={{
-            fontFamily: '"Playfair Display", serif',
-            fontWeight: 700,
-            color: '#2e7d32',
-          }}
-        >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <CalendarMonthIcon color="primary" />
+        <Typography variant="h6" fontWeight="600" color="primary">
           7-Day Forecast
         </Typography>
       </Box>
-      <Divider sx={{ mb: 2 }} />
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        spacing={1}
-        sx={{ overflowX: 'auto', flexGrow: 1, p: 1 }}
-      >
-        {loading ? (
-          [...Array(7)].map((_, i) => (
-            <Box key={i} sx={{ p: 2, textAlign: 'center', minWidth: 90 }}>
-              <Skeleton variant="text" width={40} height={20} sx={{ mx: 'auto', borderRadius: '10px' }} />
-              <Skeleton variant="circular" width={40} height={40} sx={{ my: 1, mx: 'auto' }} />
-              <Skeleton variant="text" width={40} height={25} sx={{ mx: 'auto', borderRadius: '10px' }} />
-            </Box>
-          ))
-        ) : forecast.length > 0 ? (
-          forecast.map((day, index) => (
-            <Paper
-              key={index}
-              elevation={0}
-              sx={{
-                p: 2,
-                textAlign: 'center',
-                borderRadius: '12px',
-                background: 'rgba(139, 195, 74, 0.1)',
-                minWidth: 90,
-              }}
-            >
-              <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
-                {day.day.substring(0, 3)}
-              </Typography>
-              <Box sx={{ my: 1 }}>{getWeatherIcon(day.condition)}</Box>
-              <Typography sx={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>
-                {Math.round(day.temperature)}°C
-              </Typography>
-            </Paper>
-          ))
-        ) : (
-          <Box sx={{ textAlign: 'center', width: '100%', py: 4 }}>
-            <Typography color="text.secondary" sx={{ fontFamily: 'Inter, sans-serif' }}>
+
+      {hasForecast ? (
+        <Grid container spacing={1.5} sx={{ flex: 1 }}>
+          {weather.daily.slice(0, 4).map((day, index) => (
+            <Grid item xs={6} key={index}>
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'background.default',
+                  borderRadius: 2,
+                  textAlign: 'center',
+                  transition: 'background-color 0.2s',
+                  '&:hover': {
+                    bgcolor: 'primary.light',
+                    color: 'white'
+                  }
+                }}
+              >
+                <Typography variant="body2" fontWeight="600" sx={{ mb: 1 }}>
+                  {day.day}
+                </Typography>
+                <Box sx={{ my: 1 }}>
+                  {getWeatherIcon(day.icon)}
+                </Box>
+                <Typography variant="body2" fontWeight="bold">
+                  {day.high}° / {day.low}°
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {day.condition}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      ) : (
+        <Box 
+          sx={{ 
+            flex: 1, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            textAlign: 'center',
+            py: 4
+          }}
+        >
+          <Box>
+            <CalendarMonthIcon sx={{ fontSize: '3rem', color: 'text.secondary', opacity: 0.3 }} />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
               Forecast not available.
             </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Click to view weather page
+            </Typography>
           </Box>
-        )}
-      </Stack>
+        </Box>
+      )}
+
+      {hasForecast && (
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'primary.main',
+              fontWeight: 600,
+              '&:hover': { textDecoration: 'underline' }
+            }}
+          >
+            View Full 7-Day Forecast →
+          </Typography>
+        </Box>
+      )}
     </Paper>
   );
 };
