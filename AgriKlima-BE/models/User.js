@@ -11,29 +11,32 @@ const userCropSchema = new mongoose.Schema({
     estimatedHarvestDate: { type: Date, required: true }
 });
 
-
 const userSchema = new mongoose.Schema({
     firstName: { type: String, required: [true, 'First Name is Required'] },
     lastName: { type: String, required: [true, 'Last Name is Required'] },
     email: { 
         type: String, 
         required: [true, 'Email is Required'],
-        unique: true
+        unique: true // <<< ENSURE THIS IS TRUE
     },
-    password: { type: String, required: [true, 'Password is Required'] },
+    password: { type: String, required: [true, 'Password is Required'], select: false },
     isAdmin: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
-    mobileNo: { type: String, required: [true, 'Mobile Number is Required'] },
+    mobileNo: { 
+        type: String, 
+        required: [true, 'Mobile Number is Required'],
+        unique: true // <<< ADD THIS UNIQUE CONSTRAINT
+    },
     location: { type: String, required: [true, 'Location is Required'] },
     dob: { type: String, required: [true, 'Date of Birth is Required'] },
     gender: { type: String, required: [true, 'Gender is Required'] },
-    language: { type: String, default: 'Tagalog' },
+    language: { type: String, default: 'Filipino' },
     profilePictureUrl: { type: String, default: '' },
     
-    // --- THIS FIELD IS REPLACED ---
-    crops: [{ type: String }], // This can be kept for initial signup info if desired
+    // Kept for initial signup info if desired, but not primary
+    crops: [{ type: String }],
 
-    // --- THIS IS THE NEW, DYNAMIC FIELD for tracking planted crops ---
+    // The new, dynamic field for tracking planted crops
     userCrops: [userCropSchema]
 });
 

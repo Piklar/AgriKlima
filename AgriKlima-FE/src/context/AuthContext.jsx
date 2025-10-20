@@ -8,47 +8,48 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('authToken'));
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(!!token);
+  const [loading, setLoading] = useState(true);
 
-  const fetchUserDetails = useCallback(async () => {
-    // This now checks the actual token in storage to be safe
-    if (localStorage.getItem('authToken')) {
-      try {
-        const response = await api.getProfile();
-        setUser(response.data);
-      } catch (error) {
-        console.error("Auth token is invalid, logging out.", error);
-        logout(); // Make sure to define logout before it's used here
-      }
-    }
-  }, []); // Removed dependency on logout to prevent loops
-
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('authToken');
     setToken(null);
     setUser(null);
-  };
+  }, []);
+
+  const fetchUserDetails = useCallback(async () => {
+    const storedToken = localStorage.getItem('authToken');
+    if (!storedToken) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await api.getProfile();
+      setUser(response.data);
+      setToken(storedToken);
+    } catch (error) {
+      console.error("Failed to fetch user details:", error);
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  }, [logout]);
 
   useEffect(() => {
-    const bootstrapAuth = async () => {
-      if (token) {
-        setLoading(true);
-        await fetchUserDetails();
-        setLoading(false);
-      } else {
-        setLoading(false);
-      }
-    };
-    bootstrapAuth();
-  }, [token, fetchUserDetails]);
+    fetchUserDetails();
+  }, [fetchUserDetails]);
 
-  const login = async (email, password) => {
+  const login = async (identifier, password) => {
     try {
-      const response = await api.loginUser({ email, password });
+      // Send identifier (can be email or mobile number) and password
+      const response = await api.loginUser({ identifier, password });
+      
       if (response?.data?.access) {
         const newToken = response.data.access;
         localStorage.setItem('authToken', newToken);
-        setToken(newToken); // This triggers the useEffect to fetch user details
+        setToken(newToken);
+        
+        // Fetch user profile after successful login
         const userProfileResponse = await api.getProfile();
         setUser(userProfileResponse.data);
         return userProfileResponse.data;
@@ -56,16 +57,29 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Login response did not include an access token.");
       }
     } catch (error) {
+      console.error("Login error:", error);
       logout();
       throw error;
     }
   };
 
-  const value = { token, user, isAuthenticated: !!user, loading, login, logout, fetchUserDetails };
+  const value = { 
+    token, 
+    user, 
+    isAuthenticated: !!user && !!token, 
+    loading, 
+    login, 
+    logout, 
+    fetchUserDetails 
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

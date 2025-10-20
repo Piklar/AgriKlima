@@ -10,10 +10,7 @@ const { add } = require('date-fns');
 // --- [CREATE] Register a new user ---
 module.exports.registerUser = async (req, res) => {
     try {
-        // --- THIS IS THE MODIFIED PART ---
-        // Destructure `userCrops` instead of `crops`
-        const { firstName, lastName, email, password, mobileNo, location, userCrops, dob, gender, language } = req.body;
-        
+        const { firstName, lastName, email, password, mobileNo, location, crops, dob, gender, language } = req.body;
         if (!firstName || !lastName || !email || !password || !mobileNo) {
             return res.status(400).send({ error: "Missing required account fields." });
         }
@@ -27,44 +24,14 @@ module.exports.registerUser = async (req, res) => {
         if (existingUser) {
             return res.status(409).send({ error: "Email is already in use." });
         }
-        
-        // --- THIS IS THE MODIFIED PART ---
-        // Fetch crop details to calculate harvest dates
-        let processedUserCrops = [];
-        if (userCrops && userCrops.length > 0) {
-            const cropIds = userCrops.map(c => c.cropId);
-            const masterCrops = await Crop.find({ '_id': { $in: cropIds } });
-            
-            processedUserCrops = userCrops.map(userCrop => {
-                const masterCrop = masterCrops.find(mc => mc._id.toString() === userCrop.cropId);
-                if (!masterCrop || typeof masterCrop.growingDuration !== 'number') {
-                    // Handle case where crop is not found or has no duration
-                    return null; 
-                }
-                const pDate = new Date(userCrop.plantingDate);
-                const harvestDate = add(pDate, { days: masterCrop.growingDuration });
-
-                return {
-                    cropId: masterCrop._id,
-                    name: userCrop.name,
-                    plantingDate: pDate,
-                    estimatedHarvestDate: harvestDate
-                };
-            }).filter(Boolean); // Filter out any nulls
-        }
-
         const newUser = new User({
             firstName, lastName, email,
             password: bcrypt.hashSync(password, 10),
-            mobileNo, location, dob, gender, language,
-            // Pass the new, processed array to the model
-            userCrops: processedUserCrops, 
+            mobileNo, location, crops, dob, gender, language,
             profilePictureUrl: ''
         });
-
         await newUser.save();
         res.status(201).send({ message: "User registered successfully!" });
-
     } catch (error) {
         console.error("Error during user registration:", error);
         if (error.name === 'ValidationError') {
@@ -76,20 +43,33 @@ module.exports.registerUser = async (req, res) => {
 
 // --- [AUTHENTICATE] Log in a user ---
 module.exports.loginUser = (req, res) => {
-    User.findOne({ email: req.body.email }).select('+password')
+    // The input field can be named 'identifier' for clarity
+    const { identifier, password } = req.body;
+
+    if (!identifier || !password) {
+        return res.status(400).send({ error: "Email/Mobile and password are required." });
+    }
+
+    // Use MongoDB's $or operator to find a user where the identifier matches either the email or mobileNo field
+    User.findOne({
+        $or: [{ email: identifier }, { mobileNo: identifier }]
+    }).select('+password') // Explicitly include the password for comparison
     .then(user => {
         if (!user) {
-            return res.status(404).send({ error: "No Email Found" });
+            return res.status(404).send({ error: "User not found." });
         }
-        const isPasswordCorrect = bcrypt.compareSync(req.body.password, user.password);
+
+        const isPasswordCorrect = bcrypt.compareSync(password, user.password);
+
         if (isPasswordCorrect) {
+            // Generate token and send it back
             return res.status(200).send({ access: auth.createAccessToken(user) });
         } else {
-            return res.status(401).send({ error: "Email and password do not match" });
+            return res.status(401).send({ error: "Invalid credentials." });
         }
     }).catch(err => {
         console.error("Error during login:", err);
-        return res.status(500).send({ error: "Error during login process" });
+        return res.status(500).send({ error: "Error during login process." });
     });
 };
 

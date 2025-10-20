@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Container, Box, Typography, TextField, Button, Link as MuiLink, Grid, InputAdornment } from '@mui/material';
+import { Container, Box, Typography, TextField, Button, Link as MuiLink, Grid, InputAdornment, IconButton } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 
-// Import Icons and Logo
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import logo from '../assets/logo.png';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-// Use the same font size as "Create An Account" (16px)
 const fontStyle = {
   fontWeight: 500,
   fontFamily: 'inherit',
@@ -22,9 +22,13 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, loading } = useAuth();
 
-  const [email, setEmail] = useState('');
+  // --- MODIFIED STATE ---
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -36,7 +40,8 @@ const LoginPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const user = await login(email, password);
+      // --- MODIFIED LOGIN CALL ---
+      const user = await login(identifier, password);
 
       Swal.fire({
         title: 'Login Successful!',
@@ -65,10 +70,8 @@ const LoginPage = () => {
 
   return (
     <Box sx={{ backgroundColor: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Top bar */}
       <Container maxWidth="lg">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0' }}>
-          {/* Left: Back Button */}
           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
             <Button
               startIcon={<ArrowBackIcon />}
@@ -78,13 +81,9 @@ const LoginPage = () => {
               Back
             </Button>
           </Box>
-
-          {/* Center: Logo */}
           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <img src={logo} alt="AgriKlima Logo" style={{ height: '45px' }} />
           </Box>
-
-          {/* Right: Create Account Link */}
           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
             <MuiLink
               component={RouterLink}
@@ -97,15 +96,13 @@ const LoginPage = () => {
           </Box>
         </Box>
       </Container>
-
-      {/* Main content */}
+      
       <Container maxWidth="md" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 5 }}>
           <Typography variant="h4" sx={{ textAlign: 'center', fontWeight: 500, fontFamily: 'inherit', color: 'var(--dark-text)', fontSize: '16px' }}>
             Log In
           </Typography>
         </Box>
-
         <Grid container alignItems="center" justifyContent="center">
           <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Box
@@ -120,29 +117,28 @@ const LoginPage = () => {
                 width: { xs: '100%', md: '480px' }
               }}
             >
+              {/* --- MODIFIED INPUT FIELD --- */}
               <TextField
                 fullWidth
                 required
-                label="Email Address"
+                label="Email or Mobile Number"
                 margin="normal"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailOutlinedIcon sx={{ color: 'grey.500' }} />
+                      <AccountCircleOutlinedIcon sx={{ color: 'grey.500' }} />
                     </InputAdornment>
                   ),
                   style: fontStyle
                 }}
-                InputLabelProps={{
-                  style: fontStyle
-                }}
+                InputLabelProps={{ style: fontStyle }}
               />
               <TextField
                 fullWidth
                 required
-                type="password"
+                type={showPassword ? 'text' : 'password'} // ADD THIS
                 label="Password"
                 margin="normal"
                 value={password}
@@ -153,11 +149,21 @@ const LoginPage = () => {
                       <LockOutlinedIcon sx={{ color: 'grey.500' }} />
                     </InputAdornment>
                   ),
+                  // ADD THIS END ADORNMENT:
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                        aria-label={showPassword ? 'hide password' : 'show password'}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
                   style: fontStyle
                 }}
-                InputLabelProps={{
-                  style: fontStyle
-                }}
+                InputLabelProps={{ style: fontStyle }}
               />
               <Button
                 type="submit"
@@ -182,7 +188,6 @@ const LoginPage = () => {
         </Grid>
       </Container>
 
-      {/* Footer */}
       <Box sx={{ padding: '40px 0', textAlign: 'center' }}>
         <Typography variant="body1" sx={{ fontWeight: 500, fontFamily: 'inherit', color: 'var(--dark-text)', fontSize: '16px' }}>
           Don&apos;t have an Account?{' '}
