@@ -5,7 +5,8 @@ import * as api from '../services/api';
 import Swal from 'sweetalert2';
 
 const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
-  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '' });
+  // Add mobileNo to the state
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', mobileNo: '' });
 
   useEffect(() => {
     if (user) {
@@ -13,6 +14,7 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
+        mobileNo: user.mobileNo || '', // Populate mobile number
       });
     }
   }, [user, open]);
@@ -24,10 +26,11 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user?._id) {
-      Swal.fire('Error', 'User data is not available. Please try again.', 'error');
+      Swal.fire('Error', 'User data is not available.', 'error');
       return;
     }
     try {
+      // The updateUser API call will now include the mobileNo
       await api.updateUser(user._id, formData);
 
       Swal.fire({
@@ -47,17 +50,11 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      sx={{ fontFamily: 'inherit' }} // ⬅️ all children inherit this font
-    >
-      <DialogTitle sx={{ fontFamily: 'inherit' }}>Edit Profile Information</DialogTitle>
-      <form onSubmit={handleSubmit} style={{ fontFamily: 'inherit' }}>
-        <DialogContent sx={{ fontFamily: 'inherit' }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1, fontFamily: 'inherit' }}>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Edit Profile Information</DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
             <TextField
               label="First Name"
               name="firstName"
@@ -65,7 +62,6 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
               onChange={handleChange}
               required
               fullWidth
-              sx={{ fontFamily: 'inherit' }}
             />
             <TextField
               label="Last Name"
@@ -74,7 +70,6 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
               onChange={handleChange}
               required
               fullWidth
-              sx={{ fontFamily: 'inherit' }}
             />
             <TextField
               label="Email Address"
@@ -84,13 +79,23 @@ const EditProfileModal = ({ open, onClose, user, onUpdate }) => {
               onChange={handleChange}
               required
               fullWidth
-              sx={{ fontFamily: 'inherit' }}
+            />
+            {/* --- ADDED MOBILE NUMBER FIELD --- */}
+            <TextField
+              label="Mobile Number"
+              name="mobileNo"
+              type="tel"
+              value={formData.mobileNo}
+              onChange={handleChange}
+              required
+              fullWidth
+              inputProps={{ maxLength: 11 }}
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: '16px 24px', fontFamily: 'inherit' }}>
-          <Button onClick={onClose} sx={{ fontFamily: 'inherit' }}>Cancel</Button>
-          <Button type="submit" variant="contained" sx={{ fontFamily: 'inherit' }}>Save Changes</Button>
+        <DialogActions sx={{ p: '16px 24px' }}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="contained">Save Changes</Button>
         </DialogActions>
       </form>
     </Dialog>
