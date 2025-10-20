@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Create Axios instance
 const API = axios.create({
-   baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000",
+   baseURL: import.meta.env.VITE_API_URL || "https://agriklima-backend.onrender.com",
 });
 
 // Interceptor to add token automatically
