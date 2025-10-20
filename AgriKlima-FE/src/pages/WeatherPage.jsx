@@ -2,14 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Container,
-  Box,
-  Paper,
-  Typography,
-  ThemeProvider,
-  MenuItem,
-  Select,
-  FormControl,
+  Container, Box, Grid, Paper, Typography,
+  ThemeProvider, MenuItem, Select, FormControl, CircularProgress
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import * as api from '../services/api';
@@ -41,16 +35,49 @@ const theme = createTheme({
   shape: { borderRadius: 10 },
 });
 
-const LOCATIONS = ['San Fernando', 'Santa Ana', 'Mexico', 'Bacolor', 'Arayat'];
+const LOCATIONS = [
+  'San Fernando',
+  'Santa Ana',
+  'Mexico',
+  'Bacolor',
+  'Arayat'
+];
 
 const WeatherPage = () => {
   const { user } = useAuth();
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [location, setLocation] = useState('San Fernando');
+  
+  // --- THIS IS THE FIX ---
+  // Initialize location state as an empty string.
+  // It will be populated by the user's location from the useEffect below.
+  const [location, setLocation] = useState('');
+
+  // This effect sets the initial location based on the logged-in user's profile.
+  // It runs whenever the 'user' object is loaded or changes.
+  useEffect(() => {
+    if (user && user.location) {
+      // We parse the user's location string (e.g., "Mexico, Pampanga") 
+      // to match an item in our predefined LOCATIONS array.
+      const userCity = user.location.split(',')[0].trim();
+      const matchedLocation = LOCATIONS.find(loc => userCity.includes(loc));
+
+      if (matchedLocation) {
+        setLocation(matchedLocation);
+      } else {
+        // If the user's location isn't in our list, default to a fallback.
+        setLocation('San Fernando');
+      }
+    } else if (user) {
+      // If the user object is loaded but has no location property, set a fallback.
+      setLocation('San Fernando');
+    }
+  }, [user]); // This effect depends on the user object.
 
   const fetchWeather = useCallback(async () => {
+    // This guard prevents an API call if the location hasn't been set yet.
     if (!location) return;
+
     setLoading(true);
     try {
       const response = await api.getWeather(location);
@@ -66,8 +93,9 @@ const WeatherPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [location]);
+  }, [location]); // This hook correctly depends on the 'location' state.
 
+  // This effect triggers the weather data fetch whenever the fetchWeather function is updated (i.e., when location changes).
   useEffect(() => {
     fetchWeather();
   }, [fetchWeather]);
@@ -109,80 +137,52 @@ const WeatherPage = () => {
               sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 3, minWidth: 280, maxWidth: 360 }}
             >
               <LocationOnIcon color="primary" />
-              <FormControl fullWidth>
-                <Select
-                  value={location}
-                  onChange={handleLocationChange}
-                  variant="standard"
-                  disableUnderline
-                  sx={{ fontSize: '1rem', fontWeight: 500 }}
-                >
-                  {LOCATIONS.map((loc) => (
-                    <MenuItem key={loc} value={loc}>{loc}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              {/* Show a loading spinner if the location is not yet set */}
+              {!location ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} />
+                  <Typography color="text.secondary">Getting your location...</Typography>
+                </Box>
+              ) : (
+                <FormControl fullWidth>
+                  <Select
+                    value={location}
+                    onChange={handleLocationChange}
+                    variant="standard"
+                    disableUnderline
+                    sx={{ fontSize: '1.1rem', fontWeight: 500 }}
+                  >
+                    {LOCATIONS.map((loc) => (
+                      <MenuItem key={loc} value={loc}>
+                        {loc}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
             </Paper>
           </Box>
 
-          {/* Main Content Layout */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              gap: { xs: 3, md: 7 },
-              mb: 4,
-            }}
-          >
-            {/* Daily Forecast */}
-            <Box sx={{
-              flex: '1 1 400px',
-              maxWidth: 520,
-              p: { xs: 1, md: 2 },
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 640,
-              maxHeight: 720,
-              overflowY: 'auto',
-            }}>
-              <DailyForecast forecast={weatherData?.daily || []} loading={loading} />
-            </Box>
-
-            {/* Current Weather */}
-            <Box sx={{
-              flex: '1 1 440px',
-              maxWidth: 580,
-              p: { xs: 1, md: 2 },
-              display: 'flex',
-              justifyContent: 'center',
-            }}>
-              <CurrentWeather weather={weatherData} loading={loading} />
-            </Box>
-
-            {/* Farming Advice */}
-            <Box sx={{
-              flex: '1 1 400px',
-              maxWidth: 520,
-              p: { xs: 1, md: 2 },
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 640,
-              maxHeight: 720,
-              overflowY: 'auto',
-            }}>
-              <FarmingAdvice advice={weatherData?.farmingAdvice} loading={loading} />
-            </Box>
-          </Box>
-
-          {/* Hourly Forecast */}
-          <Box sx={{ width: '100%', mb: 3, px: 1, display: 'flex', justifyContent: 'center' }}>
-            <Box sx={{ width: '100%', maxWidth: '1600px', boxSizing: 'border-box' }}>
+          {/* Main Grid Layout */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ height: '100%' }}>
+                <CurrentWeather weather={weatherData} loading={loading} />
+              </Box>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Box sx={{ height: '100%' }}>
+                <FarmingAdvice advice={weatherData?.farmingAdvice} loading={loading} />
+              </Box>
+            </Grid>
+            
+            <Grid item xs={12}>
               <HourlyForecast forecast={weatherData?.hourly || []} loading={loading} />
             </Box>
           </Box>
 
-          {/* Last Updated */}
+          {/* Last Updated Footer */}
           {weatherData && !loading && (
             <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Typography variant="caption" color="text.secondary">

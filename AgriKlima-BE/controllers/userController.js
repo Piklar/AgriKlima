@@ -43,20 +43,33 @@ module.exports.registerUser = async (req, res) => {
 
 // --- [AUTHENTICATE] Log in a user ---
 module.exports.loginUser = (req, res) => {
-    User.findOne({ email: req.body.email }).select('+password')
+    // The input field can be named 'identifier' for clarity
+    const { identifier, password } = req.body;
+
+    if (!identifier || !password) {
+        return res.status(400).send({ error: "Email/Mobile and password are required." });
+    }
+
+    // Use MongoDB's $or operator to find a user where the identifier matches either the email or mobileNo field
+    User.findOne({
+        $or: [{ email: identifier }, { mobileNo: identifier }]
+    }).select('+password') // Explicitly include the password for comparison
     .then(user => {
         if (!user) {
-            return res.status(404).send({ error: "No Email Found" });
+            return res.status(404).send({ error: "User not found." });
         }
-        const isPasswordCorrect = bcrypt.compareSync(req.body.password, user.password);
+
+        const isPasswordCorrect = bcrypt.compareSync(password, user.password);
+
         if (isPasswordCorrect) {
+            // Generate token and send it back
             return res.status(200).send({ access: auth.createAccessToken(user) });
         } else {
-            return res.status(401).send({ error: "Email and password do not match" });
+            return res.status(401).send({ error: "Invalid credentials." });
         }
     }).catch(err => {
         console.error("Error during login:", err);
-        return res.status(500).send({ error: "Error during login process" });
+        return res.status(500).send({ error: "Error during login process." });
     });
 };
 

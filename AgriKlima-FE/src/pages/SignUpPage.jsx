@@ -2,12 +2,13 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import * as api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 import {
   Container, Box, Typography, Button, Grid, Card, CardMedia, CardContent,
   TextField, Stepper, Step, StepLabel, Paper, Stack,
   CircularProgress, MenuItem, FormControl, InputLabel, Select,
-  InputAdornment, IconButton, Fade, Avatar, Link as MuiLink
+  InputAdornment, IconButton, Fade, Avatar, Collapse, Link as MuiLink
 } from '@mui/material';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -16,7 +17,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import logo from '../assets/logo.png';
 
-// images …
+// Images
 import mexicoImg from '../assets/images/location-mexico.jpg';
 import csfpImg from '../assets/images/location-csfp.jpg';
 import staAnaImg from '../assets/images/location-sta-ana.jpg';
@@ -27,8 +28,9 @@ import wheatImg from '../assets/images/crop-wheat.jpg';
 import cornImg from '../assets/images/crop-corn.jpg';
 import onionImg from '../assets/images/crop-onion.jpg';
 import othersImg from '../assets/images/crop-others.jpg';
+import startingImg from '../assets/images/crop-starting.jpg';
 
-// selection card
+// Reusable SelectionCard for locations and the "Just Starting" option
 const SelectionCard = ({ image, label, isSelected, onClick }) => (
   <Card
     onClick={onClick}
@@ -51,7 +53,40 @@ const SelectionCard = ({ image, label, isSelected, onClick }) => (
   </Card>
 );
 
-const STEPS = ['Account Info', 'Personal Details', 'Crops', 'Location', 'Profile Picture'];
+// Card for selecting crops, which includes a collapsible date field
+const CropSelectionCard = ({ image, label, isSelected, onToggle, onDateChange, plantingDate }) => (
+  <Card
+    sx={{
+      borderRadius: '20px',
+      boxShadow: isSelected ? '0 0 0 4px var(--primary-green)' : '0 4px 12px rgba(0,0,0,0.08)',
+      transform: isSelected ? 'scale(1.03)' : 'scale(1)',
+      transition: 'all 0.2s ease-in-out',
+      border: '1px solid #eee',
+      height: '100%',
+    }}
+  >
+    <CardMedia component="img" image={image} alt={label} sx={{ height: 140, cursor: 'pointer' }} onClick={() => onToggle(label)} />
+    <CardContent sx={{ p: 2, pt: 1 }}>
+      <Typography variant="subtitle1" align="center" sx={{ fontWeight: 600, cursor: 'pointer' }} onClick={() => onToggle(label)}>
+        {label}
+      </Typography>
+      <Collapse in={isSelected}>
+        <TextField
+          label="Planting Date"
+          type="date"
+          fullWidth
+          value={plantingDate}
+          onChange={(e) => onDateChange(label, e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          sx={{ mt: 2 }}
+          required={isSelected}
+        />
+      </Collapse>
+    </CardContent>
+  </Card>
+);
+
+const STEPS = ['Account Info', 'Personal Details', 'Your Crops', 'Location', 'Profile Picture'];
 
 const LOCATION_OPTIONS = [
   { label: 'Mexico, Pampanga', img: mexicoImg, value: 'Mexico, Pampanga' },
@@ -61,15 +96,17 @@ const LOCATION_OPTIONS = [
   { label: 'Bacolor, Pampanga', img: bacolorImg, value: 'Bacolor, Pampanga' },
   { label: 'Others', img: gpsImg, value: 'Others' },
 ];
+
 const CROP_OPTIONS = [
-  { label: 'Rice', img: wheatImg },
-  { label: 'Corn', img: cornImg },
-  { label: 'Onion', img: onionImg },
-  { label: 'Others', img: othersImg },
+  { _id: '60d5f2f9a7b9a72b5c8f7f8b', name: 'Rice', img: wheatImg },
+  { _id: '60d5f2f9a7b9a72b5c8f7f8c', name: 'Corn', img: cornImg },
+  { _id: '60d5f2f9a7b9a72b5c8f7f8d', name: 'Onion', img: onionImg },
+  { _id: '60d5f2f9a7b9a72b5c8f7f8e', name: 'Others', img: othersImg },
 ];
 
 const SignUpPage = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -82,8 +119,10 @@ const SignUpPage = () => {
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', email: '', mobileNo: '',
     password: '', confirmPassword: '', dob: '', gender: '',
-    language: '', crops: [], location: '',
+    language: 'Filipino', location: '', userCrops: [],
   });
+  
+  const [isJustStarting, setIsJustStarting] = useState(false);
 
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
@@ -92,18 +131,46 @@ const SignUpPage = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+  
   const handleSelection = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-  const handleCropToggle = (crop) => {
-    const newCrops = formData.crops.includes(crop)
-      ? formData.crops.filter(c => c !== crop)
-      : [...formData.crops, crop];
-    handleSelection('crops', newCrops);
+
+  const handleCropToggle = (cropName) => {
+    setIsJustStarting(false);
+    setFormData(prev => {
+      const isSelected = prev.userCrops.some(c => c.name === cropName);
+      if (isSelected) {
+        return { ...prev, userCrops: prev.userCrops.filter(c => c.name !== cropName) };
+      } else {
+        const cropDetails = CROP_OPTIONS.find(c => c.name === cropName);
+        return {
+          ...prev,
+          userCrops: [...prev.userCrops, { cropId: cropDetails._id, name: cropName, plantingDate: '' }]
+        };
+      }
+    });
   };
 
-  const handleClickShowPassword = () => setShowPassword(s => !s);
-  const handleClickShowConfirmPassword = () => setShowConfirmPassword(s => !s);
+  const handleJustStartingToggle = () => {
+    setIsJustStarting(prev => {
+      const newIsStarting = !prev;
+      if (newIsStarting) {
+          setFormData(f => ({...f, userCrops: []}));
+      }
+      return newIsStarting;
+    });
+  };
+
+  const handleCropDateChange = (cropName, date) => {
+    setFormData(prev => ({
+      ...prev,
+      userCrops: prev.userCrops.map(c => c.name === cropName ? { ...c, plantingDate: date } : c)
+    }));
+  };
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleClickShowConfirmPassword = () => setShowConfirmPassword((show) => !show);
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
@@ -118,17 +185,14 @@ const SignUpPage = () => {
     switch (step) {
       case 1:
         return (
-          formData.firstName &&
-          formData.lastName &&
-          formData.email.includes('@') &&
-          formData.mobileNo.length === 11 &&
-          formData.password.length >= 8 &&
+          formData.firstName && formData.lastName && formData.email.includes('@') &&
+          formData.mobileNo.length === 11 && formData.password.length >= 8 &&
           formData.password === formData.confirmPassword
         );
       case 2:
         return formData.dob && formData.gender && formData.language;
       case 3:
-        return formData.crops.length > 0;
+        return isJustStarting || (formData.userCrops.length > 0 && formData.userCrops.every(c => c.plantingDate));
       case 4:
         return !!formData.location;
       case 5:
@@ -136,28 +200,80 @@ const SignUpPage = () => {
       default:
         return false;
     }
-  }, [formData, step]);
+  }, [formData, step, isJustStarting]);
 
   const handleSubmit = async () => {
-    if (!isStepValid) return;
-    setIsSubmitting(true);
+  if (!isStepValid) {
+    Swal.fire('Incomplete Information', 'Please ensure all required fields are filled correctly.', 'warning');
+    return;
+  }
+  setIsSubmitting(true);
+
+  const { confirmPassword, ...registrationData } = formData;
+
+  try {
+    // Step 1: Register the user
+    await api.registerUser(registrationData);
+    
+    // Step 2: Show success message
+    await Swal.fire({
+      title: 'Registration Successful!',
+      text: 'Logging you in automatically...',
+      icon: 'success',
+      timer: 2000,
+      showConfirmButton: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
     try {
-      await api.registerUser(formData);
-      Swal.fire({
+      // Step 3: Try to auto-login using identifier (email)
+      const loggedInUser = await login(formData.email, formData.password);
+      
+      // Step 4: Upload profile picture if selected
+      if (profilePictureFile) {
+        try {
+          const pictureFormData = new FormData();
+          pictureFormData.append('profilePicture', profilePictureFile);
+          await api.updateProfilePicture(pictureFormData);
+          console.log("Profile picture uploaded successfully");
+        } catch (pictureError) {
+          console.warn("Profile picture upload failed, but continuing:", pictureError);
+          // Don't fail the entire process if picture upload fails
+        }
+      }
+      
+      // Step 5: Navigate based on user role
+      console.log("User logged in successfully:", loggedInUser);
+      if (loggedInUser && loggedInUser.isAdmin) {
+        navigate('/admin/crops');
+      } else {
+        navigate('/dashboard');
+      }
+
+    } catch (loginError) {
+      console.error("Auto-login failed:", loginError);
+      
+      // Show more detailed error information
+      const loginErrorMessage = loginError.response?.data?.error || loginError.message || "Auto-login failed. Please try logging in manually.";
+      
+      await Swal.fire({
         title: 'Registration Successful!',
-        text: 'You can now log in with your new account.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false,
+        text: `Auto-login failed: ${loginErrorMessage}. Please log in manually.`,
+        icon: 'warning',
+        confirmButtonText: 'Go to Login'
       });
+      
       navigate('/login');
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
-      Swal.fire('Registration Failed', errorMessage, 'error');
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+
+  } catch (error) {
+    console.error("Registration Error:", error);
+    const errorMessage = error.response?.data?.error || 'An unexpected error occurred during registration.';
+    Swal.fire('Registration Failed', errorMessage, 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const renderStepContent = () => (
     <Fade in key={step}>
@@ -217,18 +333,56 @@ const SignUpPage = () => {
               return (
                 <Box sx={{ maxWidth: 500, mx: 'auto' }}>
                   <Stack spacing={3}>
-                    <TextField name="dob" label="Date of Birth" type="date" value={formData.dob} onChange={handleChange} fullWidth required InputLabelProps={{ shrink: true }} />
+                    <TextField 
+                      name="dob" 
+                      label="Date of Birth" 
+                      type="date" 
+                      value={formData.dob} 
+                      onChange={handleChange} 
+                      fullWidth 
+                      required 
+                      InputLabelProps={{ 
+                        shrink: true,
+                        style: { backgroundColor: 'white', padding: '0 4px' } // Prevents overlap
+                      }}
+                    />
                     <FormControl fullWidth required>
-                      <InputLabel>Gender</InputLabel>
-                      <Select name="gender" value={formData.gender} onChange={handleChange}>
+                      <InputLabel 
+                        sx={{ 
+                          backgroundColor: 'white', // Prevents background overlap
+                          padding: '0 4px',
+                          marginLeft: '-4px'
+                        }}
+                      >
+                        Gender
+                      </InputLabel>
+                      <Select 
+                        name="gender" 
+                        value={formData.gender} 
+                        onChange={handleChange}
+                        label="Gender"
+                      >
                         <MenuItem value="Male">Male</MenuItem>
                         <MenuItem value="Female">Female</MenuItem>
                         <MenuItem value="Other">Other</MenuItem>
                       </Select>
                     </FormControl>
                     <FormControl fullWidth required>
-                      <InputLabel>Language</InputLabel>
-                      <Select name="language" value={formData.language} onChange={handleChange}>
+                      <InputLabel 
+                        sx={{ 
+                          backgroundColor: 'white', // Prevents background overlap
+                          padding: '0 4px',
+                          marginLeft: '-4px'
+                        }}
+                      >
+                        Language
+                      </InputLabel>
+                      <Select 
+                        name="language" 
+                        value={formData.language} 
+                        onChange={handleChange}
+                        label="Language"
+                      >
                         <MenuItem value="English">English</MenuItem>
                         <MenuItem value="Filipino">Filipino</MenuItem>
                         <MenuItem value="Kapampangan">Kapampangan</MenuItem>
@@ -240,19 +394,42 @@ const SignUpPage = () => {
             case 3:
               return (
                 <Grid container spacing={3} justifyContent="center">
-                  {CROP_OPTIONS.map(crop => (
-                    <Grid item xs={12} sm={6} md={3} key={crop.label}>
-                      <SelectionCard image={crop.img} label={crop.label} isSelected={formData.crops.includes(crop.label)} onClick={() => handleCropToggle(crop.label)} />
-                    </Grid>
-                  ))}
+                  {CROP_OPTIONS.map((crop) => {
+                    const selectedCrop = formData.userCrops.find((c) => c.name === crop.name);
+                    return (
+                      <Grid item xs={12} sm={6} md={3} key={crop.name}>
+                        <CropSelectionCard 
+                          image={crop.img} 
+                          label={crop.name} 
+                          isSelected={!!selectedCrop}
+                          onToggle={handleCropToggle}
+                          onDateChange={handleCropDateChange}
+                          plantingDate={selectedCrop ? selectedCrop.plantingDate : ''}
+                        />
+                      </Grid>
+                    );
+                  })}
+                  <Grid item xs={12} sm={6} md={3}>
+                    <SelectionCard 
+                      image={startingImg}
+                      label="I'm just starting"
+                      isSelected={isJustStarting}
+                      onClick={handleJustStartingToggle}
+                    />
+                  </Grid>
                 </Grid>
               );
             case 4:
               return (
                 <Grid container spacing={3} justifyContent="center">
-                  {LOCATION_OPTIONS.map(loc => (
+                  {LOCATION_OPTIONS.map((loc) => (
                     <Grid item xs={12} sm={6} md={4} key={loc.value}>
-                      <SelectionCard image={loc.img} label={loc.label} isSelected={formData.location === loc.value} onClick={() => handleSelection('location', loc.value)} />
+                      <SelectionCard
+                        image={loc.img}
+                        label={loc.label}
+                        isSelected={formData.location === loc.value}
+                        onClick={() => handleSelection('location', loc.value)}
+                      />
                     </Grid>
                   ))}
                 </Grid>
@@ -261,15 +438,27 @@ const SignUpPage = () => {
               return (
                 <Box sx={{ maxWidth: 500, mx: 'auto', textAlign: 'center' }}>
                   <Stack spacing={3} alignItems="center">
-                    <Avatar src={previewUrl} sx={{ width: 150, height: 150, mb: 2, bgcolor: 'grey.300' }}>
-                      <AddAPhotoIcon sx={{ fontSize: 60 }} />
+                    <Avatar
+                      src={previewUrl}
+                      sx={{
+                        width: 150, height: 150, mb: 2, bgcolor: 'grey.300',
+                        border: '2px solid #ccc',
+                      }}
+                    >
+                      <AddAPhotoIcon sx={{ fontSize: 60, color: 'grey.500' }} />
                     </Avatar>
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/png, image/jpeg" />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      style={{ display: 'none' }}
+                      accept="image/png, image/jpeg"
+                    />
                     <Button variant="outlined" startIcon={<AddAPhotoIcon />} onClick={triggerFileInput}>
                       Choose Picture
                     </Button>
                     <Typography variant="body2" color="text.secondary">
-                      This step is optional. You can add a profile picture later.
+                      This step is optional. You can add a profile picture later from your profile page.
                     </Typography>
                   </Stack>
                 </Box>
@@ -315,7 +504,7 @@ const SignUpPage = () => {
           <Button
             onClick={step === 5 ? handleSubmit : handleNext}
             variant="contained"
-            disabled={isSubmitting}
+            disabled={!isStepValid || isSubmitting}
             sx={{
               backgroundColor: 'var(--primary-green)',
               borderRadius: '30px',
@@ -323,9 +512,10 @@ const SignUpPage = () => {
               py: 1.5,
               textTransform: 'none',
               fontSize: '18px',
+              '&:disabled': { backgroundColor: 'grey.300' }
             }}
           >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : step === 5 ? 'Finish' : 'Next'}
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : step === 5 ? 'Finish Registration' : 'Next'}
           </Button>
         </Stack>
       </Container>
