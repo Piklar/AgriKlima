@@ -18,7 +18,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 const theme = createTheme({
   palette: {
     primary: { main: '#2e7d32', light: '#4caf50', dark: '#1b5e20' },
-    secondary: { main: '#ffa000', light: '#ffc107', dark: '#ff8f00' },
+    secondary: { main: '#2e7d32', light: '#4caf50', dark: '#1b5e20' },
     background: { default: '#f8f9f8' },
   },
   typography: {
@@ -27,6 +27,11 @@ const theme = createTheme({
     h5: { fontFamily: '"Playfair Display", serif', fontWeight: 600, fontSize: '1.8rem' },
     body1: { fontSize: '1.1rem', lineHeight: 1.7 },
     body2: { fontSize: '1rem', lineHeight: 1.6 },
+    button: {
+      textTransform: 'none',
+      fontWeight: 600,
+      fontFamily: ['Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'].join(','),
+    },
   },
   shape: { borderRadius: 12 },
 });
@@ -64,7 +69,7 @@ const CropProgressCard = ({ crop, onDelete, onAddTask, onManageTasks }) => {
 
   return (
     <Card
-      elevation={3}
+      elevation={2}
       sx={{
         borderRadius: 4,
         overflow: 'hidden',
@@ -77,7 +82,7 @@ const CropProgressCard = ({ crop, onDelete, onAddTask, onManageTasks }) => {
       }}
     >
       <CardContent>
-        <Typography variant="h5" gutterBottom color="primary" fontWeight="bold">
+        <Typography variant="h5" gutterBottom color="text.primary" fontWeight="bold">
           {crop.name}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -176,17 +181,46 @@ const CropTaskDialog = ({ open, onClose, crop, onSave }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
+      <DialogTitle
+        sx={{
+          fontFamily: 'Playfair Display, serif',
+          fontWeight: 700,
+          fontSize: '2rem',
+          px: 3,
+          pt: 2,
+          pb: 0.5,
+          mb: 2,
+        }}
+      >
         Add Task for {crop?.name}
       </DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+      <DialogContent
+        sx={{
+          px: 3,
+          pt: 3,
+          pb: 1,
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
             label="Task Title"
             value={taskTitle}
             onChange={(e) => setTaskTitle(e.target.value)}
             fullWidth
             required
+            sx={{ mt: 1 }}
+            InputProps={{
+              sx: {
+                fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif',
+                fontSize: '1.1rem',
+              }
+            }}
+            InputLabelProps={{
+              sx: {
+                fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif',
+                fontSize: '1rem',
+              }
+            }}
           />
           <TextField
             label="Description"
@@ -195,6 +229,18 @@ const CropTaskDialog = ({ open, onClose, crop, onSave }) => {
             fullWidth
             multiline
             rows={3}
+            InputProps={{
+              sx: {
+                fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif',
+                fontSize: '1.1rem',
+              }
+            }}
+            InputLabelProps={{
+              sx: {
+                fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif',
+                fontSize: '1rem',
+              }
+            }}
           />
           <TextField
             label="Due Date"
@@ -202,15 +248,27 @@ const CropTaskDialog = ({ open, onClose, crop, onSave }) => {
             value={taskDueDate}
             onChange={(e) => setTaskDueDate(e.target.value)}
             fullWidth
-            InputLabelProps={{ shrink: true }}
+            InputLabelProps={{ shrink: true,
+              sx: {
+                fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif',
+                fontSize: '1rem',
+              }
+            }}
+            InputProps={{
+              sx: {
+                fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif',
+                fontSize: '1.1rem',
+              }
+            }}
             required
           />
-          <FormControl fullWidth>
-            <InputLabel>Frequency</InputLabel>
+          <FormControl fullWidth sx={{ fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif', fontSize: '1rem' }}>
+            <InputLabel sx={{ fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif', fontSize: '1rem' }}>Frequency</InputLabel>
             <Select
               value={taskFrequency}
               onChange={(e) => setTaskFrequency(e.target.value)}
               label="Frequency"
+              sx={{ fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif', fontSize: '1.1rem' }}
             >
               <MenuItem value="Once">Once</MenuItem>
               <MenuItem value="Daily">Daily</MenuItem>
@@ -220,9 +278,9 @@ const CropTaskDialog = ({ open, onClose, crop, onSave }) => {
           </FormControl>
         </Box>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" color="primary">
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button onClick={onClose} sx={{ fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif', fontSize: '1rem', textTransform: 'none' }}>Cancel</Button>
+        <Button onClick={handleSave} variant="contained" color="primary" sx={{ fontFamily: 'Inter, Helvetica Neue, Arial, sans-serif', fontSize: '1rem', textTransform: 'none' }}>
           Create Task
         </Button>
       </DialogActions>
@@ -371,7 +429,7 @@ const ManageCropTasksDialog = ({ open, onClose, crop, tasks, onTasksUpdate }) =>
                             borderRadius: 1,
                             fontSize: '0.75rem',
                             backgroundColor: task.status === 'completed' ? '#e8f5e9' : '#fff3e0',
-                            color: task.status === 'completed' ? '#2e7d32' : '#f57c00'
+                            color: task.status === 'completed' ? '#2e7d32' : '#2e7d32'
                           }}
                         >
                           {task.status === 'completed' ? '✓ Completed' : '⏳ Pending'}
@@ -503,14 +561,25 @@ const MyFarmPage = () => {
   return (
     <ThemeProvider theme={theme}>
       <PageDataLoader loading={loading} error={error}>
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Paper elevation={0} sx={{ p: 4, backgroundColor: 'transparent' }}>
-            <Typography variant="h3" gutterBottom color="primary">
-              My Farm Overview
-            </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              Track the progress of your crops and manage your farming activities
-            </Typography>
+        <Container maxWidth="lg" sx={{ pt: 2, pb: 4 }}>
+          <Paper elevation={0} sx={{ pt: 2, pb: 3, px: 4, backgroundColor: 'transparent' }}>
+            <Box sx={{ textAlign: 'center', mb: 3, pb: { xs: 3, md: 5 } }}>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: '"Playfair Display", serif',
+                  fontWeight: 700,
+                  color: 'black',
+                  fontSize: { xs: '2rem', md: '2.8rem' },
+                  lineHeight: 1.2,
+                }}
+              >
+                My Farm Overview
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+                Track the progress of your crops and manage your farming activities
+              </Typography>
+            </Box>
 
             {userCrops.length > 0 ? (
               <Grid container spacing={3}>
