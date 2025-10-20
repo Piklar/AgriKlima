@@ -74,24 +74,38 @@ const LoggedInNavbar = () => {
       color="default"
       elevation={1}
       sx={{
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(8px)',
-        padding: '10px 5%',
-        fontFamily: 'inherit', // inherit font for AppBar
+        px: { xs: 2, sm: 3, md: '5%' },
+        py: { xs: 1, sm: 1.2, md: 1.5 },
+        fontFamily: 'inherit',
       }}
     >
       <Toolbar
+        disableGutters
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'nowrap',
+          minHeight: { xs: 56, sm: 64, md: 70 },
+          gap: { xs: 1, sm: 2 },
           fontFamily: 'inherit',
         }}
       >
         {/* Logo */}
-        <Box sx={{ flexGrow: 0 }}>
-          <NavLink to="/dashboard">
-            <img src={logo} alt="AgriKlima Logo" style={{ height: '45px', display: 'block' }} />
+        <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center' }}>
+          <NavLink to="/dashboard" style={{ display: 'flex', alignItems: 'center' }}>
+            <img
+              src={logo}
+              alt="AgriKlima Logo"
+              style={{
+                height: 'auto',
+                width: 'auto',
+                maxHeight: '40px',
+                objectFit: 'contain',
+              }}
+            />
           </NavLink>
         </Box>
 
@@ -101,7 +115,9 @@ const LoggedInNavbar = () => {
             flexGrow: 1,
             display: { xs: 'none', md: 'flex' },
             justifyContent: 'center',
-            gap: 2,
+            alignItems: 'center',
+            gap: { md: 1.5, lg: 2 },
+            flexWrap: 'wrap',
             fontFamily: 'inherit',
           }}
         >
@@ -109,9 +125,21 @@ const LoggedInNavbar = () => {
             <NavLink
               key={link.to}
               to={link.to}
-              style={({ isActive }) => ({ ...navLinkStyle, ...(isActive ? activeNavLinkStyle : {}) })}
+              style={({ isActive }) => ({
+                ...navLinkStyle,
+                ...(isActive ? activeNavLinkStyle : {}),
+              })}
             >
-              {link.label}
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: { md: '0.95rem', lg: '1rem' },
+                  fontWeight: 'inherit',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {link.label}
+              </Typography>
             </NavLink>
           ))}
 
@@ -126,6 +154,10 @@ const LoggedInNavbar = () => {
                 bgcolor: 'var(--primary-green)',
                 '&:hover': { bgcolor: 'var(--light-green)' },
                 textTransform: 'none',
+                fontSize: { md: '0.8rem', lg: '0.9rem' },
+                py: { md: 0.4, lg: 0.5 },
+                px: { md: 1.2, lg: 1.8 },
+                borderRadius: '8px',
                 fontFamily: 'inherit',
               }}
             >
@@ -134,92 +166,130 @@ const LoggedInNavbar = () => {
           )}
         </Box>
 
-        {/* Mobile Hamburger Menu */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-          <IconButton onClick={handleOpenNavMenu} color="inherit">
-            <MenuIcon />
-          </IconButton>
-          <Menu
-            anchorEl={anchorElNav}
-            open={Boolean(anchorElNav)}
-            onClose={handleCloseNavMenu}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            {navLinks.map((link) => (
-              <MenuItem
-                key={link.to}
-                onClick={() => {
-                  navigate(link.to);
-                  handleCloseNavMenu();
-                }}
-                sx={{ fontFamily: 'inherit' }}
-              >
-                {link.label}
-              </MenuItem>
-            ))}
-            {user?.isAdmin && (
-              <MenuItem
-                onClick={() => {
-                  navigate('/admin/crops');
-                  handleCloseNavMenu();
-                }}
-                sx={{ fontFamily: 'inherit' }}
-              >
-                Admin Panel
-              </MenuItem>
-            )}
-          </Menu>
-        </Box>
+        {/* User Profile + Burger beside */}
+        <Box
+          sx={{
+            ml: { xs: 1, sm: 2 },
+            flexGrow: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 1, sm: 1.5 },
+          }}
+        >
+          {/* Burger Menu beside Avatar */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+            <IconButton
+              onClick={handleOpenNavMenu}
+              color="inherit"
+              sx={{
+                p: 0.8,
+                borderRadius: 2,
+                backgroundColor: 'rgba(106,153,78,0.05)',
+                '&:hover': { backgroundColor: 'rgba(106,153,78,0.15)' },
+              }}
+            >
+              <MenuIcon sx={{ fontSize: 26, color: 'var(--dark-text)' }} />
+            </IconButton>
+          </Box>
 
-        {/* User Profile */}
-        <Box sx={{ ml: 2, flexGrow: 0 }}>
-          <Button onClick={handleOpenUserMenu} sx={{ textTransform: 'none', borderRadius: '20px', p: 0.5 }}>
+          {/* Avatar */}
+          <Button
+            onClick={handleOpenUserMenu}
+            sx={{
+              textTransform: 'none',
+              borderRadius: '20px',
+              p: { xs: 0.2, sm: 0.5 },
+              display: 'flex',
+              alignItems: 'center',
+              minWidth: 'unset',
+            }}
+          >
             <Avatar
               alt={user?.firstName}
               src={user?.profilePictureUrl}
-              sx={{ width: 32, height: 32, mr: 1, bgcolor: 'var(--primary-green)' }}
+              sx={{
+                width: { xs: 28, sm: 32 },
+                height: { xs: 28, sm: 32 },
+                mr: { xs: 0.5, sm: 1 },
+                bgcolor: 'var(--primary-green)',
+              }}
             >
               {!user?.profilePictureUrl && <AccountCircleIcon />}
             </Avatar>
             <Typography
               sx={{
                 color: 'var(--dark-text)',
-                display: { xs: 'none', md: 'block' },
-                fontFamily: 'inherit', // <-- this ensures font inheritance
+                display: { xs: 'none', sm: 'block', md: 'block' },
+                fontSize: { sm: '0.9rem', md: '1rem' },
+                fontFamily: 'inherit',
               }}
             >
               {user ? `${user.firstName} ${user.lastName}` : 'User'}
             </Typography>
           </Button>
-          <Menu
-            anchorEl={anchorElUser}
-            open={Boolean(anchorElUser)}
-            onClose={handleCloseUserMenu}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
+        </Box>
+
+        {/* Mobile Menu */}
+        <Menu
+          anchorEl={anchorElNav}
+          open={Boolean(anchorElNav)}
+          onClose={handleCloseNavMenu}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          {navLinks.map((link) => (
+            <MenuItem
+              key={link.to}
+              onClick={() => {
+                navigate(link.to);
+                handleCloseNavMenu();
+              }}
+              sx={{ fontFamily: 'inherit', fontSize: '0.95rem' }}
+            >
+              {link.label}
+            </MenuItem>
+          ))}
+          {user?.isAdmin && (
             <MenuItem
               onClick={() => {
-                handleCloseUserMenu();
-                navigate('/profile');
+                navigate('/admin/crops');
+                handleCloseNavMenu();
               }}
-              sx={{ fontFamily: 'inherit' }}
+              sx={{ fontFamily: 'inherit', fontSize: '0.95rem' }}
             >
-              <ListItemIcon>
-                <SettingsIcon fontSize="small" />
-              </ListItemIcon>
-              Profile & Settings
+              Admin Panel
             </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout} sx={{ fontFamily: 'inherit' }}>
-              <ListItemIcon>
-                <LogoutIcon fontSize="small" />
-              </ListItemIcon>
-              Logout
-            </MenuItem>
-          </Menu>
-        </Box>
+          )}
+        </Menu>
+
+        {/* User Menu */}
+        <Menu
+          anchorEl={anchorElUser}
+          open={Boolean(anchorElUser)}
+          onClose={handleCloseUserMenu}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <MenuItem
+            onClick={() => {
+              handleCloseUserMenu();
+              navigate('/profile');
+            }}
+            sx={{ fontFamily: 'inherit' }}
+          >
+            <ListItemIcon>
+              <SettingsIcon fontSize="small" />
+            </ListItemIcon>
+            Profile & Settings
+          </MenuItem>
+          <Divider />
+          <MenuItem onClick={handleLogout} sx={{ fontFamily: 'inherit' }}>
+            <ListItemIcon>
+              <LogoutIcon fontSize="small" />
+            </ListItemIcon>
+            Logout
+          </MenuItem>
+        </Menu>
       </Toolbar>
     </AppBar>
   );

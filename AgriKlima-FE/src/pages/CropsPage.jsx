@@ -1,3 +1,5 @@
+// src/pages/CropsPage.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Box, Typography, Grid, Card, CardContent, CardMedia,
@@ -31,13 +33,14 @@ const theme = createTheme({
     body1: { fontSize: '1.1rem', lineHeight: 1.7 },
     body2: { fontSize: '1rem', lineHeight: 1.6 },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: '5px' },
 });
 
+// Secondary Crop Card
 const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
   if (loading) {
     return (
-      <Card sx={{ display: 'flex', borderRadius: '5px', boxShadow: 2, mb: 3, overflow: 'hidden' }}>
+      <Card sx={{ display: 'flex', borderRadius: 4, boxShadow: 2, mb: 3, overflow: 'hidden' }}>
         <Skeleton variant="rectangular" width={159} height={151} />
         <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, p: 2 }}>
           <Skeleton variant="text" width="60%" height={30} />
@@ -53,25 +56,20 @@ const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
       onClick={onClick}
       sx={{
         display: 'flex',
-        borderRadius: '10px',
+        borderRadius: 4,
         boxShadow: 2,
         mb: 3,
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'all 0.3s ease',
         width: '100%',
-        maxWidth: 900,
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: 4,
-          borderLeft: '4px solid',
-          borderColor: 'primary.main'
-        }
+        maxWidth: '100%',
+        '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 }
       }}
     >
       <CardMedia
         component="img"
-        sx={{ width: 200, objectFit: 'cover' }}
+        sx={{ width: 180, objectFit: 'cover' }}
         image={image}
         alt={title}
       />
@@ -93,10 +91,11 @@ const SecondaryCropCard = ({ image, title, description, onClick, loading }) => {
   );
 };
 
+// Article Card
 const ArticleCard = ({ article, onClick, loading }) => {
   if (loading) {
     return (
-      <Card sx={{ borderRadius: '10px', boxShadow: 2, width: '100%', maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Card sx={{ borderRadius: 4, boxShadow: 2, width: '100%', maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Skeleton variant="rectangular" width="100%" height={200} />
         <CardContent sx={{ flex: 1 }}><Skeleton variant="text" height={30} /><Skeleton variant="text" height={20} /></CardContent>
       </Card>
@@ -106,7 +105,7 @@ const ArticleCard = ({ article, onClick, loading }) => {
   return (
     <Card
       sx={{
-        borderRadius: '10px', boxShadow: 2, width: '100%', maxWidth: 345, height: '100%',
+        borderRadius: 4, boxShadow: 2, width: '100%', maxWidth: 345, height: '100%',
         display: 'flex', flexDirection: 'column',
         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
         '&:hover': { transform: 'translateY(-5px)', boxShadow: 4 }
@@ -146,17 +145,9 @@ const CropsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      // Assuming api.getCrops() fetches from your `getAllCrops` endpoint
-      // and api.getNews() fetches news articles
       const [cropsResponse, newsResponse] = await Promise.all([api.getCrops(), api.getNews()]);
-
-      // --- THIS IS THE FIX ---
-      // We now get the 'crops' array from the response data object
-      setCrops(cropsResponse.data.crops || []); 
-      
-      // Assuming newsResponse.data is still an array
-      setNews(newsResponse.data || []); 
-
+      setCrops(cropsResponse.data.crops || []);
+      setNews(newsResponse.data || []);
     } catch (err) {
       console.error("Failed to fetch page data:", err);
       setError("Failed to load page data. Please try again later.");
@@ -165,30 +156,14 @@ const CropsPage = () => {
     }
   }, []);
 
-
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData]);
 
-  const handleOpenCropOverlay = (crop) => {
-    setSelectedCrop(crop);
-    setIsCropOverlayOpen(true);
-  };
-
-  const handleCloseCropOverlay = () => {
-    setIsCropOverlayOpen(false);
-    setSelectedCrop(null);
-  };
-
-  const handleOpenNewsOverlay = (article) => {
-    setSelectedArticle(article);
-    setIsNewsOverlayOpen(true);
-  };
-
-  const handleCloseNewsOverlay = () => {
-    setIsNewsOverlayOpen(false);
-    setSelectedArticle(null);
-  };
+  const handleOpenCropOverlay = (crop) => { setSelectedCrop(crop); setIsCropOverlayOpen(true); };
+  const handleCloseCropOverlay = () => { setIsCropOverlayOpen(false); setSelectedCrop(null); };
+  const handleOpenNewsOverlay = (article) => { setSelectedArticle(article); setIsNewsOverlayOpen(true); };
+  const handleCloseNewsOverlay = () => { setIsNewsOverlayOpen(false); setSelectedArticle(null); };
 
   const featuredCrop = crops.length > 0 ? crops[0] : null;
   const secondaryCrops = crops.length > 1 ? crops.slice(1, 5) : [];
@@ -199,149 +174,114 @@ const CropsPage = () => {
     <ThemeProvider theme={theme}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');`}</style>
       <PageDataLoader loading={loading} error={error} onRetry={fetchPageData}>
-        <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-          {/* Featured Crops Section with Complex Layout */}
-          <Container maxWidth={false} sx={{ py: 6, px: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2, mt: -2 }}>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'text.primary', textAlign: 'center', width: '100%' }}>
-                Recommended Crop this season!
-              </Typography>
+        <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh', px: { xs: 2, md: 0 } }}>
+          <Container maxWidth={false} sx={{ py: 6 }}>
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Recommended Crop this season!</Typography>
             </Box>
-            <Grid container spacing={4} justifyContent="center" alignItems="center">
-              {/* Featured Crop (Left Side) */}
+
+            <Grid container spacing={4} justifyContent="center" alignItems="flex-start">
+              {/* Featured Crop */}
               <Grid item xs={12} md={7} sx={{ display: 'flex', justifyContent: 'center' }}>
                 {featuredCrop ? (
                   <Card
                     onClick={() => handleOpenCropOverlay(featuredCrop)}
-                    sx={{ 
-                      borderRadius: '10px', 
-                      boxShadow: 3, 
-                      overflow: 'hidden', 
-                      height: '100%', 
-                      cursor: 'pointer', 
-                      transition: 'all 0.3s ease', 
-                      background: 'linear-gradient(to bottom right, #f1f8e9, #dcedc8)', 
-                      '&:hover': { transform: 'translateY(-4px)', boxShadow: 5 }, 
+                    sx={{
+                      borderRadius: 4,
+                      boxShadow: 3,
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      background: 'linear-gradient(to bottom right, #f1f8e9, #dcedc8)',
+                      '&:hover': { transform: 'translateY(-4px)', boxShadow: 5 },
                       maxWidth: 900,
-                      width: '100%'
+                      width: '100%',
+                      minHeight: 450
                     }}
                   >
                     <Box sx={{ position: 'relative' }}>
-                      <CardMedia 
-                        component="img" 
-                        height="350" 
-                        image={featuredCrop.imageUrl} 
-                        alt={featuredCrop.name} 
-                        sx={{ objectFit: 'cover', width: '100%' }} 
+                      <CardMedia
+                        component="img"
+                        height="380"
+                        image={featuredCrop.imageUrl}
+                        alt={featuredCrop.name}
+                        sx={{ objectFit: 'cover', width: '100%' }}
                       />
-                      <Chip 
-                        icon={<TrendingUp />} 
-                        label="Top Recommendation" 
-                        sx={{ 
-                          position: 'absolute', 
-                          top: 16, 
-                          left: 26, 
-                          background: 'rgba(255, 255, 255, 0.9)', 
-                          fontWeight: 600 
-                        }} 
+                      <Chip
+                        icon={<TrendingUp />}
+                        label="Top Recommendation"
+                        sx={{
+                          position: 'absolute',
+                          top: 16,
+                          left: 26,
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          fontWeight: 600
+                        }}
                       />
                     </Box>
                     <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                      <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', my: 2, color: 'primary.dark' }}>
-                        {featuredCrop.name}
-                      </Typography>
+                      <Typography variant="h3" sx={{ fontWeight: 'bold', my: 2, color: 'primary.dark' }}>{featuredCrop.name}</Typography>
                       <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                         {featuredCrop.description.substring(0, 120)}...
                       </Typography>
-                      <Button 
-                        variant="outlined" 
-                        endIcon={<ChevronRight />} 
-                        sx={{ 
-                          borderColor: 'primary.main', 
-                          color: 'primary.main', 
-                          borderRadius: '10px', 
-                          px: 3, 
-                          '&:hover': { 
-                            borderColor: 'primary.dark', 
-                            backgroundColor: 'rgba(104, 159, 56, 0.1)' 
-                          } 
-                        }}
-                      >
+                      <Button variant="outlined" endIcon={<ChevronRight />} sx={{
+                        borderColor: 'primary.main', color: 'primary.main', borderRadius: 2, px: 3,
+                        '&:hover': { borderColor: 'primary.dark', backgroundColor: 'rgba(104,159,56,0.1)' }
+                      }}>
                         Explore
                       </Button>
                     </CardContent>
                   </Card>
-                ) : (
-                  <Card sx={{ 
-                    borderRadius: theme.shape.borderRadius, 
-                    p: 2, 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    maxWidth: 600,
-                    width: '100%'
-                  }}>
-                    <Skeleton variant="rectangular" height={350} sx={{ borderRadius: '16px', mb: 2 }} />
-                    <Skeleton variant="text" height={60} width="80%" sx={{ alignSelf: 'center', mb: 2 }} />
-                    <Skeleton variant="text" height={25} width="90%" sx={{ alignSelf: 'center', mb: 1 }} />
-                    <Skeleton variant="text" height={25} width="70%" sx={{ alignSelf: 'center', mb: 3 }} />
-                    <Skeleton variant="rectangular" height={40} width={140} sx={{ borderRadius: '20px', alignSelf: 'center' }} />
-                  </Card>
-                )}
+                ) : <Skeleton variant="rectangular" height={450} width="100%" />}
               </Grid>
-              
-              {/* Secondary Crops (Right Side) */}
-              <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontWeight: 600, 
-                    mb: 2, 
-                    color: 'text.secondary', 
-                    display: 'flex', 
-                    alignItems: 'center'
-                  }}
-                >
-                  <CalendarMonth sx={{ mr: 1, color: 'primary.main' }} /> 
-                  Other Seasonal Crops 
-                </Typography>
-                {loading ? (
-                  [...Array(4)].map((_, index) => (
-                    <SecondaryCropCard key={index} loading={true} />
-                  ))
-                ) : (
-                  secondaryCrops.map(crop => (
-                    <SecondaryCropCard 
-                      key={crop._id} 
-                      title={crop.name} 
-                      description={crop.description} 
-                      image={crop.imageUrl} 
-                      onClick={() => handleOpenCropOverlay(crop)} 
-                    />
-                  ))
-                )}
-                
-                {/* View All Button for remaining crops */}
-                {remainingCrops.length > 0 && (
-                  <Box sx={{ textAlign: 'center', mt: 2 }}>
-                    <Button
-                      variant="outlined"
-                      size="medium"
-                      onClick={() => setIsViewAllOpen(true)}
-                      endIcon={<ChevronRight />}
-                      sx={{ 
-                        borderColor: 'primary.main', 
-                        color: 'primary.main',
-                        '&:hover': {
-                          borderColor: 'primary.dark', 
-                          backgroundColor: 'rgba(104, 159, 56, 0.1)'
-                        }
-                      }}
-                    >
-                      View All Crops ({crops.length})
-                    </Button>
-                  </Box>
-                )}
+
+              {/* Secondary Crops Sidebar */}
+              <Grid item xs={12} md={5}>
+                <Box sx={{
+                  width: '100%',
+                  flexShrink: 0,
+                  position: { md: 'sticky' },
+                  top: { md: 80 },
+                  maxHeight: { md: '85vh' },
+                  overflowY: { md: 'auto' },
+                  px: { xs: 0, md: 2 }
+                }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: 'text.secondary', display: 'flex', alignItems: 'center' }}>
+                    <CalendarMonth sx={{ mr: 1, color: 'primary.main' }} />
+                    Other Seasonal Crops
+                  </Typography>
+                  {loading ? (
+                    [...Array(4)].map((_, index) => <SecondaryCropCard key={index} loading={true} />)
+                  ) : (
+                    secondaryCrops.map(crop => (
+                      <SecondaryCropCard
+                        key={crop._id}
+                        title={crop.name}
+                        description={crop.description}
+                        image={crop.imageUrl}
+                        onClick={() => handleOpenCropOverlay(crop)}
+                      />
+                    ))
+                  )}
+
+                  {remainingCrops.length > 0 && (
+                    <Box sx={{ textAlign: 'center', mt: 2 }}>
+                      <Button
+                        variant="outlined"
+                        size="medium"
+                        onClick={() => setIsViewAllOpen(true)}
+                        endIcon={<ChevronRight />}
+                        sx={{
+                          borderColor: 'primary.main',
+                          color: 'primary.main',
+                          '&:hover': { borderColor: 'primary.dark', backgroundColor: 'rgba(104,159,56,0.1)' }
+                        }}
+                      >
+                        View All Crops ({crops.length})
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
               </Grid>
             </Grid>
           </Container>
@@ -360,15 +300,15 @@ const CropsPage = () => {
                   <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.7, mb: 3 }}>
                     Crops are the foundation of our global food system... Modern agriculture relies on technology to increase yields and efficiency.
                   </Typography>
-                  <Button 
-                    variant="contained" 
-                    endIcon={<ChevronRight />} 
-                    sx={{ 
-                      borderRadius: theme.shape.borderRadius, 
-                      px: 4, 
-                      py: 1.5, 
-                      fontSize: '1.1rem', 
-                      fontWeight: 600 
+                  <Button
+                    variant="contained"
+                    endIcon={<ChevronRight />}
+                    sx={{
+                      borderRadius: theme.shape.borderRadius,
+                      px: 4,
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                      fontWeight: 600
                     }}
                   >
                     Explore Resources
@@ -377,7 +317,7 @@ const CropsPage = () => {
               </Grid>
             </Container>
           </Box>
-          
+
           {/* News Section */}
           <Container maxWidth="lg" sx={{ py: 8 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
@@ -386,30 +326,34 @@ const CropsPage = () => {
                 Latest Articles
               </Typography>
             </Box>
-            <Grid container spacing={4}>
-              {loading ? (
-                [...Array(3)].map((_, index) => (
-                  <Grid item xs={12} md={4} key={index}>
-                    <ArticleCard loading={true} />
-                  </Grid>
-                ))
-              ) : (
-                articles.map(article => (
-                  <Grid item xs={12} md={4} key={article._id}>
-                    <ArticleCard
-                      article={article}
-                      onClick={handleOpenNewsOverlay}
-                    />
-                  </Grid>
-                ))
-              )}
-            </Grid>
+            <Grid 
+  container 
+  spacing={4} 
+  justifyContent={isMobile ? "center" : "flex-start"}
+>
+  {loading ? (
+    [...Array(3)].map((_, index) => (
+      <Grid item xs={12} md={4} key={index}>
+        <ArticleCard loading={true} />
+      </Grid>
+    ))
+  ) : (
+    articles.map(article => (
+      <Grid item xs={12} md={4} key={article._id}>
+        <ArticleCard
+          article={article}
+          onClick={handleOpenNewsOverlay}
+        />
+      </Grid>
+    ))
+  )}
+</Grid>
+
           </Container>
 
           {/* Overlays */}
           <CropDetailOverlay open={isCropOverlayOpen} onClose={handleCloseCropOverlay} cropData={selectedCrop} />
           <NewsSummaryOverlay open={isNewsOverlayOpen} onClose={handleCloseNewsOverlay} articleData={selectedArticle} />
-          
           <ViewAllOverlay
             open={isViewAllOpen}
             onClose={() => setIsViewAllOpen(false)}

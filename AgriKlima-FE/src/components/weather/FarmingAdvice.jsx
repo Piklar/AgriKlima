@@ -14,7 +14,17 @@ import GrainIcon from '@mui/icons-material/Grain';
 const FarmingAdvice = ({ advice, loading }) => {
   if (loading) {
     return (
-      <Paper elevation={3} sx={{ p: 3, borderRadius: 4, height: '100%' }}>
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 2, sm: 3 },
+          borderRadius: 4,
+          height: 'auto',
+          minHeight: 640,
+          maxHeight: 780,
+          boxSizing: 'border-box',
+        }}
+      >
         <Skeleton width="60%" height={40} />
         <Skeleton width="100%" height={100} sx={{ mt: 2 }} />
         <Skeleton width="100%" height={100} sx={{ mt: 2 }} />
@@ -26,34 +36,68 @@ const FarmingAdvice = ({ advice, loading }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'excellent': return '#2e7d32';
-      case 'good': return '#4caf50';
-      case 'fair': return '#ffa000';
-      case 'poor': return '#d32f2f';
-      default: return '#757575';
+      case 'excellent':
+        return '#2e7d32';
+      case 'good':
+        return '#4caf50';
+      case 'fair':
+        return '#ffa000';
+      case 'poor':
+        return '#d32f2f';
+      default:
+        return '#757575';
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'excellent': return <CheckCircleIcon sx={{ fontSize: '3rem', color: '#2e7d32' }} />;
-      case 'good': return <CheckCircleIcon sx={{ fontSize: '3rem', color: '#4caf50' }} />;
-      case 'fair': return <WarningIcon sx={{ fontSize: '3rem', color: '#ffa000' }} />;
-      case 'poor': return <ErrorIcon sx={{ fontSize: '3rem', color: '#d32f2f' }} />;
-      default: return null;
+      case 'excellent':
+        return <CheckCircleIcon sx={{ fontSize: { xs: '2.5rem', sm: '3rem' }, color: '#2e7d32' }} />;
+      case 'good':
+        return <CheckCircleIcon sx={{ fontSize: { xs: '2.5rem', sm: '3rem' }, color: '#4caf50' }} />;
+      case 'fair':
+        return <WarningIcon sx={{ fontSize: { xs: '2.5rem', sm: '3rem' }, color: '#ffa000' }} />;
+      case 'poor':
+        return <ErrorIcon sx={{ fontSize: { xs: '2.5rem', sm: '3rem' }, color: '#d32f2f' }} />;
+      default:
+        return null;
     }
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, borderRadius: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper
+      elevation={3}
+      sx={{
+        p: { xs: 2, sm: 3 },
+        borderRadius: 4,
+        height: 'auto',
+        minHeight: 640,
+        maxHeight: 780,
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+      }}
+    >
       <Typography variant="h5" gutterBottom fontWeight="600" color="primary">
         🌾 Farming Conditions Analysis
       </Typography>
 
       {/* Score Section */}
-      <Box sx={{ textAlign: 'center', my: 2, p: 2, bgcolor: 'background.default', borderRadius: 3 }}>
+      <Box
+        sx={{
+          textAlign: 'center',
+          my: 2,
+          p: 2,
+          bgcolor: 'background.default',
+          borderRadius: 3,
+        }}
+      >
         {getStatusIcon(advice.status)}
-        <Typography variant="h3" fontWeight="bold" sx={{ color: getStatusColor(advice.status), mt: 1 }}>
+        <Typography
+          variant="h3"
+          fontWeight="bold"
+          sx={{ color: getStatusColor(advice.status), mt: 1, fontSize: { xs: '2rem', sm: '3rem' } }}
+        >
           {advice.score}/100
         </Typography>
         <Typography variant="h6" color="text.secondary">
@@ -64,13 +108,13 @@ const FarmingAdvice = ({ advice, loading }) => {
           value={advice.score}
           sx={{
             mt: 2,
-            height: 12,
+            height: { xs: 10, sm: 12 },
             borderRadius: 6,
             backgroundColor: 'rgba(0,0,0,0.1)',
             '& .MuiLinearProgress-bar': {
               borderRadius: 6,
-              backgroundColor: getStatusColor(advice.status)
-            }
+              backgroundColor: getStatusColor(advice.status),
+            },
           }}
         />
       </Box>
@@ -125,7 +169,7 @@ const FarmingAdvice = ({ advice, loading }) => {
 
       {/* Warnings */}
       {advice.warnings && advice.warnings.length > 0 && (
-        <Box sx={{ mb: 2, flex: 1, overflow: 'auto' }}>
+        <Box sx={{ mb: 2, flex: '0 0 auto', maxHeight: 220, overflow: 'auto' }}>
           <Typography variant="subtitle2" fontWeight="600" gutterBottom>
             ⚠️ Warnings
           </Typography>
@@ -138,28 +182,33 @@ const FarmingAdvice = ({ advice, loading }) => {
       )}
 
       {/* Recommendations */}
-      <Box sx={{ flex: 1, overflow: 'auto' }}>
-        <Typography variant="subtitle2" fontWeight="600" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ flex: '1 1 auto', overflow: 'auto', maxHeight: 360 }}>
+        <Typography
+          variant="subtitle2"
+          fontWeight="600"
+          gutterBottom
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        >
           <LightbulbIcon color="primary" fontSize="small" />
           Recommendations
         </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, sm: 1.5 } }}>
           {advice.recommendations.map((rec, index) => (
             <Chip
               key={index}
               label={rec}
               icon={<CheckCircleIcon />}
-              size="small"
               sx={{
                 justifyContent: 'flex-start',
                 height: 'auto',
-                py: 1,
-                px: 1.5,
+                py: { xs: 1, sm: 1.25 },
+                px: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '0.85rem', sm: '0.9rem' },
                 '& .MuiChip-label': {
                   whiteSpace: 'normal',
                   textAlign: 'left',
-                  fontSize: '0.75rem'
-                }
+                  fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                },
               }}
               color="primary"
               variant="outlined"
