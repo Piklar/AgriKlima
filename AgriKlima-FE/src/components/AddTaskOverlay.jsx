@@ -7,7 +7,9 @@ import {
   Button,
   TextField,
   Box,
+  IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from '../context/AuthContext';
 
 const AddTaskOverlay = ({ open, onClose, onAddTask }) => {
@@ -39,8 +41,29 @@ const AddTaskOverlay = ({ open, onClose, onAddTask }) => {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Add a New Task</DialogTitle>
       <form onSubmit={handleSubmit}>
+        <DialogTitle sx={{ m: 0, p: 2, position: 'relative' }}>
+          Add a New Task
+          <IconButton
+            onClick={onClose}
+            aria-label="Close"
+            disableRipple
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              zIndex: 10,
+              backgroundColor: 'transparent',
+              padding: 0,
+              borderRadius: 0,
+              color: 'rgba(0,0,0,0.6)',
+              '&:hover': { backgroundColor: 'transparent' }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 1 }}>
             <TextField
@@ -65,6 +88,7 @@ const AddTaskOverlay = ({ open, onClose, onAddTask }) => {
             />
           </Box>
         </DialogContent>
+
         <DialogActions sx={{ p: '16px 24px' }}>
           <Button onClick={onClose} color="secondary">
             Cancel

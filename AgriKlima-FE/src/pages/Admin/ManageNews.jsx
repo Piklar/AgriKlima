@@ -10,11 +10,49 @@ import AdminFormModal from '../../components/AdminFormModal';
 const ManageNews = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [currentNews, setCurrentNews] = useState(null);
 
+  // 🌿 Reusable SweetAlert2 Style
+  const styleSweetAlert = () => {
+    const popup = Swal.getPopup();
+    popup.style.borderRadius = '20px';
+    popup.style.padding = '30px';
+    popup.style.boxShadow = '0 6px 25px rgba(46, 125, 50, 0.4)';
+
+    const confirmBtn = Swal.getConfirmButton();
+    if (confirmBtn) {
+      confirmBtn.style.backgroundColor = '#66bb6a';
+      confirmBtn.style.color = 'white';
+      confirmBtn.style.fontWeight = '600';
+      confirmBtn.style.padding = '10px 25px';
+      confirmBtn.style.borderRadius = '8px';
+      confirmBtn.style.margin = '5px';
+      confirmBtn.style.border = 'none';
+      confirmBtn.style.cursor = 'pointer';
+      confirmBtn.style.transition = '0.3s';
+      confirmBtn.onmouseover = () => (confirmBtn.style.backgroundColor = '#4caf50');
+      confirmBtn.onmouseout = () => (confirmBtn.style.backgroundColor = '#66bb6a');
+    }
+
+    const cancelBtn = Swal.getCancelButton();
+    if (cancelBtn) {
+      cancelBtn.style.backgroundColor = '#ffffff';
+      cancelBtn.style.color = '#2e7d32';
+      cancelBtn.style.fontWeight = '600';
+      cancelBtn.style.padding = '10px 25px';
+      cancelBtn.style.borderRadius = '8px';
+      cancelBtn.style.margin = '5px';
+      cancelBtn.style.border = '1px solid #a5d6a7';
+      cancelBtn.style.cursor = 'pointer';
+      cancelBtn.style.transition = '0.3s';
+      cancelBtn.onmouseover = () => (cancelBtn.style.backgroundColor = '#e8f5e9');
+      cancelBtn.onmouseout = () => (cancelBtn.style.backgroundColor = '#ffffff');
+    }
+  };
+
+  // 📥 Fetch News
   const fetchNews = useCallback(async () => {
     setLoading(true);
     try {
@@ -22,7 +60,15 @@ const ManageNews = () => {
       setNews(response.data || []);
     } catch (error) {
       console.error('Failed to fetch news:', error);
-      Swal.fire('Error', 'Could not fetch news from the server.', 'error');
+      Swal.fire({
+        title: '❌ Error',
+        text: 'Could not fetch news from the server.',
+        icon: 'error',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        confirmButtonText: 'OK',
+        didOpen: styleSweetAlert
+      });
     } finally {
       setLoading(false);
     }
@@ -32,12 +78,14 @@ const ManageNews = () => {
     fetchNews();
   }, [fetchNews]);
 
+  // ➕ Add
   const handleOpenAddModal = () => {
     setModalMode('add');
     setCurrentNews(null);
     setIsModalOpen(true);
   };
 
+  // ✏️ Edit
   const handleOpenEditModal = (newsArticle) => {
     setModalMode('edit');
     setCurrentNews(newsArticle);
@@ -49,23 +97,28 @@ const ManageNews = () => {
     setCurrentNews(null);
   };
 
+  // 📝 Save or Update News
   const handleFormSubmit = async (formData, imageFile) => {
     try {
       let savedItem;
       if (modalMode === 'add') {
         const response = await api.addNews(formData);
         savedItem = response.data;
-        if (imageFile)
+        if (imageFile) {
           Swal.fire({
             title: 'Step 1/2 Complete',
             text: 'Article details saved. Now uploading image...',
             icon: 'info',
             timer: 1500,
             showConfirmButton: false,
+            background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+            color: '#2e7d32',
+            didOpen: styleSweetAlert
           });
+        }
       } else {
         const response = await api.updateNews(currentNews._id, formData);
-        savedItem = response.data.article; // fix
+        savedItem = response.data.article;
       }
 
       if (imageFile && savedItem?._id) {
@@ -74,44 +127,80 @@ const ManageNews = () => {
         await api.uploadNewsImage(savedItem._id, uploadFormData);
       }
 
-      Swal.fire(
-        'Success!',
-        `News article ${modalMode === 'add' ? 'created' : 'updated'} successfully.`,
-        'success'
-      );
+      Swal.fire({
+        title: '🌿 Success!',
+        text: `News article ${modalMode === 'add' ? 'created' : 'updated'} successfully.`,
+        icon: 'success',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        confirmButtonText: 'OK',
+        didOpen: styleSweetAlert
+      });
       handleCloseModal();
       fetchNews();
     } catch (error) {
       console.error('Failed to save news article:', error);
       const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
-      Swal.fire('Error', `Failed to save the article: ${errorMessage}`, 'error');
+      Swal.fire({
+        title: '❌ Error',
+        text: `Failed to save the article: ${errorMessage}`,
+        icon: 'error',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        confirmButtonText: 'OK',
+        didOpen: styleSweetAlert
+      });
     }
   };
 
+  // 🗑️ Delete
   const handleDelete = (id) => {
     Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
+      title: '🚜 Are you sure?',
+      html: `
+        <div style="font-family: 'Poppins', sans-serif; font-size: 16px; color: #2e4d2c;">
+          <p>This article will be permanently removed.</p>
+        </div>
+      `,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+      background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+      color: '#2e7d32',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: styleSweetAlert
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           await api.deleteNews(id);
-          Swal.fire('Deleted!', 'The news article has been deleted.', 'success');
+          Swal.fire({
+            title: '🌿 Deleted!',
+            text: 'The article has been successfully deleted.',
+            icon: 'success',
+            background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+            color: '#2e7d32',
+            confirmButtonText: 'OK',
+            didOpen: styleSweetAlert
+          });
           fetchNews();
         } catch (error) {
-          Swal.fire(
-            'Error',
-            `Failed to delete the article: ${error.response?.data?.error || ''}`,
-            'error'
-          );
+          Swal.fire({
+            title: '❌ Error',
+            text: `Failed to delete the article: ${error.response?.data?.error || 'An unexpected error occurred.'}`,
+            icon: 'error',
+            background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+            color: '#2e7d32',
+            confirmButtonText: 'OK',
+            didOpen: styleSweetAlert
+          });
         }
       }
     });
   };
 
+  // 📰 Form fields
   const newsFields = [
     { name: 'title', label: 'Title', required: true, group: 'Article Content' },
     { name: 'author', label: 'Author', required: true, group: 'Article Content' },
@@ -149,6 +238,7 @@ const ManageNews = () => {
     },
   ];
 
+  // 📊 Table columns
   const columns = [
     {
       field: 'imageUrl',
@@ -217,8 +307,8 @@ const ManageNews = () => {
           variant="contained"
           startIcon={<AddIcon />}
           sx={{
-            bgcolor: 'var(--primary-green)',
-            '&:hover': { bgcolor: 'var(--light-green)' },
+            bgcolor: '#66bb6a',
+            '&:hover': { bgcolor: '#4caf50' },
             borderRadius: 2,
           }}
           onClick={handleOpenAddModal}
@@ -226,6 +316,7 @@ const ManageNews = () => {
           Add New Article
         </Button>
       </Box>
+
       <Paper sx={{ height: '75vh', width: '100%' }}>
         <DataGrid
           rows={news}
@@ -239,6 +330,7 @@ const ManageNews = () => {
           }}
         />
       </Paper>
+
       <AdminFormModal
         open={isModalOpen}
         onClose={handleCloseModal}
