@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Box, Typography, Grid, Paper, Chip } from '@mui/material';
+import { Modal, Box, Typography, Grid, Paper, Chip, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 // --- Reusable Info Components ---
 const InfoItem = ({ title, content }) => (
@@ -123,9 +124,25 @@ const PestDetailOverlay = ({ open, onClose, pestData }) => {
           maxWidth: 1000,
           maxHeight: '90vh',
           borderRadius: '10px',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          position: 'relative' // enable absolute-positioned close button
         }}
       >
+        {/* Close / Exit Button */}
+        <IconButton
+          onClick={onClose}
+          aria-label="Close"
+          sx={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            zIndex: 10,
+            '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.25)' }
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
         {/* Header / Hero Image */}
         <Box
           sx={{

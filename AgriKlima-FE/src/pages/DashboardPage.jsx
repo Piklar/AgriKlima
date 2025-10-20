@@ -102,10 +102,11 @@ const DashboardPage = () => {
           sx={{
             backgroundColor: theme.palette.background.default,
             minHeight: '100vh',
-            py: { xs: 4, md: 6 },
+            py: { xs: 3, sm: 4, md: 6 },
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'flex-start',
+            overflowX: 'hidden',
           }}
         >
           <Container
@@ -114,24 +115,34 @@ const DashboardPage = () => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 4,
+              gap: { xs: 2.5, sm: 3.5, md: 4 },
+              px: { xs: 1.5, sm: 3, md: 4, lg: 6 },
+              boxSizing: 'border-box',
             }}
           >
             {/* Header */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box sx={{ textAlign: 'center', mb: { xs: 2.5, sm: 3.5, md: 4 } }}>
               <Typography
                 variant="h4"
                 sx={{
                   fontFamily: '"Playfair Display", serif',
                   fontWeight: 700,
                   color: 'black',
-                  fontSize: { xs: '2rem', md: '2.8rem' },
+                  fontSize: { xs: '1.6rem', sm: '2rem', md: '2.6rem', lg: '2.8rem' },
                   lineHeight: 1.2,
+                  mb: { xs: 0.5, sm: 1 },
                 }}
               >
                 Welcome back, {user?.firstName || 'Farmer'}!
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{
+                  fontSize: { xs: '0.9rem', sm: '1rem', md: '1.05rem', lg: '1.1rem' },
+                  lineHeight: 1.6,
+                }}
+              >
                 Here’s your farm’s overview for today.
               </Typography>
             </Box>
@@ -139,28 +150,63 @@ const DashboardPage = () => {
             {/* Dashboard Grid */}
             <Grid
               container
-              spacing={4}
+              spacing={{ xs: 2, sm: 3, md: 4 }}
               justifyContent="center"
-              sx={{ width: '100%', maxWidth: 1600 }}
+              alignItems="stretch"
+              sx={{
+                width: '100%',
+                maxWidth: 1600,
+                mx: 'auto',
+              }}
             >
               {/* Left Column */}
-              <Grid item xs={12} md={6} sx={{ maxWidth: 550 }}>
-                <Stack spacing={3}>
+              <Grid item xs={12} sm={6} lg={4} sx={{ display: 'flex' }}>
+                <Stack
+                  spacing={{ xs: 1.5, sm: 2, md: 3 }}
+                  sx={{
+                    width: '100%',
+                    '& > *': {
+                      borderRadius: { xs: 2, sm: 3 },
+                      p: { xs: 1.5, sm: 2, md: 3 },
+                      boxShadow: 3,
+                    },
+                  }}
+                >
                   <WeatherTodayCard weather={dashboardData.weather} loading={loading} />
                   <PestAlertCard pests={dashboardData.pests} loading={loading} />
                 </Stack>
               </Grid>
 
               {/* Middle Column */}
-              <Grid item xs={12} md={6} sx={{ maxWidth: 550 }}>
-                <Stack spacing={3}>
+              <Grid item xs={12} sm={6} lg={4} sx={{ display: 'flex' }}>
+                <Stack
+                  spacing={{ xs: 1.5, sm: 2, md: 3 }}
+                  sx={{
+                    width: '100%',
+                    '& > *': {
+                      borderRadius: { xs: 2, sm: 3 },
+                      p: { xs: 1.5, sm: 2, md: 3 },
+                      boxShadow: 3,
+                    },
+                  }}
+                >
                   <MyCropsCard userCrops={dashboardData.userCrops} loading={loading} />
                 </Stack>
               </Grid>
 
               {/* Right Column */}
-              <Grid item xs={12} md={6} sx={{ maxWidth: 550 }}>
-                <Stack spacing={3}>
+              <Grid item xs={12} sm={6} lg={4} sx={{ display: 'flex' }}>
+                <Stack
+                  spacing={{ xs: 1.5, sm: 2, md: 3 }}
+                  sx={{
+                    width: '100%',
+                    '& > *': {
+                      borderRadius: { xs: 2, sm: 3 },
+                      p: { xs: 1.5, sm: 2, md: 3 },
+                      boxShadow: 3,
+                    },
+                  }}
+                >
                   <TodayTasksCard
                     tasks={dashboardData.tasks}
                     loading={loading}

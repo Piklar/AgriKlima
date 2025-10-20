@@ -9,6 +9,46 @@ import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
 import { useAuth } from '../../context/AuthContext';
 
+// ✨ SweetAlert2 agricultural-themed styling
+const styleSweetAlert = () => {
+  const popup = Swal.getPopup();
+  if (popup) {
+    popup.style.borderRadius = '20px';
+    popup.style.padding = '30px';
+    popup.style.boxShadow = '0 6px 25px rgba(46, 125, 50, 0.4)';
+  }
+
+  const confirmBtn = Swal.getConfirmButton();
+  if (confirmBtn) {
+    confirmBtn.style.backgroundColor = '#66bb6a';
+    confirmBtn.style.color = 'white';
+    confirmBtn.style.fontWeight = '600';
+    confirmBtn.style.padding = '10px 25px';
+    confirmBtn.style.borderRadius = '8px';
+    confirmBtn.style.margin = '5px';
+    confirmBtn.style.border = 'none';
+    confirmBtn.style.cursor = 'pointer';
+    confirmBtn.style.transition = '0.3s';
+    confirmBtn.onmouseover = () => (confirmBtn.style.backgroundColor = '#4caf50');
+    confirmBtn.onmouseout = () => (confirmBtn.style.backgroundColor = '#66bb6a');
+  }
+
+  const cancelBtn = Swal.getCancelButton();
+  if (cancelBtn) {
+    cancelBtn.style.backgroundColor = '#ffffff';
+    cancelBtn.style.color = '#2e7d32';
+    cancelBtn.style.fontWeight = '600';
+    cancelBtn.style.padding = '10px 25px';
+    cancelBtn.style.borderRadius = '8px';
+    cancelBtn.style.margin = '5px';
+    cancelBtn.style.border = '1px solid #a5d6a7';
+    cancelBtn.style.cursor = 'pointer';
+    cancelBtn.style.transition = '0.3s';
+    cancelBtn.onmouseover = () => (cancelBtn.style.backgroundColor = '#e8f5e9');
+    cancelBtn.onmouseout = () => (cancelBtn.style.backgroundColor = '#ffffff');
+  }
+};
+
 const ManageCrops = () => {
   const { token } = useAuth();
   const [crops, setCrops] = useState([]);
@@ -16,12 +56,11 @@ const ManageCrops = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [currentCrop, setCurrentCrop] = useState(null);
-
-  // --- NEW STATE for search and pagination ---
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
 
+  // 📥 Fetch crops
   const fetchCrops = useCallback(async () => {
     setLoading(true);
     try {
@@ -29,8 +68,14 @@ const ManageCrops = () => {
       setCrops(response.data.crops);
       setTotalPages(response.data.totalPages);
     } catch (error) {
-      console.error('Failed to fetch crops:', error);
-      Swal.fire('Error', 'Could not fetch crops from the server.', 'error');
+      Swal.fire({
+        title: '❌ Error',
+        text: 'Could not fetch crops from the server.',
+        icon: 'error',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        didOpen: styleSweetAlert
+      });
     } finally {
       setLoading(false);
     }
@@ -39,14 +84,13 @@ const ManageCrops = () => {
   useEffect(() => {
     const handler = setTimeout(() => {
       fetchCrops();
-    }, 500); // debounce search
+    }, 500);
     return () => clearTimeout(handler);
   }, [fetchCrops]);
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
-  };
+  const handlePageChange = (event, value) => setPage(value);
 
+  // ➕ Add / ✏️ Edit Modal
   const handleOpenAddModal = () => {
     setModalMode('add');
     setCurrentCrop(null);
@@ -64,9 +108,17 @@ const ManageCrops = () => {
     setCurrentCrop(null);
   };
 
+  // 📝 Save or Update Crop
   const handleFormSubmit = async (formData, imageFile) => {
     if (!token) {
-      Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
+      Swal.fire({
+        title: '❌ Error',
+        text: 'You must be logged in.',
+        icon: 'error',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        didOpen: styleSweetAlert
+      });
       return;
     }
     try {
@@ -74,13 +126,17 @@ const ManageCrops = () => {
       if (modalMode === 'add') {
         const response = await api.addCrop(formData, token);
         savedItem = response.data;
+
         if (imageFile) {
           Swal.fire({
             title: 'Step 1/2 Complete',
             text: 'Crop details saved. Now uploading image...',
             icon: 'info',
-            timer: 1500,
             showConfirmButton: false,
+            timer: 1500,
+            background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+            color: '#2e7d32',
+            didOpen: styleSweetAlert
           });
         }
       } else {
@@ -94,38 +150,76 @@ const ManageCrops = () => {
         await api.uploadCropImage(savedItem._id, uploadFormData);
       }
 
-      Swal.fire('Success', `Crop ${modalMode === 'add' ? 'created' : 'updated'} successfully!`, 'success');
+      Swal.fire({
+        title: '🌿 Success!',
+        text: `Crop ${modalMode === 'add' ? 'created' : 'updated'} successfully!`,
+        icon: 'success',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        didOpen: styleSweetAlert
+      });
+
       handleCloseModal();
       fetchCrops();
     } catch (error) {
-      console.error('Failed to save crop:', error);
       const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
-      Swal.fire('Error', `Failed to save the crop: ${errorMessage}`, 'error');
+      Swal.fire({
+        title: '❌ Error',
+        text: `Failed to save the crop: ${errorMessage}`,
+        icon: 'error',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        didOpen: styleSweetAlert
+      });
     }
   };
 
+  // 🗑️ Delete Crop
   const handleDelete = (id) => {
     if (!token) {
-      Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
+      Swal.fire({
+        title: '❌ Error',
+        text: 'You must be logged in.',
+        icon: 'error',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        didOpen: styleSweetAlert
+      });
       return;
     }
+
     Swal.fire({
-      title: 'Are you sure?',
+      title: '🚜 Are you sure?',
       text: "You won't be able to revert this!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+      background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+      color: '#2e7d32',
+      didOpen: styleSweetAlert
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await api.deleteCrop(id);
-          Swal.fire('Deleted!', 'The crop has been deleted.', 'success');
+          await api.deleteCrop(id, token);
+          Swal.fire({
+            title: '🌿 Deleted!',
+            text: 'The crop has been deleted.',
+            icon: 'success',
+            background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+            color: '#2e7d32',
+            didOpen: styleSweetAlert
+          });
           fetchCrops();
         } catch (error) {
-          console.error('Failed to delete crop:', error.response?.data?.error || error);
-          Swal.fire('Error', `Failed to delete the crop: ${error.response?.data?.error || ''}`, 'error');
+          Swal.fire({
+            title: '❌ Error',
+            text: `Failed to delete the crop: ${error.response?.data?.error || 'An unexpected error occurred.'}`,
+            icon: 'error',
+            background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+            color: '#2e7d32',
+            didOpen: styleSweetAlert
+          });
         }
       }
     });
@@ -143,12 +237,12 @@ const ManageCrops = () => {
     { name: 'growingGuide.soilType', label: 'Soil Type', group: 'Growing Guide' },
     { name: 'growingGuide.waterNeeds', label: 'Water Needs', group: 'Growing Guide' },
     { name: 'growingGuide.fertilizer', label: 'Fertilizer', group: 'Growing Guide' },
-    { name: 'marketInfo.priceRange', label: 'Price Range (e.g., ₱50-₱60/kg)', group: 'Growing Guide' },
+    { name: 'marketInfo.priceRange', label: 'Price Range', group: 'Growing Guide' },
     { name: 'marketInfo.storageMethod', label: 'Storage Method', group: 'Growing Guide' },
-    { name: 'healthCare.commonDiseases', label: 'Common Diseases (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
-    { name: 'healthCare.pestControl', label: 'Pest Control (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
-    { name: 'healthCare.nutritionalValue', label: 'Nutritional Value (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
-    { name: 'marketInfo.cookingTips', label: 'Cooking Tips (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
+    { name: 'healthCare.commonDiseases', label: 'Common Diseases', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
+    { name: 'healthCare.pestControl', label: 'Pest Control', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
+    { name: 'healthCare.nutritionalValue', label: 'Nutritional Value', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
+    { name: 'marketInfo.cookingTips', label: 'Cooking Tips', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
   ];
 
   const columns = [
@@ -215,8 +309,8 @@ const ManageCrops = () => {
           variant="contained"
           startIcon={<AddIcon />}
           sx={{
-            bgcolor: 'var(--primary-green)',
-            '&:hover': { bgcolor: 'var(--light-green)' },
+            bgcolor: '#66bb6a',
+            '&:hover': { bgcolor: '#4caf50' },
             borderRadius: 2,
           }}
           onClick={handleOpenAddModal}
@@ -225,8 +319,8 @@ const ManageCrops = () => {
         </Button>
       </Box>
 
-      {/* Search Bar */}
-      <Paper sx={{ mb: 2, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Search */}
+      <Paper sx={{ mb: 2, p: 2, display: 'flex', alignItems: 'center' }}>
         <TextField
           fullWidth
           variant="outlined"
@@ -246,7 +340,7 @@ const ManageCrops = () => {
         />
       </Paper>
 
-      {/* Data Table */}
+      {/* Table */}
       <Paper sx={{ height: '70vh', width: '100%' }}>
         <DataGrid
           rows={crops}

@@ -249,7 +249,6 @@ const PestsPage = () => {
           backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${pestsHero})`, 
           backgroundSize: 'cover', 
           backgroundPosition: 'center', 
-          backgroundAttachment: 'fixed', 
           display: 'flex', 
           flexDirection: 'column', 
           justifyContent: 'center', 

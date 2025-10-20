@@ -29,13 +29,12 @@ const theme = createTheme({
     h4: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2.2rem' },
     h5: { fontFamily: '"Playfair Display", serif', fontWeight: 600, fontSize: '1.8rem' },
     h6: { fontWeight: 600, fontSize: '1.2rem' },
-    body1: { fontSize: '1.1rem', lineHeight: 1.7 },
-    body2: { fontSize: '1rem', lineHeight: 1.6 },
+    body1: { fontSize: '1.05rem', lineHeight: 1.6 },
+    body2: { fontSize: '0.95rem', lineHeight: 1.5 },
   },
   shape: { borderRadius: 10 },
 });
 
-// This list should match the locations supported by your backend
 const LOCATIONS = [
   'San Fernando',
   'Santa Ana',
@@ -101,36 +100,41 @@ const WeatherPage = () => {
     fetchWeather();
   }, [fetchWeather]);
 
-  const handleLocationChange = (event) => {
-    setLocation(event.target.value);
-  };
+  const handleLocationChange = (event) => setLocation(event.target.value);
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 3, md: 5 } }}>
         <Container maxWidth="xl">
           {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h2" color="primary" gutterBottom>
+          <Box sx={{ textAlign: 'center', mb: { xs: 3, md: 4 } }}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontFamily: '"Playfair Display", serif',
+                fontWeight: 700,
+                color: 'black',
+                fontSize: { xs: '1.8rem', md: '2.8rem' },
+                lineHeight: 1.2,
+                mb: 1,
+              }}
+            >
               Weather Forecast
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ fontSize: { xs: '1rem', md: '1.1rem' } }}
+            >
               Real-time weather data for Pampanga's 3rd District
             </Typography>
           </Box>
 
           {/* Location Selector */}
-          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+          <Box sx={{ mb: { xs: 3, md: 5 }, display: 'flex', justifyContent: 'center' }}>
             <Paper
               elevation={3}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                p: 2,
-                borderRadius: 3,
-                minWidth: 300
-              }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 3, minWidth: 280, maxWidth: 360 }}
             >
               <LocationOnIcon color="primary" />
               {/* Show a loading spinner if the location is not yet set */}
@@ -175,16 +179,12 @@ const WeatherPage = () => {
             
             <Grid item xs={12}>
               <HourlyForecast forecast={weatherData?.hourly || []} loading={loading} />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <DailyForecast forecast={weatherData?.daily || []} loading={loading} />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           {/* Last Updated Footer */}
           {weatherData && !loading && (
-            <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Typography variant="caption" color="text.secondary">
                 Last updated: {new Date(weatherData.lastUpdated).toLocaleString()}
               </Typography>

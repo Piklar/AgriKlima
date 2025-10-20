@@ -1,15 +1,16 @@
 // src/pages/AboutUsPage.jsx
-
 import React from 'react';
-import { Button, Container, Grid, Typography, Box, Card, CardContent, Divider } from '@mui/material';
+import {
+  Button, Container, Typography, Box, Card, CardContent, Divider
+} from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// Import your images
+// Import images
 import heroBg from '../assets/images/about-image-1.jpg';
 import videoBg from '../assets/images/about-image-2.jpg';
 import visionImg from '../assets/images/mission-vision.jpg';
 
-// Import icons
+// Icons
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
@@ -20,7 +21,6 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
-// Create a custom theme
 const theme = createTheme({
   palette: {
     primary: { main: '#2e7d32', light: '#4caf50', dark: '#1b5e20' },
@@ -29,20 +29,17 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: ['Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'].join(','),
-    h1: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '3.5rem', lineHeight: 1.2 },
-    h2: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '3rem', lineHeight: 1.2 },
-    h3: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2.8rem', lineHeight: 1.2 },
-    h4: { fontFamily: '"Playfair Display", serif', fontWeight: 700, fontSize: '2.2rem' },
-    h5: { fontFamily: '"Playfair Display", serif', fontWeight: 600, fontSize: '1.8rem' },
-    h6: { fontWeight: 600, fontSize: '1.2rem' },
-    body1: { fontSize: '1.1rem', lineHeight: 1.7 },
-    body2: { fontSize: '1rem', lineHeight: 1.6 },
+    h1: { fontFamily: '"Playfair Display", serif', fontWeight: 700 },
+    h2: { fontFamily: '"Playfair Display", serif', fontWeight: 700 },
+    h3: { fontFamily: '"Playfair Display", serif', fontWeight: 700 },
+    h4: { fontFamily: '"Playfair Display", serif', fontWeight: 700 },
+    h5: { fontFamily: '"Playfair Display", serif', fontWeight: 600 },
+    h6: { fontWeight: 600 },
   },
   shape: { borderRadius: 12 },
 });
 
 const AboutUsPage = () => {
-  // Styles
   const heroStyles = {
     backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${heroBg})`,
     minHeight: '100vh',
@@ -55,7 +52,7 @@ const AboutUsPage = () => {
     alignItems: 'center',
     color: 'white',
     textAlign: 'center',
-    padding: '0 20px',
+    px: 2,
   };
 
   const videoBannerStyles = {
@@ -63,7 +60,8 @@ const AboutUsPage = () => {
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundAttachment: 'fixed',
-    padding: { xs: '80px 20px', md: '120px 20px' },
+    py: { xs: 8, md: 12 },
+    px: 2,
     color: 'white',
     textAlign: 'center',
   };
@@ -84,33 +82,56 @@ const AboutUsPage = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <style>
-        {`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
-      `}
-      </style>
-
       {/* Hero Section */}
       <Box sx={heroStyles}>
         <Typography
           variant="h1"
-          component="h1"
-          gutterBottom
           sx={{
             maxWidth: '900px',
             mb: 4,
             textShadow: '0 2px 4px rgba(0,0,0,0.5)',
             fontStyle: 'italic',
-            fontSize: { xs: '2.5rem', md: '3.5rem' },
+            fontSize: { xs: '2rem', sm: '2.6rem', md: '3.2rem' },
+            lineHeight: 1.3,
+            px: { xs: 2, sm: 4 },
           }}
         >
           "Without agriculture, there is no life, no growth, and no future."
         </Typography>
-        <Box mt={4} display="flex" gap={3} flexWrap="wrap" justifyContent="center">
-          <Button variant="contained" size="large" sx={{ px: 5, py: 1.5, fontSize: '1.1rem' }} onClick={() => window.location.href = '/login'}>
+
+        <Box mt={4} display="flex" gap={2} flexWrap="wrap" justifyContent="center">
+          <Button
+            variant="contained"
+            size="large"
+            sx={{
+              px: { xs: 4, sm: 5 },
+              py: 1.4,
+              fontSize: { xs: '1rem', sm: '1.1rem' },
+            }}
+            onClick={() => window.location.href = '/login'}
+          >
             Get Started
           </Button>
-          <Button variant="outlined" size="large" sx={{ color: 'white', borderColor: 'white', borderWidth: 2, px: 5, py: 1.5, fontSize: '1.1rem', '&:hover': { borderWidth: 2, backgroundColor: 'rgba(255,255,255,0.1)' } }} onClick={() => document.getElementById('about-section').scrollIntoView({ behavior: 'smooth' })}>Learn More</Button>
+
+          <Button
+            variant="outlined"
+            size="large"
+            sx={{
+              color: 'white',
+              borderColor: 'white',
+              borderWidth: 2,
+              px: { xs: 4, sm: 5 },
+              py: 1.4,
+              fontSize: { xs: '1rem', sm: '1.1rem' },
+              '&:hover': {
+                borderWidth: 2,
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              },
+            }}
+            onClick={() => document.getElementById('about-section').scrollIntoView({ behavior: 'smooth' })}
+          >
+            Learn More
+          </Button>
         </Box>
       </Box>
 
@@ -120,10 +141,9 @@ const AboutUsPage = () => {
           <Typography variant="h3" sx={{ mb: 3, fontSize: { xs: '2rem', md: '2.8rem' } }}>
             About <span style={{ color: theme.palette.primary.main }}>AgriKlima</span>
           </Typography>
-          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4 }}>
-            AgriKlima is a climate-smart agriculture platform designed to empower farmers with accurate weather
-            forecasts, crop recommendations, and real-time insights to adapt to changing climate conditions.
-            Our innovative solutions help increase yield, reduce waste, and promote sustainable farming practices.
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, px: { xs: 2, md: 0 } }}>
+            AgriKlima is a climate-smart agriculture platform designed to empower farmers with accurate weather forecasts,
+            crop recommendations, and real-time insights to adapt to changing climate conditions.
           </Typography>
         </Box>
       </Container>
@@ -137,43 +157,31 @@ const AboutUsPage = () => {
               flexDirection: { xs: 'column', md: 'row' },
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
+              gap: { xs: 4, md: 6 },
             }}
           >
-            {/* Image Container */}
-            <Box
-              sx={{
-                flex: 1,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                mb: { xs: 4, md: 0 },
-              }}
-            >
+            <Box sx={{ flex: 1, textAlign: 'center' }}>
               <img
                 src={visionImg}
                 alt="Mission and Vision"
                 style={{
                   width: '100%',
                   maxWidth: 500,
-                  borderRadius: '16px',
+                  borderRadius: 16,
                   boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
                 }}
               />
             </Box>
-            {/* Texts Container */}
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="h3" sx={{ mb: 4, fontSize: { xs: '2rem', md: '2.8rem' } }}>
+
+            <Box sx={{ flex: 1, px: { xs: 2, md: 0 } }}>
+              <Typography variant="h3" sx={{ mb: 3, fontSize: { xs: '2rem', md: '2.6rem' } }}>
                 Our Vision & <span style={{ color: theme.palette.primary.main }}>Mission</span>
               </Typography>
-              <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
+              <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
                 Our vision is to create a sustainable farming community supported by modern technology.
-                We envision a world where farmers can thrive despite the challenges of climate change.
               </Typography>
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                Our mission is to help farmers adapt, thrive, and innovate in the face of climate change through
-                accessible technology and data-driven insights. We provide tools that make precision agriculture
-                available to everyone.
+                Our mission is to help farmers adapt, thrive, and innovate in the face of climate change through accessible technology.
               </Typography>
             </Box>
           </Box>
@@ -189,7 +197,8 @@ const AboutUsPage = () => {
             mx: 'auto',
             mb: 4,
             textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-            fontSize: { xs: '2.2rem', md: '3rem' },
+            fontSize: { xs: '2rem', md: '3rem' },
+            px: { xs: 2, md: 0 },
           }}
         >
           Agriculture Matters to the Future of Development
@@ -198,14 +207,13 @@ const AboutUsPage = () => {
           variant="contained"
           size="large"
           startIcon={<PlayArrowIcon />}
-          component="a"
           href="https://drive.google.com/file/d/1QW1toEbLmd4J7i8XmmcSPLdUDh-oxMR3/view?usp=sharing"
           target="_blank"
           rel="noopener noreferrer"
           sx={{
-            px: 5,
-            py: 1.5,
-            fontSize: '1.1rem',
+            px: { xs: 4, sm: 6 },
+            py: 1.4,
+            fontSize: { xs: '1rem', sm: '1.1rem' },
             backgroundColor: theme.palette.secondary.main,
             '&:hover': { backgroundColor: theme.palette.secondary.dark },
           }}
@@ -216,19 +224,19 @@ const AboutUsPage = () => {
 
       {/* Features Section */}
       <Container sx={{ py: { xs: 6, md: 10 } }}>
-        <Typography variant="h3" sx={{ textAlign: 'center', mb: 6, fontSize: { xs: '2rem', md: '2.8rem' } }}>
+        <Typography variant="h3" sx={{ textAlign: 'center', mb: 5, fontSize: { xs: '2rem', md: '2.8rem' } }}>
           Our <span style={{ color: theme.palette.primary.main }}>Features</span>
         </Typography>
 
         <Box
           sx={{
             display: { xs: 'block', md: 'flex' },
-            gap: 4,
+            gap: { xs: 0, md: 4 },
             alignItems: 'flex-start',
             justifyContent: 'center',
           }}
         >
-          {/* Left Features Column */}
+          {/* Left Features */}
           <Box sx={{ flex: 1 }}>
             {leftFeatures.map((feature, index) => (
               <Card
@@ -236,6 +244,7 @@ const AboutUsPage = () => {
                 sx={{
                   mb: 3,
                   textAlign: 'left',
+                  mx: { xs: 1, sm: 0 },
                   transition: 'transform 0.3s, box-shadow 0.3s',
                   '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 8px 20px rgba(0,0,0,0.12)' },
                 }}
@@ -244,10 +253,10 @@ const AboutUsPage = () => {
                 <CardContent sx={{ p: 3, display: 'flex', alignItems: 'flex-start' }}>
                   <Box sx={{ color: theme.palette.primary.main, mr: 2, mt: 0.5 }}>{feature.icon}</Box>
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: '600', mb: 1, fontSize: '1.1rem' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, fontSize: '1.1rem' }}>
                       {feature.title}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.5, fontSize: '0.9rem' }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.5 }}>
                       {feature.description}
                     </Typography>
                   </Box>
@@ -256,7 +265,7 @@ const AboutUsPage = () => {
             ))}
           </Box>
 
-          {/* Center Divider */}
+          {/* Divider for desktop */}
           <Divider
             orientation="vertical"
             flexItem
@@ -265,11 +274,10 @@ const AboutUsPage = () => {
               mx: 2,
               borderWidth: 1,
               borderColor: 'rgba(0,0,0,0.1)',
-              height: 'auto',
             }}
           />
 
-          {/* Right Features Column */}
+          {/* Right Features */}
           <Box sx={{ flex: 1 }}>
             {rightFeatures.map((feature, index) => (
               <Card
@@ -277,6 +285,7 @@ const AboutUsPage = () => {
                 sx={{
                   mb: 3,
                   textAlign: 'left',
+                  mx: { xs: 1, sm: 0 },
                   transition: 'transform 0.3s, box-shadow 0.3s',
                   '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 8px 20px rgba(0,0,0,0.12)' },
                 }}
@@ -285,10 +294,10 @@ const AboutUsPage = () => {
                 <CardContent sx={{ p: 3, display: 'flex', alignItems: 'flex-start' }}>
                   <Box sx={{ color: theme.palette.primary.main, mr: 2, mt: 0.5 }}>{feature.icon}</Box>
                   <Box>
-                    <Typography variant="h6" sx={{ fontWeight: '600', mb: 1, fontSize: '1.1rem' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, fontSize: '1.1rem' }}>
                       {feature.title}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.5, fontSize: '0.9rem' }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.5 }}>
                       {feature.description}
                     </Typography>
                   </Box>

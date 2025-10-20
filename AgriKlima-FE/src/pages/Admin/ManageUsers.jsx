@@ -20,17 +20,57 @@ import Swal from 'sweetalert2';
 import * as api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
+// ✨ SweetAlert2 agricultural-themed styling
+const styleSweetAlert = () => {
+  const popup = Swal.getPopup();
+  if (popup) {
+    popup.style.borderRadius = '20px';
+    popup.style.padding = '30px';
+    popup.style.boxShadow = '0 6px 25px rgba(46, 125, 50, 0.4)';
+  }
+
+  const confirmBtn = Swal.getConfirmButton();
+  if (confirmBtn) {
+    confirmBtn.style.backgroundColor = '#66bb6a';
+    confirmBtn.style.color = 'white';
+    confirmBtn.style.fontWeight = '600';
+    confirmBtn.style.padding = '10px 25px';
+    confirmBtn.style.borderRadius = '8px';
+    confirmBtn.style.margin = '5px';
+    confirmBtn.style.border = 'none';
+    confirmBtn.style.cursor = 'pointer';
+    confirmBtn.style.transition = '0.3s';
+    confirmBtn.onmouseover = () => (confirmBtn.style.backgroundColor = '#4caf50');
+    confirmBtn.onmouseout = () => (confirmBtn.style.backgroundColor = '#66bb6a');
+  }
+
+  const cancelBtn = Swal.getCancelButton();
+  if (cancelBtn) {
+    cancelBtn.style.backgroundColor = '#ffffff';
+    cancelBtn.style.color = '#2e7d32';
+    cancelBtn.style.fontWeight = '600';
+    cancelBtn.style.padding = '10px 25px';
+    cancelBtn.style.borderRadius = '8px';
+    cancelBtn.style.margin = '5px';
+    cancelBtn.style.border = '1px solid #a5d6a7';
+    cancelBtn.style.cursor = 'pointer';
+    cancelBtn.style.transition = '0.3s';
+    cancelBtn.onmouseover = () => (cancelBtn.style.backgroundColor = '#e8f5e9');
+    cancelBtn.onmouseout = () => (cancelBtn.style.backgroundColor = '#ffffff');
+  }
+};
+
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const { token } = useAuth();
   const isSmall = useMediaQuery('(max-width:600px)');
 
-  // --- NEW STATE for search and pagination ---
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
 
+  // 📥 Fetch users
   const fetchUsers = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -44,8 +84,14 @@ const ManageUsers = () => {
         setTotalPages(0);
       }
     } catch (error) {
-      console.error('Failed to fetch users:', error);
-      Swal.fire('Error', 'Could not fetch users from the server.', 'error');
+      Swal.fire({
+        title: '❌ Error',
+        text: 'Could not fetch users from the server.',
+        icon: 'error',
+        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+        color: '#2e7d32',
+        didOpen: styleSweetAlert
+      });
     } finally {
       setLoading(false);
     }
@@ -58,10 +104,9 @@ const ManageUsers = () => {
     return () => clearTimeout(handler);
   }, [fetchUsers]);
 
-  const handlePageChange = (event, value) => {
-    setPage(value);
-  };
+  const handlePageChange = (event, value) => setPage(value);
 
+  // 🔄 Promote/Demote Admin
   const handleSetAdmin = async (id, newIsAdmin) => {
     Swal.fire({
       title: `Confirm Role Change`,
@@ -69,19 +114,43 @@ const ManageUsers = () => {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Yes, change role!',
-      cancelButtonText: 'No, cancel'
+      cancelButtonText: 'No, cancel',
+      background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+      color: '#2e7d32',
+      didOpen: styleSweetAlert
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           if (newIsAdmin) {
             await api.setAsAdmin(id);
-            Swal.fire('Success!', 'User has been promoted to Admin.', 'success');
+            Swal.fire({
+              title: '🌿 Success!',
+              text: 'User has been promoted to Admin.',
+              icon: 'success',
+              background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+              color: '#2e7d32',
+              didOpen: styleSweetAlert
+            });
             fetchUsers();
           } else {
-            Swal.fire('Info', 'Demoting users from admin status is not yet supported.', 'info');
+            Swal.fire({
+              title: 'ℹ️ Info',
+              text: 'Demoting users from admin status is not yet supported.',
+              icon: 'info',
+              background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+              color: '#2e7d32',
+              didOpen: styleSweetAlert
+            });
           }
         } catch (error) {
-          Swal.fire('Error', 'Could not update user role.', 'error');
+          Swal.fire({
+            title: '❌ Error',
+            text: 'Could not update user role.',
+            icon: 'error',
+            background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+            color: '#2e7d32',
+            didOpen: styleSweetAlert
+          });
         }
       }
     });
@@ -92,9 +161,7 @@ const ManageUsers = () => {
       field: 'profilePictureUrl',
       headerName: 'Profile',
       width: 80,
-      renderCell: (params) => (
-        <Avatar src={params.value} sx={{ width: 40, height: 40 }} />
-      ),
+      renderCell: (params) => <Avatar src={params.value} sx={{ width: 40, height: 40 }} />,
       sortable: false,
       filterable: false,
     },
@@ -118,7 +185,7 @@ const ManageUsers = () => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ p: { xs: 1, md: 3 } }}>
       <Typography
         variant="h4"
         sx={{
@@ -130,7 +197,7 @@ const ManageUsers = () => {
         Manage Users
       </Typography>
 
-      {/* --- NEW SEARCH BAR --- */}
+      {/* Search */}
       <Paper sx={{ mb: 2, p: 2 }}>
         <TextField
           fullWidth
@@ -151,6 +218,7 @@ const ManageUsers = () => {
         />
       </Paper>
 
+      {/* Table */}
       <Paper sx={{ height: '70vh', width: '100%' }}>
         <DataGrid
           rows={users}
@@ -161,10 +229,14 @@ const ManageUsers = () => {
           paginationMode="server"
           rowCount={totalPages * 10}
           hideFooter
+          sx={{
+            '& .MuiDataGrid-cell': { py: 1 },
+            '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f0f4f0' },
+          }}
         />
       </Paper>
 
-      {/* --- NEW PAGINATION CONTROLS --- */}
+      {/* Pagination */}
       <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2 }}>
         <Pagination
           count={totalPages}

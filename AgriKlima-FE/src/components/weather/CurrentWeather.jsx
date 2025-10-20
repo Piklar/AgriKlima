@@ -59,13 +59,16 @@ const CurrentWeather = ({ weather, loading }) => {
       sx={{
         p: 4,
         borderRadius: 4,
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white'
+        background: 'linear-gradient(135deg, #2e7d32 0%, #ffc107 100%)',
+        color: 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
       }}
     >
-      <Box sx={{ textAlign: 'center' }}>
+      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
         {/* Location */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2, width: '100%' }}>
           <LocationOnIcon sx={{ mr: 1 }} />
           {loading ? (
             <Skeleton width={200} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
@@ -75,7 +78,7 @@ const CurrentWeather = ({ weather, loading }) => {
         </Box>
 
         {/* Weather Icon */}
-        <Box sx={{ my: 3 }}>
+  <Box sx={{ my: 3, display: 'flex', justifyContent: 'center', width: '100%' }}>
           {loading ? (
             <Skeleton variant="circular" width={100} height={100} sx={{ mx: 'auto', bgcolor: 'rgba(255,255,255,0.2)' }} />
           ) : (
@@ -87,7 +90,7 @@ const CurrentWeather = ({ weather, loading }) => {
         {loading ? (
           <Skeleton width={150} height={80} sx={{ mx: 'auto', bgcolor: 'rgba(255,255,255,0.2)' }} />
         ) : (
-          <Typography variant="h1" fontWeight="bold">
+          <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center' }}>
             {Math.round(weather?.current?.temperature || 0)}°
           </Typography>
         )}
@@ -112,7 +115,7 @@ const CurrentWeather = ({ weather, loading }) => {
       </Box>
 
       {/* Metrics */}
-      <Grid container spacing={2} sx={{ mt: 4 }}>
+      <Grid container spacing={2} sx={{ mt: 4, width: '100%', justifyContent: 'center' }}>
         <Grid item xs={6} sm={3}>
           <Metric
             icon={<WaterDropIcon />}
