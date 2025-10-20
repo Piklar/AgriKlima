@@ -203,77 +203,98 @@ const SignUpPage = () => {
   }, [formData, step, isJustStarting]);
 
   const handleSubmit = async () => {
-  if (!isStepValid) {
-    Swal.fire('Incomplete Information', 'Please ensure all required fields are filled correctly.', 'warning');
-    return;
-  }
-  setIsSubmitting(true);
+    if (!isStepValid) {
+      Swal.fire('Incomplete Information', 'Please ensure all required fields are filled correctly.', 'warning');
+      return;
+    }
+    setIsSubmitting(true);
 
-  const { confirmPassword, ...registrationData } = formData;
+    // Normalize & prepare payload
+    const { confirmPassword, ...registrationDataRaw } = formData;
+    const registrationData = {
+      ...registrationDataRaw,
+      email: (registrationDataRaw.email || '').trim().toLowerCase(),
+      mobileNo: (registrationDataRaw.mobileNo || '').trim(),
+    };
 
-  try {
-    // Step 1: Register the user
-    await api.registerUser(registrationData);
-    
-    // Step 2: Show success message
-    await Swal.fire({
-      title: 'Registration Successful!',
-      text: 'Logging you in automatically...',
-      icon: 'success',
-      timer: 2000,
-      showConfirmButton: false,
-      didOpen: () => Swal.showLoading(),
-    });
+    // Helpful debug log (remove in production)
+    console.debug('Register payload:', registrationData);
 
     try {
-      // Step 3: Try to auto-login using identifier (email)
-      const loggedInUser = await login(formData.email, formData.password);
-      
-      // Step 4: Upload profile picture if selected
-      if (profilePictureFile) {
-        try {
-          const pictureFormData = new FormData();
-          pictureFormData.append('profilePicture', profilePictureFile);
-          await api.updateProfilePicture(pictureFormData);
-          console.log("Profile picture uploaded successfully");
-        } catch (pictureError) {
-          console.warn("Profile picture upload failed, but continuing:", pictureError);
-          // Don't fail the entire process if picture upload fails
-        }
-      }
-      
-      // Step 5: Navigate based on user role
-      console.log("User logged in successfully:", loggedInUser);
-      if (loggedInUser && loggedInUser.isAdmin) {
-        navigate('/admin/crops');
-      } else {
-        navigate('/dashboard');
-      }
+      // Attempt registration
+      await api.registerUser(registrationData);
 
-    } catch (loginError) {
-      console.error("Auto-login failed:", loginError);
-      
-      // Show more detailed error information
-      const loginErrorMessage = loginError.response?.data?.error || loginError.message || "Auto-login failed. Please try logging in manually.";
-      
+      // On success, notify and auto-login
       await Swal.fire({
         title: 'Registration Successful!',
-        text: `Auto-login failed: ${loginErrorMessage}. Please log in manually.`,
-        icon: 'warning',
-        confirmButtonText: 'Go to Login'
+        text: 'Logging you in automatically...',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(),
       });
-      
-      navigate('/login');
-    }
 
-  } catch (error) {
-    console.error("Registration Error:", error);
-    const errorMessage = error.response?.data?.error || 'An unexpected error occurred during registration.';
-    Swal.fire('Registration Failed', errorMessage, 'error');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      try {
+        const loggedInUser = await login(registrationData.email, formData.password);
+
+        // Upload profile picture if selected (non-blocking)
+        if (profilePictureFile) {
+          try {
+            const pictureFormData = new FormData();
+            pictureFormData.append('profilePicture', profilePictureFile);
+            await api.updateProfilePicture(pictureFormData);
+          } catch (pictureError) {
+            console.warn('Profile picture upload failed, continuing:', pictureError);
+          }
+        }
+
+        if (loggedInUser && loggedInUser.isAdmin) {
+          navigate('/admin/crops');
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (loginError) {
+        console.error('Auto-login failed:', loginError);
+        const loginErrorMessage = loginError?.response?.data?.error || loginError?.message || 'Auto-login failed. Please log in manually.';
+        await Swal.fire({
+          title: 'Registration Successful!',
+          text: `Auto-login failed: ${loginErrorMessage}. Please log in manually.`,
+          icon: 'warning',
+          confirmButtonText: 'Go to Login'
+        });
+        navigate('/login');
+      }
+    } catch (error) {
+      console.error('Registration Error:', error);
+
+      // Network / no response
+      if (!error.response) {
+        Swal.fire('Registration Failed', 'No response from server. Check your network or backend server.', 'error');
+      } else {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        // Common backend patterns:
+        // 409 - conflict (email already exists)
+        if (status === 409) {
+          const msg = data?.error || data?.message || 'Email already in use.';
+          Swal.fire('Email Already Registered', msg, 'warning');
+        } else if (status >= 500) {
+          const msg = data?.error || data?.message || 'Internal server error. Check backend logs.';
+          Swal.fire('Server Error', msg, 'error');
+        } else if (data?.errors) {
+          // validation array from backend
+          const firstError = Array.isArray(data.errors) ? data.errors.map(e => e.msg || e).join('\n') : JSON.stringify(data.errors);
+          Swal.fire('Validation Error', firstError, 'warning');
+        } else {
+          const msg = data?.error || data?.message || 'An unexpected error occurred during registration.';
+          Swal.fire('Registration Failed', msg, 'error');
+        }
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const renderStepContent = () => (
     <Fade in key={step}>

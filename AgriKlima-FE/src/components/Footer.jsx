@@ -43,25 +43,32 @@ const Footer = () => {
               Smart farming for a sustainable tomorrow.
             </Typography>
             <Box mt={2}>
-              {[FacebookIcon, TwitterIcon, InstagramIcon, LinkedInIcon].map(
-                (Icon, index) => (
-                  <IconButton
-                    key={index}
-                    sx={{
-                      color: 'white',
-                      backgroundColor: 'rgba(0,0,0,0.05)',
-                      mr: 1,
-                      transition: '0.3s',
-                      '&:hover': {
-                        backgroundColor: 'var(--primary-green)',
-                        color: '#fff',
-                      },
-                    }}
-                  >
-                    <Icon />
-                  </IconButton>
-                )
-              )}
+            {[
+              { Icon: FacebookIcon, link: 'https://www.facebook.com' },
+              { Icon: TwitterIcon, link: 'https://www.twitter.com' },
+              { Icon: InstagramIcon, link: 'https://www.instagram.com' },
+              { Icon: LinkedInIcon, link: 'https://www.linkedin.com' },
+            ].map(({ Icon, link }, index) => (
+              <IconButton
+                key={index}
+                component="a"
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  color: 'white',
+                  backgroundColor: 'rgba(0,0,0,0.05)',
+                  mr: 1,
+                  transition: '0.3s',
+                  '&:hover': {
+                    backgroundColor: 'var(--primary-green)',
+                    color: '#fff',
+                  },
+                }}
+              >
+                <Icon />
+              </IconButton>
+            ))}
             </Box>
           </Grid>
 
@@ -83,7 +90,7 @@ const Footer = () => {
             </Typography>
             <Box display="flex" alignItems="center" mb={1}>
               <PhoneIcon sx={{ mr: 1, color: 'var(--primary-green)' }} />
-              <Typography sx={{ fontSize: '0.95rem' }}>0921245546</Typography>
+              <Typography sx={{ fontSize: '0.95rem' }}>09158158735</Typography>
             </Box>
             <Box display="flex" alignItems="center" mb={1}>
               <EmailIcon sx={{ mr: 1, color: 'var(--primary-green)' }} />

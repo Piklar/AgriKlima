@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import {
   Container, Box, Typography, Avatar, Paper, List, ListItem,
   ListItemButton, ListItemIcon, ListItemText, IconButton,
-  Divider, Switch, CircularProgress
+  Divider, Switch, CircularProgress, Dialog, DialogTitle, DialogActions, Button
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import { useThemeContext } from '../context/ThemeContext'; // <-- Import Theme hook
+import { useLanguage } from '../context/LanguageContext'; // <-- Import Language hook
 import Swal from 'sweetalert2';
 
 // Modals
@@ -29,136 +31,141 @@ import LockResetOutlinedIcon from '@mui/icons-material/LockResetOutlined';
 
 const ProfilePage = () => {
   const { user, fetchUserDetails } = useAuth();
+  const { mode, toggleTheme } = useThemeContext(); // Use theme context
+  const { language, changeLanguage, t } = useLanguage(); // Use language context
+
   const [isPictureModalOpen, setIsPictureModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
-
-  // Light / Dark mode state
-  const [darkMode, setDarkMode] = useState(false);
-
-  const handleThemeToggle = () => {
-    setDarkMode((prev) => !prev);
-    document.body.setAttribute('data-theme', !darkMode ? 'dark' : 'light');
-  };
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false); // State for new modal
 
   const handleClosePictureModal = (wasUpdateSuccessful) => {
     setIsPictureModalOpen(false);
     if (wasUpdateSuccessful) {
-      Swal.fire({
-        title: 'Success!',
-        text: 'Your profile picture has been updated.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
-      if (typeof fetchUserDetails === 'function') {
-        fetchUserDetails();
-      }
+      Swal.fire('Success!', 'Your profile picture has been updated.', 'success');
+      fetchUserDetails();
     }
   };
 
   if (!user) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', fontFamily: 'inherit' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <CircularProgress />
       </Box>
     );
   }
 
   const displayName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User';
+  const currentLanguageLabel = language === 'fil' ? 'Filipino' : 'English';
 
   return (
     <>
-      <Box sx={{ minHeight: '100vh', backgroundColor: 'var(--background-gray)', py: 6, fontFamily: 'inherit' }}>
-        <Container maxWidth="sm">
-          {/* Profile Header */}
-          <Paper elevation={4} sx={{ borderRadius: '24px', p: 3, textAlign: 'center', mb: 4, backgroundColor: 'var(--card-bg)', color: 'var(--text-primary)' }}>
-            <Box sx={{ position: 'relative', width: 120, height: 120, margin: '0 auto 16px' }}>
-              <Avatar
-                src={user.profilePictureUrl}
-                sx={{ width: 120, height: 120, border: '4px solid white', bgcolor: 'var(--primary-green)' }}
-              >
-                {!user.profilePictureUrl && <AccountCircleIcon sx={{ width: 100, height: 100 }} />}
-              </Avatar>
-              <IconButton
-                onClick={() => setIsPictureModalOpen(true)}
-                aria-label="change profile picture"
-                sx={{ position: 'absolute', bottom: 0, right: 0, bgcolor: 'rgba(240, 240, 240, 0.9)', '&:hover': { bgcolor: 'white' } }}
-              >
-                <AddAPhotoIcon />
-              </IconButton>
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{displayName}</Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
-              <LocationOnOutlinedIcon fontSize="small" />
-              <Typography sx={{ ml: 1 }}>{user.location || 'Location not set'}</Typography>
-            </Box>
-          </Paper>
+      <Container maxWidth="sm" sx={{ py: 6 }}>
+        {/* Profile Header */}
+        <Paper elevation={4} sx={{ borderRadius: '24px', p: 3, textAlign: 'center', mb: 4 }}>
+          <Box sx={{ position: 'relative', width: 120, height: 120, margin: '0 auto 16px' }}>
+            <Avatar
+              src={user.profilePictureUrl}
+              sx={{ width: 120, height: 120, border: '4px solid white', bgcolor: 'primary.main' }}
+            >
+              {!user.profilePictureUrl && <AccountCircleIcon sx={{ width: 100, height: 100 }} />}
+            </Avatar>
+            <IconButton
+              onClick={() => setIsPictureModalOpen(true)}
+              aria-label="change profile picture"
+              sx={{ position: 'absolute', bottom: 0, right: 0, bgcolor: 'background.paper', '&:hover': { bgcolor: 'grey.200' } }}
+            >
+              <AddAPhotoIcon />
+            </IconButton>
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{displayName}</Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
+            <LocationOnOutlinedIcon fontSize="small" />
+            <Typography sx={{ ml: 1 }}>{user.location || 'Location not set'}</Typography>
+          </Box>
+        </Paper>
 
-          {/* General Settings */}
-          <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
-            <List>
-              <ListItemButton onClick={() => setEditModalOpen(true)}>
-                <ListItemIcon><EditOutlinedIcon /></ListItemIcon>
-                <ListItemText primary="Edit profile information" />
-              </ListItemButton>
-              <ListItem>
-                <ListItemIcon><LanguageOutlinedIcon /></ListItemIcon>
-                <ListItemText primary="Language" />
-                <Typography color="text.secondary">{user.language || 'English'}</Typography>
-              </ListItem>
-            </List>
-          </Paper>
+        {/* General Settings */}
+        <Paper elevation={1} sx={{ borderRadius: '24px', p: 2, mb: 3 }}>
+          <List>
+            <ListItemButton onClick={() => setEditModalOpen(true)}>
+              <ListItemIcon><EditOutlinedIcon color="primary" /></ListItemIcon>
+              <ListItemText primary={t('editProfileInfo')} />
+            </ListItemButton>
+            <ListItemButton onClick={() => setIsLanguageModalOpen(true)}>
+              <ListItemIcon><LanguageOutlinedIcon color="primary" /></ListItemIcon>
+              <ListItemText primary={t('language')} />
+              <Typography color="text.secondary">{currentLanguageLabel}</Typography>
+            </ListItemButton>
+          </List>
+        </Paper>
 
-          {/* Security and Theme */}
-          <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, mb: 3, border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
-            <List>
-              <ListItem>
-                <ListItemIcon><SecurityOutlinedIcon /></ListItemIcon>
-                <ListItemText primary="Security" />
-              </ListItem>
-              <ListItemButton onClick={() => setPasswordModalOpen(true)}>
-                <ListItemIcon><LockResetOutlinedIcon /></ListItemIcon>
-                <ListItemText primary="Change Password" />
-              </ListItemButton>
-              <Divider component="li" sx={{ mx: 2 }} />
-              <ListItem>
-                <ListItemIcon><PaletteOutlinedIcon /></ListItemIcon>
-                <ListItemText primary="Theme" />
-                <Typography color="text.secondary" sx={{ mr: 1 }}>{darkMode ? 'Dark mode' : 'Light mode'}</Typography>
-                <Switch checked={darkMode} onChange={handleThemeToggle} color="success" />
-              </ListItem>
-            </List>
-          </Paper>
+        {/* Security and Theme */}
+        <Paper elevation={1} sx={{ borderRadius: '24px', p: 2, mb: 3 }}>
+          <List>
+            <ListItem>
+              <ListItemIcon><SecurityOutlinedIcon color="primary" /></ListItemIcon>
+              <ListItemText primary={t('security')} />
+            </ListItem>
+            <ListItemButton onClick={() => setPasswordModalOpen(true)}>
+              <ListItemIcon><LockResetOutlinedIcon /></ListItemIcon>
+              <ListItemText primary={t('changePassword')} />
+            </ListItemButton>
+            <Divider component="li" sx={{ my: 1 }} />
+            <ListItem>
+              <ListItemIcon><PaletteOutlinedIcon /></ListItemIcon>
+              <ListItemText primary={t('theme')} />
+              <Typography color="text.secondary" sx={{ mr: 1 }}>
+                {mode === 'dark' ? t('darkMode') : t('lightMode')}
+              </Typography>
+              <Switch checked={mode === 'dark'} onChange={toggleTheme} color="primary" />
+            </ListItem>
+          </List>
+        </Paper>
 
-          {/* Help & Support */}
-          <Paper elevation={0} sx={{ borderRadius: '24px', p: 2, border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
-            <List>
-              <ListItemButton>
-                <ListItemIcon><HelpOutlineOutlinedIcon /></ListItemIcon>
-                <ListItemText primary="Help & Support" />
-              </ListItemButton>
-              <ListItemButton>
-                <ListItemIcon><ContactSupportOutlinedIcon /></ListItemIcon>
-                <ListItemText primary="Contact us" />
-              </ListItemButton>
-              <ListItemButton>
-                <ListItemIcon><PrivacyTipOutlinedIcon /></ListItemIcon>
-                <ListItemText primary="Privacy policy" />
-              </ListItemButton>
-            </List>
-          </Paper>
-        </Container>
-      </Box>
+        {/* Help & Support */}
+        <Paper elevation={1} sx={{ borderRadius: '24px', p: 2 }}>
+          <List>
+            <ListItemButton>
+              <ListItemIcon><HelpOutlineOutlinedIcon color="primary" /></ListItemIcon>
+              <ListItemText primary={t('helpAndSupport')} />
+            </ListItemButton>
+            <ListItemButton>
+              <ListItemIcon><ContactSupportOutlinedIcon /></ListItemIcon>
+              <ListItemText primary={t('contactUs')} />
+            </ListItemButton>
+            <ListItemButton>
+              <ListItemIcon><PrivacyTipOutlinedIcon /></ListItemIcon>
+              <ListItemText primary={t('privacyPolicy')} />
+            </ListItemButton>
+          </List>
+        </Paper>
+      </Container>
 
-      {/* Modals */}
-      {user && (
-        <>
-          <ProfilePictureModal open={isPictureModalOpen} onClose={handleClosePictureModal} user={user} />
-          <EditProfileModal open={isEditModalOpen} onClose={() => setEditModalOpen(false)} user={user} onUpdate={fetchUserDetails} />
-          <ChangePasswordModal open={isPasswordModalOpen} onClose={() => setPasswordModalOpen(false)} />
-        </>
-      )}
+      {/* MODALS */}
+      <ProfilePictureModal open={isPictureModalOpen} onClose={handleClosePictureModal} user={user} />
+      <EditProfileModal open={isEditModalOpen} onClose={() => setEditModalOpen(false)} user={user} onUpdate={fetchUserDetails} />
+      <ChangePasswordModal open={isPasswordModalOpen} onClose={() => setPasswordModalOpen(false)} />
+
+      {/* NEW Language Selection Modal */}
+      <Dialog open={isLanguageModalOpen} onClose={() => setIsLanguageModalOpen(false)}>
+        <DialogTitle>Select Language</DialogTitle>
+        <List sx={{ pt: 0 }}>
+          <ListItem disableGutters>
+            <ListItemButton onClick={() => { changeLanguage('en'); setIsLanguageModalOpen(false); }}>
+              <ListItemText primary="English" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disableGutters>
+            <ListItemButton onClick={() => { changeLanguage('fil'); setIsLanguageModalOpen(false); }}>
+              <ListItemText primary="Filipino" />
+            </ListItemButton>
+          </ListItem>
+        </List>
+        <DialogActions>
+            <Button onClick={() => setIsLanguageModalOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
