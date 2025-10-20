@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Box, Grid, Paper, Typography,
-  ThemeProvider, MenuItem, Select, FormControl
+  ThemeProvider, MenuItem, Select, FormControl, CircularProgress
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import * as api from '../services/api';
@@ -35,6 +35,7 @@ const theme = createTheme({
   shape: { borderRadius: 10 },
 });
 
+// This list should match the locations supported by your backend
 const LOCATIONS = [
   'San Fernando',
   'Santa Ana',
@@ -47,10 +48,37 @@ const WeatherPage = () => {
   const { user } = useAuth();
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [location, setLocation] = useState('San Fernando');
+  
+  // --- THIS IS THE FIX ---
+  // Initialize location state as an empty string.
+  // It will be populated by the user's location from the useEffect below.
+  const [location, setLocation] = useState('');
+
+  // This effect sets the initial location based on the logged-in user's profile.
+  // It runs whenever the 'user' object is loaded or changes.
+  useEffect(() => {
+    if (user && user.location) {
+      // We parse the user's location string (e.g., "Mexico, Pampanga") 
+      // to match an item in our predefined LOCATIONS array.
+      const userCity = user.location.split(',')[0].trim();
+      const matchedLocation = LOCATIONS.find(loc => userCity.includes(loc));
+
+      if (matchedLocation) {
+        setLocation(matchedLocation);
+      } else {
+        // If the user's location isn't in our list, default to a fallback.
+        setLocation('San Fernando');
+      }
+    } else if (user) {
+      // If the user object is loaded but has no location property, set a fallback.
+      setLocation('San Fernando');
+    }
+  }, [user]); // This effect depends on the user object.
 
   const fetchWeather = useCallback(async () => {
+    // This guard prevents an API call if the location hasn't been set yet.
     if (!location) return;
+
     setLoading(true);
     try {
       const response = await api.getWeather(location);
@@ -66,8 +94,9 @@ const WeatherPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [location]);
+  }, [location]); // This hook correctly depends on the 'location' state.
 
+  // This effect triggers the weather data fetch whenever the fetchWeather function is updated (i.e., when location changes).
   useEffect(() => {
     fetchWeather();
   }, [fetchWeather]);
@@ -104,27 +133,34 @@ const WeatherPage = () => {
               }}
             >
               <LocationOnIcon color="primary" />
-              <FormControl fullWidth>
-                <Select
-                  value={location}
-                  onChange={handleLocationChange}
-                  variant="standard"
-                  disableUnderline
-                  sx={{ fontSize: '1.1rem', fontWeight: 500 }}
-                >
-                  {LOCATIONS.map((loc) => (
-                    <MenuItem key={loc} value={loc}>
-                      {loc}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              {/* Show a loading spinner if the location is not yet set */}
+              {!location ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} />
+                  <Typography color="text.secondary">Getting your location...</Typography>
+                </Box>
+              ) : (
+                <FormControl fullWidth>
+                  <Select
+                    value={location}
+                    onChange={handleLocationChange}
+                    variant="standard"
+                    disableUnderline
+                    sx={{ fontSize: '1.1rem', fontWeight: 500 }}
+                  >
+                    {LOCATIONS.map((loc) => (
+                      <MenuItem key={loc} value={loc}>
+                        {loc}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
             </Paper>
           </Box>
 
-          {/* 2x2 Grid Layout - Matching your Paint mockup */}
+          {/* Main Grid Layout */}
           <Grid container spacing={3}>
-            {/* Row 1: Two equal boxes */}
             <Grid item xs={12} md={6}>
               <Box sx={{ height: '100%' }}>
                 <CurrentWeather weather={weatherData} loading={loading} />
@@ -137,7 +173,6 @@ const WeatherPage = () => {
               </Box>
             </Grid>
             
-            {/* Row 2: Two full-width boxes */}
             <Grid item xs={12}>
               <HourlyForecast forecast={weatherData?.hourly || []} loading={loading} />
             </Grid>
@@ -147,7 +182,7 @@ const WeatherPage = () => {
             </Grid>
           </Grid>
 
-          {/* Last Updated */}
+          {/* Last Updated Footer */}
           {weatherData && !loading && (
             <Box sx={{ textAlign: 'center', mt: 3 }}>
               <Typography variant="caption" color="text.secondary">

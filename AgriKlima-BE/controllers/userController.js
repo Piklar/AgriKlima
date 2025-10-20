@@ -10,7 +10,10 @@ const { add } = require('date-fns');
 // --- [CREATE] Register a new user ---
 module.exports.registerUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, password, mobileNo, location, crops, dob, gender, language } = req.body;
+        // --- THIS IS THE MODIFIED PART ---
+        // Destructure `userCrops` instead of `crops`
+        const { firstName, lastName, email, password, mobileNo, location, userCrops, dob, gender, language } = req.body;
+        
         if (!firstName || !lastName || !email || !password || !mobileNo) {
             return res.status(400).send({ error: "Missing required account fields." });
         }
@@ -24,14 +27,44 @@ module.exports.registerUser = async (req, res) => {
         if (existingUser) {
             return res.status(409).send({ error: "Email is already in use." });
         }
+        
+        // --- THIS IS THE MODIFIED PART ---
+        // Fetch crop details to calculate harvest dates
+        let processedUserCrops = [];
+        if (userCrops && userCrops.length > 0) {
+            const cropIds = userCrops.map(c => c.cropId);
+            const masterCrops = await Crop.find({ '_id': { $in: cropIds } });
+            
+            processedUserCrops = userCrops.map(userCrop => {
+                const masterCrop = masterCrops.find(mc => mc._id.toString() === userCrop.cropId);
+                if (!masterCrop || typeof masterCrop.growingDuration !== 'number') {
+                    // Handle case where crop is not found or has no duration
+                    return null; 
+                }
+                const pDate = new Date(userCrop.plantingDate);
+                const harvestDate = add(pDate, { days: masterCrop.growingDuration });
+
+                return {
+                    cropId: masterCrop._id,
+                    name: userCrop.name,
+                    plantingDate: pDate,
+                    estimatedHarvestDate: harvestDate
+                };
+            }).filter(Boolean); // Filter out any nulls
+        }
+
         const newUser = new User({
             firstName, lastName, email,
             password: bcrypt.hashSync(password, 10),
-            mobileNo, location, crops, dob, gender, language,
+            mobileNo, location, dob, gender, language,
+            // Pass the new, processed array to the model
+            userCrops: processedUserCrops, 
             profilePictureUrl: ''
         });
+
         await newUser.save();
         res.status(201).send({ message: "User registered successfully!" });
+
     } catch (error) {
         console.error("Error during user registration:", error);
         if (error.name === 'ValidationError') {
