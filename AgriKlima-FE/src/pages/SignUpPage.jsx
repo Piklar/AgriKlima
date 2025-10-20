@@ -7,7 +7,7 @@ import {
   Container, Box, Typography, Button, Grid, Card, CardMedia, CardContent,
   TextField, Stepper, Step, StepLabel, Paper, Stack,
   CircularProgress, MenuItem, FormControl, InputLabel, Select,
-  InputAdornment, IconButton, Fade, Avatar, Link as MuiLink
+  InputAdornment, IconButton, Fade, Avatar, Link as MuiLink, Collapse
 } from '@mui/material';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -16,7 +16,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import logo from '../assets/logo.png';
 
-// images …
+// Images
 import mexicoImg from '../assets/images/location-mexico.jpg';
 import csfpImg from '../assets/images/location-csfp.jpg';
 import staAnaImg from '../assets/images/location-sta-ana.jpg';
@@ -28,7 +28,7 @@ import cornImg from '../assets/images/crop-corn.jpg';
 import onionImg from '../assets/images/crop-onion.jpg';
 import othersImg from '../assets/images/crop-others.jpg';
 
-// selection card
+// Reusable SelectionCard for locations
 const SelectionCard = ({ image, label, isSelected, onClick }) => (
   <Card
     onClick={onClick}
@@ -51,7 +51,40 @@ const SelectionCard = ({ image, label, isSelected, onClick }) => (
   </Card>
 );
 
-const STEPS = ['Account Info', 'Personal Details', 'Crops', 'Location', 'Profile Picture'];
+// --- NEW CROP SELECTION CARD WITH DATE INPUT ---
+const CropSelectionCard = ({ image, label, isSelected, onToggle, onDateChange, plantingDate }) => (
+  <Card
+    sx={{
+      borderRadius: '20px',
+      boxShadow: isSelected ? '0 0 0 4px var(--primary-green)' : '0 4px 12px rgba(0,0,0,0.08)',
+      transform: isSelected ? 'scale(1.03)' : 'scale(1)',
+      transition: 'all 0.2s ease-in-out',
+      border: '1px solid #eee',
+      height: '100%',
+    }}
+  >
+    <CardMedia component="img" image={image} alt={label} sx={{ height: 140, cursor: 'pointer' }} onClick={() => onToggle(label)} />
+    <CardContent sx={{ p: 2, pt: 1 }}>
+      <Typography variant="subtitle1" align="center" sx={{ fontWeight: 600, cursor: 'pointer' }} onClick={() => onToggle(label)}>
+        {label}
+      </Typography>
+      <Collapse in={isSelected}>
+        <TextField
+          label="Planting Date"
+          type="date"
+          fullWidth
+          value={plantingDate}
+          onChange={(e) => onDateChange(label, e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          sx={{ mt: 2 }}
+          required={isSelected}
+        />
+      </Collapse>
+    </CardContent>
+  </Card>
+);
+
+const STEPS = ['Account Info', 'Personal Details', 'Your Crops', 'Location', 'Profile Picture'];
 
 const LOCATION_OPTIONS = [
   { label: 'Mexico, Pampanga', img: mexicoImg, value: 'Mexico, Pampanga' },
@@ -61,11 +94,12 @@ const LOCATION_OPTIONS = [
   { label: 'Bacolor, Pampanga', img: bacolorImg, value: 'Bacolor, Pampanga' },
   { label: 'Others', img: gpsImg, value: 'Others' },
 ];
+
 const CROP_OPTIONS = [
-  { label: 'Rice', img: wheatImg },
-  { label: 'Corn', img: cornImg },
-  { label: 'Onion', img: onionImg },
-  { label: 'Others', img: othersImg },
+  { id: '60d5f2f9a7b9a72b5c8f7f8b', name: 'Rice', img: wheatImg }, // Example IDs
+  { id: '60d5f2f9a7b9a72b5c8f7f8c', name: 'Corn', img: cornImg },
+  { id: '60d5f2f9a7b9a72b5c8f7f8d', name: 'Onion', img: onionImg },
+  { id: '60d5f2f9a7b9a72b5c8f7f8e', name: 'Others', img: othersImg },
 ];
 
 const SignUpPage = () => {
@@ -79,10 +113,13 @@ const SignUpPage = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
 
+  // --- REFINED STATE ---
   const [formData, setFormData] = useState({
     firstName: '', lastName: '', email: '', mobileNo: '',
     password: '', confirmPassword: '', dob: '', gender: '',
-    language: '', crops: [], location: '',
+    language: 'Filipino', location: '',
+    // This will now store objects: { name: 'Rice', plantingDate: '2025-10-21' }
+    userCrops: [], 
   });
 
   const handleNext = () => setStep(prev => prev + 1);
@@ -92,14 +129,34 @@ const SignUpPage = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
   const handleSelection = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
-  const handleCropToggle = (crop) => {
-    const newCrops = formData.crops.includes(crop)
-      ? formData.crops.filter(c => c !== crop)
-      : [...formData.crops, crop];
-    handleSelection('crops', newCrops);
+
+  // --- UPDATED CROP HANDLING LOGIC ---
+  const handleCropToggle = (cropName) => {
+    setFormData(prev => {
+      const isSelected = prev.userCrops.some(c => c.name === cropName);
+      if (isSelected) {
+        // Remove the crop
+        return { ...prev, userCrops: prev.userCrops.filter(c => c.name !== cropName) };
+      } else {
+        // Add the crop with a default planting date
+        const cropDetails = CROP_OPTIONS.find(c => c.name === cropName);
+        return {
+          ...prev,
+          userCrops: [...prev.userCrops, { cropId: cropDetails.id, name: cropName, plantingDate: '' }]
+        };
+      }
+    });
+  };
+
+  const handleCropDateChange = (cropName, date) => {
+    setFormData(prev => ({
+      ...prev,
+      userCrops: prev.userCrops.map(c => c.name === cropName ? { ...c, plantingDate: date } : c)
+    }));
   };
 
   const handleClickShowPassword = () => setShowPassword(s => !s);
@@ -118,31 +175,70 @@ const SignUpPage = () => {
     switch (step) {
       case 1:
         return (
-          formData.firstName &&
-          formData.lastName &&
+          formData.firstName.trim() !== '' &&
+          formData.lastName.trim() !== '' &&
           formData.email.includes('@') &&
-          formData.mobileNo.length === 11 &&
+          /^\d{11}$/.test(formData.mobileNo) && // Use regex for 11 digits
           formData.password.length >= 8 &&
           formData.password === formData.confirmPassword
         );
       case 2:
         return formData.dob && formData.gender && formData.language;
       case 3:
-        return formData.crops.length > 0;
+        // Validate that all selected crops have a planting date
+        return formData.userCrops.length > 0 && formData.userCrops.every(c => c.plantingDate);
       case 4:
         return !!formData.location;
       case 5:
-        return true;
+        return true; // Profile picture is optional
       default:
         return false;
     }
   }, [formData, step]);
 
+  // --- REFINED SUBMIT LOGIC TO HANDLE IMAGE UPLOAD ---
   const handleSubmit = async () => {
-    if (!isStepValid) return;
+    if (!isStepValid) {
+        Swal.fire('Incomplete Information', 'Please ensure all required fields are filled correctly.', 'warning');
+        return;
+    }
     setIsSubmitting(true);
+
+    // Prepare data for registration (remove confirmPassword)
+    const { confirmPassword, ...registrationData } = formData;
+
     try {
-      await api.registerUser(formData);
+      // Step 1: Register the user
+      await api.registerUser(registrationData);
+      
+      // Step 2 (Optional): If there's a profile picture, log in to get a token and then upload
+      if (profilePictureFile) {
+        Swal.fire({
+          title: 'Almost Done!',
+          text: 'User registered. Now uploading profile picture...',
+          icon: 'info',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading(),
+        });
+
+        // Log in silently to get the auth token
+        const loginResponse = await api.loginUser({ email: formData.email, password: formData.password });
+        const token = loginResponse.data.access;
+        
+        // Use the token to upload the picture
+        const pictureFormData = new FormData();
+        pictureFormData.append('profilePicture', profilePictureFile);
+        
+        // Manually create an Axios instance with the token for this one-off request
+        const apiWithToken = api.default.create({
+            baseURL: import.meta.env.VITE_API_URL,
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        await apiWithToken.patch('/users/update-picture', pictureFormData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+
       Swal.fire({
         title: 'Registration Successful!',
         text: 'You can now log in with your new account.',
@@ -151,6 +247,7 @@ const SignUpPage = () => {
         showConfirmButton: false,
       });
       navigate('/login');
+
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
       Swal.fire('Registration Failed', errorMessage, 'error');
@@ -240,11 +337,21 @@ const SignUpPage = () => {
             case 3:
               return (
                 <Grid container spacing={3} justifyContent="center">
-                  {CROP_OPTIONS.map(crop => (
-                    <Grid item xs={12} sm={6} md={3} key={crop.label}>
-                      <SelectionCard image={crop.img} label={crop.label} isSelected={formData.crops.includes(crop.label)} onClick={() => handleCropToggle(crop.label)} />
-                    </Grid>
-                  ))}
+                  {CROP_OPTIONS.map(crop => {
+                    const selectedCrop = formData.userCrops.find(c => c.name === crop.name);
+                    return (
+                      <Grid item xs={12} sm={6} md={3} key={crop.name}>
+                        <CropSelectionCard 
+                          image={crop.img} 
+                          label={crop.name} 
+                          isSelected={!!selectedCrop}
+                          onToggle={handleCropToggle}
+                          onDateChange={handleCropDateChange}
+                          plantingDate={selectedCrop ? selectedCrop.plantingDate : ''}
+                        />
+                      </Grid>
+                    );
+                  })}
                 </Grid>
               );
             case 4:
@@ -261,15 +368,15 @@ const SignUpPage = () => {
               return (
                 <Box sx={{ maxWidth: 500, mx: 'auto', textAlign: 'center' }}>
                   <Stack spacing={3} alignItems="center">
-                    <Avatar src={previewUrl} sx={{ width: 150, height: 150, mb: 2, bgcolor: 'grey.300' }}>
-                      <AddAPhotoIcon sx={{ fontSize: 60 }} />
+                    <Avatar src={previewUrl} sx={{ width: 150, height: 150, mb: 2, bgcolor: 'grey.300', border: '2px solid #ccc' }}>
+                      <AddAPhotoIcon sx={{ fontSize: 60, color: 'grey.500' }} />
                     </Avatar>
                     <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/png, image/jpeg" />
                     <Button variant="outlined" startIcon={<AddAPhotoIcon />} onClick={triggerFileInput}>
                       Choose Picture
                     </Button>
                     <Typography variant="body2" color="text.secondary">
-                      This step is optional. You can add a profile picture later.
+                      This step is optional. You can add a profile picture later from your profile page.
                     </Typography>
                   </Stack>
                 </Box>
@@ -315,7 +422,7 @@ const SignUpPage = () => {
           <Button
             onClick={step === 5 ? handleSubmit : handleNext}
             variant="contained"
-            disabled={isSubmitting}
+            disabled={!isStepValid || isSubmitting}
             sx={{
               backgroundColor: 'var(--primary-green)',
               borderRadius: '30px',
@@ -323,9 +430,12 @@ const SignUpPage = () => {
               py: 1.5,
               textTransform: 'none',
               fontSize: '18px',
+              '&:disabled': {
+                backgroundColor: 'grey.300'
+              }
             }}
           >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : step === 5 ? 'Finish' : 'Next'}
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : step === 5 ? 'Finish Registration' : 'Next'}
           </Button>
         </Stack>
       </Container>
