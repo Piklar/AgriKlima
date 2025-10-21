@@ -83,89 +83,102 @@ const FarmingAdvice = ({ advice, loading }) => {
       </Typography>
 
       {/* Score Section */}
-      <Box
-        sx={{
-          textAlign: 'center',
-          my: 2,
-          p: 2,
-          bgcolor: 'background.default',
-          borderRadius: 3,
-        }}
-      >
-        {getStatusIcon(advice.status)}
-        <Typography
-          variant="h3"
-          fontWeight="bold"
-          sx={{ color: getStatusColor(advice.status), mt: 1, fontSize: { xs: '2rem', sm: '3rem' } }}
-        >
-          {advice.score}/100
-        </Typography>
-        <Typography variant="h6" color="text.secondary">
-          {advice.statusLabel}
-        </Typography>
-        <LinearProgress
-          variant="determinate"
-          value={advice.score}
-          sx={{
-            mt: 2,
-            height: { xs: 10, sm: 12 },
-            borderRadius: 6,
-            backgroundColor: 'rgba(0,0,0,0.1)',
-            '& .MuiLinearProgress-bar': {
-              borderRadius: 6,
-              backgroundColor: getStatusColor(advice.status),
-            },
-          }}
-        />
-      </Box>
+          <Box
+            sx={{
+              textAlign: 'center',
+              my: 2,
+              p: 2,
+              bgcolor: 'background.default',
+              borderRadius: 3,
+            }}
+          >
+            {getStatusIcon(advice.status)}
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              sx={{
+                color: getStatusColor(advice.status),
+                mt: 1,
+                fontSize: { xs: '1.5rem', sm: '2.2rem' },
+              }}
+            >
+              {advice.score}/100
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              color="text.secondary"
+              sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}
+            >
+              {advice.statusLabel}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={advice.score}
+              sx={{
+                mt: 2,
+                height: { xs: 8, sm: 10 },
+                borderRadius: 6,
+                backgroundColor: 'rgba(0,0,0,0.1)',
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: 6,
+                  backgroundColor: getStatusColor(advice.status),
+                },
+              }}
+            />
+          </Box>
 
-      {/* Condition Details */}
-      <Grid container spacing={1.5} sx={{ mb: 2 }}>
-        <Grid item xs={6}>
-          <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'background.default', borderRadius: 2 }}>
-            <ThermostatIcon color="error" />
-            <Typography variant="caption" display="block" color="text.secondary">
-              Temperature
-            </Typography>
-            <Typography variant="body2" fontWeight="bold">
-              {advice.details.temperature}
-            </Typography>
-          </Box>
+
+     {/* Condition Details */}
+        <Grid container spacing={1.2} sx={{ mb: 2 }}>
+          <Grid item xs={6}>
+            <Box sx={{ textAlign: 'center', p: 1.2, bgcolor: 'background.default', borderRadius: 2 }}>
+              <ThermostatIcon color="error" sx={{ fontSize: 22 }} />
+              <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Temperature
+              </Typography>
+              <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.9rem' }}>
+                {advice.details.temperature}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={6}>
+            <Box sx={{ textAlign: 'center', p: 1.2, bgcolor: 'background.default', borderRadius: 2 }}>
+              <WaterDropIcon color="primary" sx={{ fontSize: 22 }} />
+              <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Humidity
+              </Typography>
+              <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.9rem' }}>
+                {advice.details.humidity}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={6}>
+            <Box sx={{ textAlign: 'center', p: 1.2, bgcolor: 'background.default', borderRadius: 2 }}>
+              <GrainIcon color="info" sx={{ fontSize: 22 }} />
+              <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Rainfall
+              </Typography>
+              <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.9rem' }}>
+                {advice.details.rainfall}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item xs={6}>
+            <Box sx={{ textAlign: 'center', p: 1.2, bgcolor: 'background.default', borderRadius: 2 }}>
+              <AirIcon color="secondary" sx={{ fontSize: 22 }} />
+              <Typography variant="caption" display="block" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Wind
+              </Typography>
+              <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.9rem' }}>
+                {advice.details.wind}
+              </Typography>
+            </Box>
+          </Grid>
         </Grid>
-        <Grid item xs={6}>
-          <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'background.default', borderRadius: 2 }}>
-            <WaterDropIcon color="primary" />
-            <Typography variant="caption" display="block" color="text.secondary">
-              Humidity
-            </Typography>
-            <Typography variant="body2" fontWeight="bold">
-              {advice.details.humidity}
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={6}>
-          <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'background.default', borderRadius: 2 }}>
-            <GrainIcon color="info" />
-            <Typography variant="caption" display="block" color="text.secondary">
-              Rainfall
-            </Typography>
-            <Typography variant="body2" fontWeight="bold">
-              {advice.details.rainfall}
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={6}>
-          <Box sx={{ textAlign: 'center', p: 1.5, bgcolor: 'background.default', borderRadius: 2 }}>
-            <AirIcon color="secondary" />
-            <Typography variant="caption" display="block" color="text.secondary">
-              Wind
-            </Typography>
-            <Typography variant="body2" fontWeight="bold">
-              {advice.details.wind}
-            </Typography>
-          </Box>
-        </Grid>
-      </Grid>
+
 
       {/* Warnings */}
       {advice.warnings && advice.warnings.length > 0 && (
