@@ -1,31 +1,15 @@
 // src/components/WeatherTodayCard.jsx
+
 import React from 'react';
 import { Box, Typography, Paper, Skeleton, Stack, Divider } from '@mui/material';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import WbTwilightIcon from '@mui/icons-material/WbTwilight';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
-import WbCloudyOutlinedIcon from '@mui/icons-material/WbCloudyOutlined';
-import GrainIcon from '@mui/icons-material/Grain'; // For rain
+import { getWeatherIcon } from '../utils/weatherIcons'; // <-- IMPORT THE NEW UTILITY
 
 const WeatherTodayCard = ({ weather, loading }) => {
   const current = weather?.current;
   const detailed = weather?.detailed;
-
-  const getWeatherIcon = (condition) => {
-    if (!condition)
-      return <WbCloudyOutlinedIcon sx={{ fontSize: 80, color: 'white', opacity: 0.8 }} />;
-
-    const lower = condition.toLowerCase();
-
-    if (lower.includes('sun'))
-      return <WbSunnyOutlinedIcon sx={{ fontSize: 80, color: '#ffc107' }} />;
-    if (lower.includes('rain'))
-      return <GrainIcon sx={{ fontSize: 80, color: '#90caf9' }} />;
-    if (lower.includes('cloud'))
-      return <WbCloudyOutlinedIcon sx={{ fontSize: 80, color: 'white', opacity: 0.8 }} />;
-
-    return <WbCloudyOutlinedIcon sx={{ fontSize: 80, color: 'white', opacity: 0.8 }} />;
-  };
 
   return (
     <Paper
@@ -57,25 +41,14 @@ const WeatherTodayCard = ({ weather, loading }) => {
 
       {loading ? (
         <Stack spacing={1} sx={{ mt: 2 }}>
-          <Skeleton
-            variant="text"
-            height={80}
-            sx={{ bgcolor: 'rgba(255,255,255,0.3)', borderRadius: '10px' }}
-          />
-          <Skeleton
-            variant="text"
-            height={40}
-            sx={{ bgcolor: 'rgba(255,255,255,0.3)', borderRadius: '10px' }}
-          />
-          <Skeleton
-            variant="rectangular"
-            height={60}
-            sx={{ bgcolor: 'rgba(255,255,255,0.3)', borderRadius: '10px' }}
-          />
+          <Skeleton variant="text" height={80} sx={{ bgcolor: 'rgba(255,255,255,0.3)'}} />
+          <Skeleton variant="text" height={40} sx={{ bgcolor: 'rgba(255,255,255,0.3)'}} />
+          <Skeleton variant="rectangular" height={60} sx={{ bgcolor: 'rgba(255,255,255,0.3)'}} />
         </Stack>
       ) : current && detailed ? (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
-          {getWeatherIcon(current.condition)}
+          {/* --- FIX: Use the new icon utility --- */}
+          {getWeatherIcon(current.icon, '80px')}
 
           <Typography variant="h2" sx={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>
             {Math.round(current.temperature)}°C
@@ -89,38 +62,24 @@ const WeatherTodayCard = ({ weather, loading }) => {
           <Stack direction="row" justifyContent="space-around" spacing={2}>
             <Box>
               <ThermostatIcon />
-              <Typography sx={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>
-                {detailed.feelsLike}°C
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8, fontFamily: 'Inter, sans-serif' }}>
-                Feels Like
-              </Typography>
+              <Typography sx={{ fontWeight: 'bold' }}>{detailed.feelsLike}°C</Typography>
+              <Typography variant="caption" sx={{ opacity: 0.8 }}>Feels Like</Typography>
             </Box>
             <Box>
               <WbSunnyOutlinedIcon />
-              <Typography sx={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>
-                {detailed.sunrise}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8, fontFamily: 'Inter, sans-serif' }}>
-                Sunrise
-              </Typography>
+              <Typography sx={{ fontWeight: 'bold' }}>{detailed.sunrise}</Typography>
+              <Typography variant="caption" sx={{ opacity: 0.8 }}>Sunrise</Typography>
             </Box>
             <Box>
               <WbTwilightIcon />
-              <Typography sx={{ fontWeight: 'bold', fontFamily: 'Inter, sans-serif' }}>
-                {detailed.sunset}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8, fontFamily: 'Inter, sans-serif' }}>
-                Sunset
-              </Typography>
+              <Typography sx={{ fontWeight: 'bold' }}>{detailed.sunset}</Typography>
+              <Typography variant="caption" sx={{ opacity: 0.8 }}>Sunset</Typography>
             </Box>
           </Stack>
         </Box>
       ) : (
         <Box sx={{ textAlign: 'center', py: 6 }}>
-          <Typography sx={{ fontFamily: 'Inter, sans-serif' }}>
-            Weather data not available for your location.
-          </Typography>
+          <Typography>Weather data not available.</Typography>
         </Box>
       )}
     </Paper>

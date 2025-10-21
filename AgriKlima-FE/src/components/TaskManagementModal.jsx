@@ -97,7 +97,6 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
     setIsLoading(true);
     try {
       if (taskData._id) {
-        // Include all necessary fields for update including applyToSeries
         await api.updateTask(taskData._id, {
           title: taskData.title,
           description: taskData.description,
@@ -108,13 +107,11 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
       } else {
         await api.addTask(taskData);
       }
-
       Swal.fire({ icon: 'success', title: 'Task saved!', showConfirmButton: false, timer: 1500 });
       onTasksUpdate();
       setView('list');
     } catch (error) {
       Swal.fire('Error', 'Failed to save task.', 'error');
-      console.error("Failed to save task", error);
     } finally {
       setIsLoading(false);
     }
@@ -126,14 +123,11 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
       onTasksUpdate();
     } catch (error) {
       Swal.fire('Error', 'Could not update task status.', 'error');
-      console.error(error);
     }
   };
 
   const handleDeleteTask = async (task) => {
     const hasRecurrence = task.recurrenceId;
-
-    // Configure SweetAlert with higher z-index
     let deleteOptions = {
       title: 'Delete this task?',
       text: `"${task.title}" will be permanently deleted.`,
@@ -141,29 +135,19 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
       showCancelButton: true,
       confirmButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!',
-      customClass: {
-        container: 'swal-high-z-index'
-      },
+      customClass: { container: 'swal-high-z-index' },
       backdrop: true
     };
 
-    // If recurring task, give option to delete all
     if (hasRecurrence) {
       deleteOptions = {
+        ...deleteOptions,
         title: 'Delete recurring task',
         text: `"${task.title}" is a recurring task. What would you like to delete?`,
-        icon: 'warning',
-        showCancelButton: true,
         showDenyButton: true,
         confirmButtonText: 'Delete all future occurrences',
         denyButtonText: 'Delete only this one',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: '#d33',
         denyButtonColor: '#ff9800',
-        customClass: {
-          container: 'swal-high-z-index'
-        },
-        backdrop: true
       };
     }
 
@@ -173,29 +157,20 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
         try {
           const deleteAll = hasRecurrence && result.isConfirmed;
           await api.deleteTask(task._id, deleteAll);
-          
           Swal.fire({
             title: 'Deleted!',
             text: deleteAll ? 'All future recurring tasks have been deleted.' : 'The task has been deleted.',
             icon: 'success',
             timer: 1500,
             showConfirmButton: false,
-            customClass: {
-              container: 'swal-high-z-index'
-            }
+            customClass: { container: 'swal-high-z-index' }
           });
-          
           onTasksUpdate();
         } catch (error) {
           Swal.fire({
-            title: 'Error',
-            text: 'Could not delete the task.',
-            icon: 'error',
-            customClass: {
-              container: 'swal-high-z-index'
-            }
+            title: 'Error', text: 'Could not delete the task.', icon: 'error',
+            customClass: { container: 'swal-high-z-index' }
           });
-          console.error("Failed to delete task", error);
         } finally {
           setIsLoading(false);
         }
@@ -203,7 +178,6 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
     });
   };
 
-  // Group recurring tasks and only show unique ones
   const tasksForDay = tasks.filter(t => isSameDay(new Date(t.dueDate), selectedDate));
   const uniqueTasksForDay = [];
   const seenRecurrenceIds = new Set();
@@ -224,25 +198,17 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
       <Modal open={open} onClose={onClose}>
         <Paper
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
+            position: 'absolute', top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: { xs: '90%', sm: 500 },
-            maxHeight: '80vh',
-            overflow: 'auto',
-            p: 3,
-            borderRadius: 2,
-            zIndex: 1300
+            width: { xs: '90%', sm: 500 }, maxHeight: '80vh',
+            overflow: 'auto', p: 3, borderRadius: 2, zIndex: 1300
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6">
               Tasks for {format(selectedDate, 'MMMM d, yyyy')}
             </Typography>
-            <IconButton onClick={onClose} size="small">
-              <CloseIcon />
-            </IconButton>
+            <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
           </Box>
 
           {isLoading && <CircularProgress />}
@@ -256,8 +222,7 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
                     disablePadding
                     sx={{
                       borderLeft: task.cropId ? `4px solid ${task.color}` : 'none',
-                      pl: task.cropId ? 1 : 0,
-                      mb: 1,
+                      pl: task.cropId ? 1 : 0, mb: 1,
                       backgroundColor: task.cropId ? `${task.color}08` : 'transparent',
                       borderRadius: 1
                     }}
@@ -267,40 +232,20 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
                       checked={task.status === 'completed'}
                       onChange={() => handleToggleStatus(task._id)}
                     />
-                    <ListItemButton
-                      onClick={() => { setSelectedTask(task); setView('form'); }}
-                      sx={{ flex: 1 }}
-                    >
+                    <ListItemButton onClick={() => { setSelectedTask(task); setView('form'); }} sx={{ flex: 1 }}>
                       <ListItemText
                         primary={
                           <Box>
                             {task.title}
-                            {task.status === 'completed' && (
-                              <Chip label="Completed" size="small" color="success" sx={{ ml: 1 }} />
-                            )}
-                            {task.cropId && (
-                              <Chip 
-                                label={`🌱 ${task.cropId.name}`} 
-                                size="small" 
-                                sx={{ ml: 1, backgroundColor: task.color, color: 'white' }} 
-                              />
-                            )}
-                            {task.recurrenceId && (
-                              <Chip 
-                                label={`🔁 ${task.frequency}`} 
-                                size="small" 
-                                sx={{ ml: 1 }} 
-                                variant="outlined"
-                              />
-                            )}
+                            {task.status === 'completed' && (<Chip label="Completed" size="small" color="success" sx={{ ml: 1 }} />)}
+                            {task.cropId && (<Chip label={`🌱 ${task.cropId.name}`} size="small" sx={{ ml: 1, backgroundColor: task.color, color: 'white' }} />)}
+                            {task.recurrenceId && (<Chip label={`🔁 ${task.frequency}`} size="small" sx={{ ml: 1 }} variant="outlined" />)}
                           </Box>
                         }
                         secondary={task.description}
                       />
                     </ListItemButton>
-                    <IconButton edge="end" onClick={() => handleDeleteTask(task)}>
-                      <DeleteIcon />
-                    </IconButton>
+                    <IconButton edge="end" onClick={() => handleDeleteTask(task)}><DeleteIcon /></IconButton>
                   </ListItem>
                 )) : (
                   <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
@@ -311,12 +256,7 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
 
               <Divider sx={{ my: 2 }} />
               
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                fullWidth
-                onClick={() => { setSelectedTask(null); setView('form'); }}
-              >
+              <Button variant="contained" startIcon={<AddIcon />} fullWidth onClick={() => { setSelectedTask(null); setView('form'); }}>
                 Add New Task
               </Button>
             </>
@@ -333,11 +273,15 @@ const TaskManagementModal = ({ open, onClose, selectedDate, tasks, onTasksUpdate
         </Paper>
       </Modal>
 
-      <style jsx global>{`
-        .swal-high-z-index {
-          z-index: 9999 !important;
-        }
-      `}</style>
+      {/* --- THIS IS THE FIX --- */}
+      {/* Replace the <style jsx global> tag with a standard <style> tag */}
+      <style>
+        {`
+          .swal-high-z-index {
+            z-index: 9999 !important;
+          }
+        `}
+      </style>
     </>
   );
 };

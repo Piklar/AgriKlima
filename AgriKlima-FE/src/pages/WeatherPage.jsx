@@ -49,6 +49,10 @@ const WeatherPage = () => {
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState('');
+  
+  // --- NEW: State for hottest and coldest days ---
+  const [peakHot, setPeakHot] = useState(null);
+  const [peakCold, setPeakCold] = useState(null);
 
   useEffect(() => {
     if (user && user.location) {
@@ -86,6 +90,20 @@ const WeatherPage = () => {
   useEffect(() => {
     fetchWeather();
   }, [fetchWeather]);
+
+  // --- NEW: useEffect to calculate peak temperatures ---
+  useEffect(() => {
+    if (weatherData && weatherData.daily && weatherData.daily.length > 0) {
+      // Find the hottest day
+      const hottest = weatherData.daily.reduce((max, day) => (day.high > max.high ? day : max), weatherData.daily[0]);
+      setPeakHot({ temp: hottest.high, day: hottest.day });
+
+      // Find the coldest day
+      const coldest = weatherData.daily.reduce((min, day) => (day.low < min.low ? day : min), weatherData.daily[0]);
+      setPeakCold({ temp: coldest.low, day: coldest.day });
+    }
+  }, [weatherData]);
+
 
   const handleLocationChange = (event) => setLocation(event.target.value);
 
