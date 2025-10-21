@@ -1,7 +1,13 @@
 // src/pages/AboutUsPage.jsx
 import React from 'react';
 import {
-  Button, Container, Typography, Box, Card, CardContent, Divider
+  Button,
+  Container,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Divider,
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -17,9 +23,7 @@ import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PestControlIcon from '@mui/icons-material/PestControl';
 import LocalFloristIcon from '@mui/icons-material/LocalFlorist';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
-import WaterDropIcon from '@mui/icons-material/WaterDrop';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import ChecklistIcon from '@mui/icons-material/Checklist';
 
 const theme = createTheme({
   palette: {
@@ -36,7 +40,7 @@ const theme = createTheme({
     h5: { fontFamily: '"Playfair Display", serif', fontWeight: 600 },
     h6: { fontWeight: 600 },
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 10 },
 });
 
 const AboutUsPage = () => {
@@ -67,17 +71,39 @@ const AboutUsPage = () => {
   };
 
   const leftFeatures = [
-    { title: 'Weather Forecast', description: 'Accurate weather predictions tailored to your location and farming needs.', icon: <WbSunnyIcon sx={{ fontSize: 32 }} /> },
-    { title: 'Recommended Crops', description: 'Personalized crop suggestions based on soil type and climate conditions.', icon: <LocalFloristIcon sx={{ fontSize: 32 }} /> },
-    { title: 'Personalized Suggestions per Account', description: 'Optimize water usage with smart irrigation scheduling.', icon: <WaterDropIcon sx={{ fontSize: 32 }} /> },
-    { title: 'Pest Detection and Information', description: 'Early identification of potential pest problems with AI recognition.', icon: <PestControlIcon sx={{ fontSize: 32 }} /> },
+    {
+      title: 'Weather Forecast',
+      description: 'Accurate weather predictions tailored to your location and farming needs.',
+      icon: <WbSunnyIcon sx={{ fontSize: 32 }} />,
+    },
+    {
+      title: 'Recommended Crops',
+      description: 'Personalized crop suggestions based on soil type and climate conditions.',
+      icon: <LocalFloristIcon sx={{ fontSize: 32 }} />,
+    },
+    {
+      title: 'Pest Detection and Information',
+      description: 'Early identification of potential pest problems with AI recognition.',
+      icon: <PestControlIcon sx={{ fontSize: 32 }} />,
+    },
   ];
 
   const rightFeatures = [
-    { title: 'Farming Calendar', description: 'Plan agricultural activities with a personalized seasonal calendar.', icon: <CalendarTodayIcon sx={{ fontSize: 32 }} /> },
-    { title: 'Growth Analytics', description: 'Track and analyze crop growth patterns and compare with benchmarks.', icon: <AnalyticsIcon sx={{ fontSize: 32 }} /> },
-    { title: 'Suggested Farming Actions', description: 'Estimate harvest yields based on conditions and historical data.', icon: <TrendingUpIcon sx={{ fontSize: 32 }} /> },
-    { title: 'AI Farming Assistant', description: 'Get AI-powered recommendations for improving farming practices.', icon: <AgricultureIcon sx={{ fontSize: 32 }} /> },
+    {
+      title: 'Farming Calendar',
+      description: 'Plan and organize farming activities efficiently with a personalized seasonal calendar to guide your schedule.',
+      icon: <CalendarTodayIcon sx={{ fontSize: 32 }} />,
+    },
+    {
+      title: 'Task Manager',
+      description: 'Manage and monitor your farming activities efficiently from planting to harvest to keep crops healthy and productive.',
+      icon: <ChecklistIcon sx={{ fontSize: 32 }} />,
+    },
+    {
+      title: 'AI Farming Assistant',
+      description: 'Get AI-powered recommendations for improving farming practices.',
+      icon: <AgricultureIcon sx={{ fontSize: 32 }} />,
+    },
   ];
 
   return (
@@ -101,19 +127,6 @@ const AboutUsPage = () => {
 
         <Box mt={4} display="flex" gap={2} flexWrap="wrap" justifyContent="center">
           <Button
-            variant="contained"
-            size="large"
-            sx={{
-              px: { xs: 4, sm: 5 },
-              py: 1.4,
-              fontSize: { xs: '1rem', sm: '1.1rem' },
-            }}
-            onClick={() => window.location.href = '/login'}
-          >
-            Get Started
-          </Button>
-
-          <Button
             variant="outlined"
             size="large"
             sx={{
@@ -128,7 +141,9 @@ const AboutUsPage = () => {
                 backgroundColor: 'rgba(255,255,255,0.1)',
               },
             }}
-            onClick={() => document.getElementById('about-section').scrollIntoView({ behavior: 'smooth' })}
+            onClick={() =>
+              document.getElementById('about-section').scrollIntoView({ behavior: 'smooth' })
+            }
           >
             Learn More
           </Button>
@@ -142,8 +157,7 @@ const AboutUsPage = () => {
             About <span style={{ color: theme.palette.primary.main }}>AgriKlima</span>
           </Typography>
           <Typography variant="body1" sx={{ color: 'text.secondary', mb: 4, px: { xs: 2, md: 0 } }}>
-            AgriKlima is a climate-smart agriculture platform designed to empower farmers with accurate weather forecasts,
-            crop recommendations, and real-time insights to adapt to changing climate conditions.
+            AgriKlima is a climate-smart agriculture platform designed to empower farmers with accurate weather forecasts, crop recommendations, and real-time insights to adapt to changing climate conditions.
           </Typography>
         </Box>
       </Container>
@@ -167,7 +181,7 @@ const AboutUsPage = () => {
                 style={{
                   width: '100%',
                   maxWidth: 500,
-                  borderRadius: 16,
+                  borderRadius: 10,
                   boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
                 }}
               />
@@ -224,7 +238,15 @@ const AboutUsPage = () => {
 
       {/* Features Section */}
       <Container sx={{ py: { xs: 6, md: 10 } }}>
-        <Typography variant="h3" sx={{ textAlign: 'center', mb: 5, fontSize: { xs: '2rem', md: '2.8rem' } }}>
+        <Typography
+          variant="h3"
+          sx={{
+            textAlign: 'center',
+            mb: 5,
+            fontSize: { xs: '2rem', md: '2.8rem' },
+            fontWeight: 700,
+          }}
+        >
           Our <span style={{ color: theme.palette.primary.main }}>Features</span>
         </Typography>
 
@@ -232,7 +254,7 @@ const AboutUsPage = () => {
           sx={{
             display: { xs: 'block', md: 'flex' },
             gap: { xs: 0, md: 4 },
-            alignItems: 'flex-start',
+            alignItems: 'stretch',
             justifyContent: 'center',
           }}
         >
@@ -245,13 +267,24 @@ const AboutUsPage = () => {
                   mb: 3,
                   textAlign: 'left',
                   mx: { xs: 1, sm: 0 },
+                  minHeight: 160,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.08)',
                   transition: 'transform 0.3s, box-shadow 0.3s',
-                  '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 8px 20px rgba(0,0,0,0.12)' },
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+                  },
                 }}
-                elevation={1}
+                elevation={0}
               >
                 <CardContent sx={{ p: 3, display: 'flex', alignItems: 'flex-start' }}>
-                  <Box sx={{ color: theme.palette.primary.main, mr: 2, mt: 0.5 }}>{feature.icon}</Box>
+                  <Box sx={{ color: theme.palette.primary.main, mr: 2, mt: 0.5 }}>
+                    {feature.icon}
+                  </Box>
                   <Box>
                     <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, fontSize: '1.1rem' }}>
                       {feature.title}
@@ -265,7 +298,7 @@ const AboutUsPage = () => {
             ))}
           </Box>
 
-          {/* Divider for desktop */}
+          {/* Divider for Desktop */}
           <Divider
             orientation="vertical"
             flexItem
@@ -286,13 +319,24 @@ const AboutUsPage = () => {
                   mb: 3,
                   textAlign: 'left',
                   mx: { xs: 1, sm: 0 },
+                  minHeight: 160,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.08)',
                   transition: 'transform 0.3s, box-shadow 0.3s',
-                  '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 8px 20px rgba(0,0,0,0.12)' },
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+                  },
                 }}
-                elevation={1}
+                elevation={0}
               >
                 <CardContent sx={{ p: 3, display: 'flex', alignItems: 'flex-start' }}>
-                  <Box sx={{ color: theme.palette.primary.main, mr: 2, mt: 0.5 }}>{feature.icon}</Box>
+                  <Box sx={{ color: theme.palette.primary.main, mr: 2, mt: 0.5 }}>
+                    {feature.icon}
+                  </Box>
                   <Box>
                     <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, fontSize: '1.1rem' }}>
                       {feature.title}

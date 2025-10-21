@@ -86,31 +86,80 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
   const imageUrl = previewUrl || formData.imageUrl || '';
 
   return (
-    <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {/* --- THIS IS THE FIX: The Paper is now the form element --- */}
+    <Modal 
+      open={open} 
+      onClose={onClose} 
+      sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        p: 2
+      }}
+    >
       <Paper
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          width: '90%', maxWidth: '900px', maxHeight: '90vh',
-          borderRadius: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden'
+          width: '90%',
+          maxWidth: '800px', // Reduced maxWidth for better centering
+          maxHeight: '95vh',
+          borderRadius: '12px',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          mx: 'auto' // Center horizontally
         }}
       >
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee' }}>
-          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{title}</Typography>
-          <IconButton onClick={onClose}><CloseIcon /></IconButton>
+        {/* Header - Centered */}
+        <Box sx={{ 
+          p: 3, 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          borderBottom: '1px solid #e0e0e0',
+          bgcolor: 'background.paper'
+        }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, textAlign: 'center', flex: 1 }}>
+            {title}
+          </Typography>
+          <IconButton onClick={onClose} size="small" sx={{ position: 'absolute', right: 16 }}>
+            <CloseIcon />
+          </IconButton>
         </Box>
         
-        {/* --- This Box is no longer a form, just a container --- */}
-        <Box sx={{ overflowY: 'auto', flexGrow: 1, p: 3 }}>
-          <Box sx={{ mb: 3, textAlign: 'center' }}>
-            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 500, color: 'text.secondary' }}>
+        {/* Content Area - Centered */}
+        <Box sx={{ 
+          overflowY: 'auto', 
+          flexGrow: 1, 
+          p: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          {/* Image Upload Section - Centered */}
+          <Box sx={{ 
+            mb: 4, 
+            textAlign: 'center',
+            p: 3,
+            border: '1px dashed #e0e0e0',
+            borderRadius: 2,
+            bgcolor: 'grey.50',
+            width: '100%',
+            maxWidth: '400px'
+          }}>
+            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
               Item Image
             </Typography>
             <Avatar
               src={imageUrl}
               variant="rounded"
-              sx={{ width: 150, height: 150, margin: '0 auto', border: '2px solid #eee' }}
+              sx={{ 
+                width: 120, 
+                height: 120, 
+                margin: '0 auto', 
+                border: '2px solid #e0e0e0',
+                mb: 2
+              }}
             />
             <input
               type="file"
@@ -122,66 +171,107 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
             <Button
               startIcon={<AddAPhotoIcon />}
               onClick={() => fileInputRef.current.click()}
-              size="small"
-              sx={{ mt: 1 }}
+              variant="outlined"
+              size="medium"
             >
               {imageUrl ? 'Change Image' : 'Upload Image'}
             </Button>
           </Box>
           
-          <Grid container spacing={4}>
-            {Object.entries(groupedFields).map(([groupName, groupFields]) => (
-              <Grid item xs={12} md={6} key={groupName}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'var(--primary-green)' }}>
-                  {groupName}
-                </Typography>
-                <Stack spacing={2.5}>
-                  {groupFields.map(field => {
-                    if (field.name === 'imageUrl') return null;
-                    return (
-                      <Box key={field.name}>
-                        {field.type === 'select' ? (
-                          <FormControl fullWidth>
-                            <InputLabel>{field.label}</InputLabel>
-                            <Select
+          {/* Form Fields - Centered */}
+          <Box sx={{ width: '100%', maxWidth: '700px' }}>
+            <Grid container spacing={4} justifyContent="center">
+              {Object.entries(groupedFields).map(([groupName, groupFields]) => (
+                <Grid item xs={12} md={6} key={groupName} sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      mb: 3, 
+                      fontWeight: 600, 
+                      color: 'primary.main',
+                      pb: 1,
+                      borderBottom: '2px solid',
+                      borderColor: 'primary.light',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {groupName}
+                  </Typography>
+                  <Stack spacing={3}>
+                    {groupFields.map(field => {
+                      if (field.name === 'imageUrl') return null;
+                      return (
+                        <Box key={field.name} sx={{ display: 'flex', justifyContent: 'center' }}>
+                          {field.type === 'select' ? (
+                            <FormControl fullWidth size="medium" sx={{ maxWidth: '400px' }}>
+                              <InputLabel>{field.label}</InputLabel>
+                              <Select
+                                name={field.name}
+                                label={field.label}
+                                value={formData[field.name] || field.defaultValue || ''}
+                                onChange={handleChange}
+                                required={field.required}
+                              >
+                                {field.options?.map(option => (
+                                  <MenuItem key={option} value={option}>{option}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          ) : (
+                            <TextField
+                              fullWidth
+                              size="medium"
                               name={field.name}
                               label={field.label}
-                              value={formData[field.name] || field.defaultValue || ''}
+                              type={field.type === 'textarea' ? 'text' : field.type || 'text'}
+                              multiline={field.type === 'textarea'}
+                              rows={field.rows || (field.type === 'textarea' ? 4 : 1)}
+                              value={formData[field.name] || ''}
                               onChange={handleChange}
                               required={field.required}
-                            >
-                              {field.options?.map(option => (
-                                <MenuItem key={option} value={option}>{option}</MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        ) : (
-                          <TextField
-                            fullWidth
-                            name={field.name}
-                            label={field.label}
-                            type={field.type === 'textarea' ? 'text' : field.type || 'text'}
-                            multiline={field.type === 'textarea'}
-                            rows={field.rows || (field.type === 'textarea' ? 3 : 1)}
-                            value={formData[field.name] || ''}
-                            onChange={handleChange}
-                            required={field.required}
-                            helperText={field.helperText}
-                          />
-                        )}
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              </Grid>
-            ))}
-          </Grid>
+                              helperText={field.helperText}
+                              sx={{ maxWidth: '400px' }}
+                            />
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
         </Box>
         
-        {/* --- This Box is now INSIDE the form --- */}
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 1, borderTop: '1px solid #eee' }}>
-          <Button type="button" onClick={onClose} variant="outlined" color="secondary">Cancel</Button>
-          <Button type="submit" variant="contained" sx={{ bgcolor: 'var(--primary-green)', '&:hover': { bgcolor: 'var(--light-green)' } }}>
+        {/* Footer - Centered */}
+        <Box sx={{ 
+          p: 3, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          gap: 2, 
+          borderTop: '1px solid #e0e0e0',
+          bgcolor: 'grey.50'
+        }}>
+          <Button 
+            type="button" 
+            onClick={onClose} 
+            variant="outlined" 
+            color="secondary"
+            sx={{ minWidth: 120 }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="contained" 
+            sx={{ 
+              minWidth: 120,
+              bgcolor: 'primary.main', 
+              '&:hover': { 
+                bgcolor: 'primary.dark' 
+              } 
+            }}
+          >
             {mode === 'add' ? 'Create' : 'Save Changes'}
           </Button>
         </Box>
