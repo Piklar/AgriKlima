@@ -286,35 +286,48 @@ const CropsPage = () => {
             </Grid>
           </Container>
 
-          {/* Educational Section */}
-          <Box sx={{ backgroundColor: 'rgba(46, 125, 50, 0.05)', py: 8 }}>
-            <Container maxWidth="lg">
-              <Grid container spacing={5} alignItems="center" direction={isMobile ? "column-reverse" : "row"}>
-                <Grid item xs={12} md={7}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Lightbulb sx={{ color: 'primary.main', fontSize: 36, mr: 2 }} />
-                    <Typography variant="h3" component="h2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                      Learn about Crops
+           {/* Quote Section */}
+          <Box sx={{ backgroundColor: 'rgba(46,125,50,0.05)', py: { xs: 6, md: 10 } }}>
+            <Container maxWidth="md">
+              <Box sx={{ textAlign: 'center', px: { xs: 2, md: 6 } }}>
+                <Box sx={{ display: 'inline-block', textAlign: 'left', position: 'relative', maxWidth: 900, width: '100%' }}>
+                  {/* left accent bar */}
+                  <Box sx={{
+                    position: 'absolute',
+                    left: -20,
+                    top: 12,
+                    width: 6,
+                    height: '80%',
+                    bgcolor: 'primary.main',
+                    borderRadius: 1
+                  }} />
+                  <Box sx={{ pl: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <Lightbulb sx={{ color: 'primary.main', fontSize: 36 }} />
+                      <Typography component="h2" variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                        Insight &amp; Inspiration
+                      </Typography>
+                    </Box>
+                    <Typography
+                      component="blockquote"
+                      variant="h4"
+                      sx={{
+                        fontStyle: 'italic',
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        mb: 2,
+                        lineHeight: 1.35,
+                        fontSize: { xs: '1.25rem', md: '1.8rem' }
+                      }}
+                    >
+                      "The farmer is the only man in our economy who buys everything at retail, sells everything at wholesale, and pays the freight both ways."
+                    </Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.secondary', textAlign: 'right' }}>
+                      — John F. Kennedy
                     </Typography>
                   </Box>
-                  <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.7, mb: 3 }}>
-                    Crops are the foundation of our global food system... Modern agriculture relies on technology to increase yields and efficiency.
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    endIcon={<ChevronRight />}
-                    sx={{
-                      borderRadius: theme.shape.borderRadius,
-                      px: 4,
-                      py: 1.5,
-                      fontSize: '1.1rem',
-                      fontWeight: 600
-                    }}
-                  >
-                    Explore Resources
-                  </Button>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </Container>
           </Box>
 

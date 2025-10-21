@@ -189,13 +189,7 @@ const WeatherPage = () => {
                 order: { xs: 2, md: 1 },
               }}
             >
-              {/* --- UPDATE: Pass the new props --- */}
-              <DailyForecast
-                forecast={weatherData?.daily || []}
-                loading={loading}
-                peakHot={peakHot}
-                peakCold={peakCold}
-              />
+              <DailyForecast forecast={weatherData?.daily || []} loading={loading} />
             </Box>
 
             {/* CURRENT WEATHER (Center on wide, first on mobile) */}
