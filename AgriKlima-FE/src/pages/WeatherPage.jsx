@@ -10,7 +10,7 @@ import {
   MenuItem,
   Select,
   FormControl,
-  CircularProgress // <-- Import CircularProgress for a better loading experience
+  CircularProgress
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import * as api from '../services/api';
@@ -48,40 +48,28 @@ const WeatherPage = () => {
   const { user } = useAuth();
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // --- FIX #1: Initialize location state as an empty string ---
-  // This prevents the page from immediately fetching "San Fernando" by default.
   const [location, setLocation] = useState('');
+  
+  // --- NEW: State for hottest and coldest days ---
+  const [peakHot, setPeakHot] = useState(null);
+  const [peakCold, setPeakCold] = useState(null);
 
-  // --- FIX #2: Add a new useEffect hook to set the initial location from the user object ---
   useEffect(() => {
-    // This effect runs when the 'user' object from useAuth() is loaded.
     if (user && user.location) {
-      // Parse the user's location (e.g., "Mexico, Pampanga") to get the city/municipality.
       const userCity = user.location.split(',')[0].trim();
-      
-      // Find a matching location from our predefined list.
       const matchedLocation = LOCATIONS.find(loc => userCity.includes(loc));
-
       if (matchedLocation) {
         setLocation(matchedLocation);
       } else {
-        // If the user's location isn't in our list, use a default fallback.
         setLocation('San Fernando');
       }
     } else if (user) {
-      // If the user object is available but has no location property, set a default.
       setLocation('San Fernando');
     }
-    // This effect should only run when the 'user' object changes.
   }, [user]);
 
   const fetchWeather = useCallback(async () => {
-    // --- FIX #3: Add a guard clause to prevent fetching if the location hasn't been set yet ---
-    if (!location) {
-      return;
-    }
-    
+    if (!location) return;
     setLoading(true);
     try {
       const response = await api.getWeather(location);
@@ -97,12 +85,25 @@ const WeatherPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [location]); // This correctly depends on 'location'.
+  }, [location]);
 
   useEffect(() => {
-    // This effect will now wait until 'location' is set by the user data before running.
     fetchWeather();
   }, [fetchWeather]);
+
+  // --- NEW: useEffect to calculate peak temperatures ---
+  useEffect(() => {
+    if (weatherData && weatherData.daily && weatherData.daily.length > 0) {
+      // Find the hottest day
+      const hottest = weatherData.daily.reduce((max, day) => (day.high > max.high ? day : max), weatherData.daily[0]);
+      setPeakHot({ temp: hottest.high, day: hottest.day });
+
+      // Find the coldest day
+      const coldest = weatherData.daily.reduce((min, day) => (day.low < min.low ? day : min), weatherData.daily[0]);
+      setPeakCold({ temp: coldest.low, day: coldest.day });
+    }
+  }, [weatherData]);
+
 
   const handleLocationChange = (event) => setLocation(event.target.value);
 
@@ -141,7 +142,6 @@ const WeatherPage = () => {
               sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, borderRadius: 3, minWidth: 280, maxWidth: 360 }}
             >
               <LocationOnIcon color="primary" />
-              {/* --- FIX #4: Show a loading state while waiting for the user's location --- */}
               {!location ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
                   <CircularProgress size={20} />
@@ -175,43 +175,63 @@ const WeatherPage = () => {
               mb: 4,
             }}
           >
-            <Box sx={{
-              flex: '1 1 400px',
-              maxWidth: 520,
-              p: { xs: 1, md: 2 },
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 640,
-              maxHeight: 720,
-              overflowY: 'auto',
-            }}>
-              <DailyForecast forecast={weatherData?.daily || []} loading={loading} />
+            {/* DAILY FORECAST (Left) */}
+            <Box
+              sx={{
+                flex: '1 1 400px',
+                maxWidth: 520,
+                p: { xs: 1, md: 2 },
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 640,
+                maxHeight: 720,
+                overflowY: 'auto',
+                order: { xs: 2, md: 1 },
+              }}
+            >
+              {/* --- UPDATE: Pass the new props --- */}
+              <DailyForecast
+                forecast={weatherData?.daily || []}
+                loading={loading}
+                peakHot={peakHot}
+                peakCold={peakCold}
+              />
             </Box>
 
-            <Box sx={{
-              flex: '1 1 440px',
-              maxWidth: 580,
-              p: { xs: 1, md: 2 },
-              display: 'flex',
-              justifyContent: 'center',
-            }}>
+            {/* CURRENT WEATHER (Center on wide, first on mobile) */}
+            <Box
+              sx={{
+                flex: '1 1 440px',
+                maxWidth: 580,
+                p: { xs: 1, md: 2 },
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                order: { xs: 1, md: 2 },
+              }}
+            >
               <CurrentWeather weather={weatherData} loading={loading} />
             </Box>
 
-            <Box sx={{
-              flex: '1 1 400px',
-              maxWidth: 520,
-              p: { xs: 1, md: 2 },
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 640,
-              maxHeight: 720,
-              overflowY: 'auto',
-            }}>
+            {/* FARMING ADVICE (Right) */}
+            <Box
+              sx={{
+                flex: '1 1 400px',
+                maxWidth: 520,
+                p: { xs: 1, md: 2 },
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 640,
+                maxHeight: 720,
+                overflowY: 'auto',
+                order: { xs: 3, md: 3 },
+              }}
+            >
               <FarmingAdvice advice={weatherData?.farmingAdvice} loading={loading} />
             </Box>
           </Box>
 
+          {/* HOURLY FORECAST */}
           <Box sx={{ width: '100%', mb: 3, px: 1, display: 'flex', justifyContent: 'center' }}>
             <Box sx={{ width: '100%', maxWidth: '1600px', boxSizing: 'border-box' }}>
               <HourlyForecast forecast={weatherData?.hourly || []} loading={loading} />

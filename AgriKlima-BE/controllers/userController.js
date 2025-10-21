@@ -7,10 +7,13 @@ const auth = require("../auth");
 const cloudinary = require('../config/cloudinary');
 const { add } = require('date-fns');
 
-// --- [CREATE] Register a new user ---
+// === [CREATE] REGISTER A NEW USER ===
 module.exports.registerUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, password, mobileNo, location, crops, dob, gender, language } = req.body;
+        // Updated: Uses `userCrops` instead of plain `crops`
+        const { firstName, lastName, email, password, mobileNo, location, userCrops, dob, gender, language } = req.body;
+
+        // --- Basic Validation ---
         if (!firstName || !lastName || !email || !password || !mobileNo) {
             return res.status(400).send({ error: "Missing required account fields." });
         }
@@ -24,14 +27,40 @@ module.exports.registerUser = async (req, res) => {
         if (existingUser) {
             return res.status(409).send({ error: "Email is already in use." });
         }
+
+        // --- Process User Crops ---
+        let processedUserCrops = [];
+        if (userCrops && userCrops.length > 0) {
+            processedUserCrops = await Promise.all(userCrops.map(async (userCrop) => {
+                const masterCrop = await Crop.findById(userCrop.cropId);
+                if (!masterCrop || typeof masterCrop.growingDuration !== 'number') {
+                    console.warn(`Skipping invalid crop during registration. ID: ${userCrop.cropId}`);
+                    return null;
+                }
+                const plantingDate = new Date(userCrop.plantingDate);
+                const estimatedHarvestDate = add(plantingDate, { days: masterCrop.growingDuration });
+                return {
+                    cropId: masterCrop._id,
+                    name: masterCrop.name,
+                    plantingDate: plantingDate,
+                    estimatedHarvestDate: estimatedHarvestDate
+                };
+            }));
+            processedUserCrops = processedUserCrops.filter(crop => crop !== null);
+        }
+
+        // --- Create and Save New User ---
         const newUser = new User({
             firstName, lastName, email,
             password: bcrypt.hashSync(password, 10),
-            mobileNo, location, crops, dob, gender, language,
+            mobileNo, location, dob, gender, language,
+            userCrops: processedUserCrops,
             profilePictureUrl: ''
         });
+
         await newUser.save();
         res.status(201).send({ message: "User registered successfully!" });
+
     } catch (error) {
         console.error("Error during user registration:", error);
         if (error.name === 'ValidationError') {
@@ -41,38 +70,36 @@ module.exports.registerUser = async (req, res) => {
     }
 };
 
-// --- [AUTHENTICATE] Log in a user ---
+// === [AUTHENTICATE] LOG IN A USER ===
 module.exports.loginUser = (req, res) => {
-    // The input field can be named 'identifier' for clarity
     const { identifier, password } = req.body;
 
     if (!identifier || !password) {
         return res.status(400).send({ error: "Email/Mobile and password are required." });
     }
 
-    // Use MongoDB's $or operator to find a user where the identifier matches either the email or mobileNo field
     User.findOne({
         $or: [{ email: identifier }, { mobileNo: identifier }]
-    }).select('+password') // Explicitly include the password for comparison
-    .then(user => {
-        if (!user) {
-            return res.status(404).send({ error: "User not found." });
-        }
+    }).select('+password')
+        .then(user => {
+            if (!user) {
+                return res.status(404).send({ error: "User not found." });
+            }
 
-        const isPasswordCorrect = bcrypt.compareSync(password, user.password);
+            const isPasswordCorrect = bcrypt.compareSync(password, user.password);
 
-        if (isPasswordCorrect) {
-            // Generate token and send it back
-            return res.status(200).send({ access: auth.createAccessToken(user) });
-        } else {
-            return res.status(401).send({ error: "Invalid credentials." });
-        }
-    }).catch(err => {
-        console.error("Error during login:", err);
-        return res.status(500).send({ error: "Error during login process." });
-    });
+            if (isPasswordCorrect) {
+                return res.status(200).send({ access: auth.createAccessToken(user) });
+            } else {
+                return res.status(401).send({ error: "Invalid credentials." });
+            }
+        }).catch(err => {
+            console.error("Error during login:", err);
+            return res.status(500).send({ error: "Error during login process." });
+        });
 };
 
+// === [READ] GET PROFILE ===
 module.exports.getProfile = (req, res) => {
     return User.findById(req.user.id).select('-password')
         .then(user => {
@@ -85,7 +112,7 @@ module.exports.getProfile = (req, res) => {
         });
 };
 
-// --- [UPDATE] Update user's profile picture ---
+// === [UPDATE] PROFILE PICTURE ===
 module.exports.updateProfilePicture = async (req, res) => {
     try {
         if (!req.file) {
@@ -122,46 +149,46 @@ module.exports.updateProfilePicture = async (req, res) => {
     }
 };
 
-// --- [UPDATE] Change a logged-in user's password ---
+// === [UPDATE] CHANGE PASSWORD ===
 module.exports.changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
         if (!currentPassword || !newPassword) { return res.status(400).send({ error: "Current and new passwords are required." }); }
         if (newPassword.length < 8) { return res.status(400).send({ error: "New password must be at least 8 characters." }); }
-        
+
         const user = await User.findById(req.user.id).select('+password');
         if (!user) { return res.status(404).send({ error: "User not found." }); }
-        
+
         const isPasswordCorrect = bcrypt.compareSync(currentPassword, user.password);
         if (!isPasswordCorrect) { return res.status(400).send({ error: "Incorrect current password." }); }
-        
+
         user.password = bcrypt.hashSync(newPassword, 10);
         await user.save();
-        
+
         res.status(200).send({ message: "Password changed successfully." });
-    } catch (error) { 
-        console.error("Error changing password:", error); 
-        res.status(500).send({ error: "Internal server error." }); 
+    } catch (error) {
+        console.error("Error changing password:", error);
+        res.status(500).send({ error: "Internal server error." });
     }
 };
 
-// --- [UPDATE] Reset a user's password ---
+// === [UPDATE] RESET PASSWORD ===
 module.exports.resetPassword = async (req, res) => {
-  try {
-    const { newPassword } = req.body;
-    if (newPassword.length < 8) { return res.status(400).send({ error: "Password must be at least 8 characters" }); }
-    const user = await User.findById(req.user.id).select('+password');
-    if (!user) { return res.status(404).send({ error: "User not found." }); }
-    user.password = bcrypt.hashSync(newPassword, 10);
-    await user.save();
-    res.status(200).send({ message: 'Password reset successful' });
-  } catch (err) { 
-    console.error("Failed to reset password: ", err); 
-    res.status(500).send({ error: 'Failed to reset password' }); 
-  }
+    try {
+        const { newPassword } = req.body;
+        if (newPassword.length < 8) { return res.status(400).send({ error: "Password must be at least 8 characters" }); }
+        const user = await User.findById(req.user.id).select('+password');
+        if (!user) { return res.status(404).send({ error: "User not found." }); }
+        user.password = bcrypt.hashSync(newPassword, 10);
+        await user.save();
+        res.status(200).send({ message: 'Password reset successful' });
+    } catch (err) {
+        console.error("Failed to reset password: ", err);
+        res.status(500).send({ error: 'Failed to reset password' });
+    }
 };
 
-// --- [UPDATE] Update a user's profile information ---
+// === [UPDATE] UPDATE USER PROFILE INFO ===
 module.exports.updateUser = async (req, res) => {
     try {
         const userIdToUpdate = req.params.userId;
@@ -181,20 +208,19 @@ module.exports.updateUser = async (req, res) => {
         if (!updatedUser) {
             return res.status(404).send({ message: 'User not found' });
         }
-        
+
         res.status(200).send({ message: 'Profile updated successfully', user: updatedUser });
 
-    } catch (error) { 
+    } catch (error) {
         if (error.code === 11000) {
             return res.status(400).send({ error: "Email is already in use." });
         }
-        console.error("Error in updateUser:", error); 
-        res.status(500).send({ message: 'Internal server error' }); 
+        console.error("Error in updateUser:", error);
+        res.status(500).send({ message: 'Internal server error' });
     }
 };
 
-// === ADMIN-ONLY FUNCTIONS ===
-// UPGRADED getAllUsers with search + pagination
+// === [ADMIN] GET ALL USERS (with pagination & search) ===
 module.exports.getAllUsers = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -230,19 +256,21 @@ module.exports.getAllUsers = async (req, res) => {
     }
 };
 
+// === [ADMIN] SET USER AS ADMIN ===
 module.exports.setAsAdmin = (req, res) => {
     User.findByIdAndUpdate(req.params.id, { isAdmin: true }, { new: true })
-    .then(user => res.status(200).send({ message: "User set as admin", user }))
-    .catch(err => res.status(500).send({ error: "Failed to set user as admin" }));
+        .then(user => res.status(200).send({ message: "User set as admin", user }))
+        .catch(err => res.status(500).send({ error: "Failed to set user as admin" }));
 };
 
+// === [ADMIN] DELETE USER ===
 module.exports.deleteUser = (req, res) => {
     User.findByIdAndDelete(req.params.userId)
-    .then(() => res.status(200).send({ message: "User deleted successfully" }))
-    .catch(err => res.status(500).send({ error: "Failed to delete user" }));
+        .then(() => res.status(200).send({ message: "User deleted successfully" }))
+        .catch(err => res.status(500).send({ error: "Failed to delete user" }));
 };
 
-// --- NEW CONTROLLER FUNCTIONS for User's Planted Crops ---
+// === [USER] ADD USER CROP ===
 module.exports.addUserCrop = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -281,6 +309,7 @@ module.exports.addUserCrop = async (req, res) => {
     }
 };
 
+// === [USER] GET USER CROPS ===
 module.exports.getUserCrops = async (req, res) => {
     try {
         const user = await User.findById(req.user.id)
@@ -297,6 +326,7 @@ module.exports.getUserCrops = async (req, res) => {
     }
 };
 
+// === [USER] DELETE USER CROP ===
 module.exports.deleteUserCrop = async (req, res) => {
     try {
         const userId = req.user.id;
