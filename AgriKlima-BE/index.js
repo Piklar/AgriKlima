@@ -4,6 +4,7 @@ require('dotenv').config(); // Use dotenv to manage environment variables
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const vercelFrontendURL = "https://agri-klima.vercel.app/";
 
 // Import all route files
 const userRoutes = require("./routes/userRoutes");
@@ -38,6 +39,10 @@ app.use("/weather", weatherRoutes);
 app.use("/tasks", taskRoutes); 
 app.use("/chat", chatRoutes);
 app.use('/api/weather-rules', weatherRulesRoutes);
+
+app.use(cors({
+  origin: [vercelFrontendURL, "http://localhost:5173"] // Allow both deployed and local frontends
+}));
 
 app.listen(PORT, () => {
     console.log(`API is now online on port ${PORT}`);
