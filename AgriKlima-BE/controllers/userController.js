@@ -10,7 +10,6 @@ const { add } = require('date-fns');
 // === [CREATE] REGISTER A NEW USER ===
 module.exports.registerUser = async (req, res) => {
     try {
-        // Updated: Uses `userCrops` instead of plain `crops`
         const { firstName, lastName, email, password, mobileNo, location, userCrops, dob, gender, language } = req.body;
 
         // --- Basic Validation ---
@@ -23,9 +22,16 @@ module.exports.registerUser = async (req, res) => {
         if (mobileNo.length !== 11) {
             return res.status(400).send({ error: "Mobile number must be 11 digits." });
         }
-        const existingUser = await User.findOne({ email: email });
+
+        // --- THIS IS THE FIX: Check for existing email OR mobile number ---
+        const existingUser = await User.findOne({ $or: [{ email: email }, { mobileNo: mobileNo }] });
         if (existingUser) {
-            return res.status(409).send({ error: "Email is already in use." });
+            if (existingUser.email === email) {
+                return res.status(409).send({ error: "Email is already in use." });
+            }
+            if (existingUser.mobileNo === mobileNo) {
+                return res.status(409).send({ error: "Mobile number is already in use." });
+            }
         }
 
         // --- Process User Crops ---
@@ -63,12 +69,17 @@ module.exports.registerUser = async (req, res) => {
 
     } catch (error) {
         console.error("Error during user registration:", error);
+        // This will now also catch the unique index error from the database as a final safety net
+        if (error.code === 11000) {
+            return res.status(409).send({ error: "Email or Mobile Number is already registered." });
+        }
         if (error.name === 'ValidationError') {
             return res.status(400).send({ error: "Validation failed", details: error.message });
         }
         res.status(500).send({ error: "Internal server error." });
     }
 };
+
 
 // === [AUTHENTICATE] LOG IN A USER ===
 module.exports.loginUser = (req, res) => {
@@ -346,5 +357,29 @@ module.exports.deleteUserCrop = async (req, res) => {
     } catch (error) {
         console.error("Error deleting user crop:", error);
         res.status(500).send({ error: 'Internal server error.' });
+    }
+};
+
+module.exports.checkUserExists = async (req, res) => {
+    try {
+        const { email, mobileNo } = req.body;
+
+        if (!email && !mobileNo) {
+            return res.status(400).send({ error: "Email or mobile number is required for check." });
+        }
+
+        const query = email ? { email: email.trim().toLowerCase() } : { mobileNo: mobileNo.trim() };
+        
+        const user = await User.findOne(query);
+
+        if (user) {
+            return res.status(200).json({ exists: true, message: `${email ? 'Email' : 'Mobile number'} is already in use.` });
+        } else {
+            return res.status(200).json({ exists: false });
+        }
+
+    } catch (error) {
+        console.error("Error in checkUserExists:", error);
+        res.status(500).send({ error: "Internal server error during check." });
     }
 };

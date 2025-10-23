@@ -11,6 +11,7 @@ const upload = multer({ storage: storage });
 // === PUBLIC ROUTES ===
 router.post("/register", userController.registerUser);
 router.post("/login", userController.loginUser);
+router.post("/check-exists", userController.checkUserExists);
 
 // --- Private User Routes ---
 router.get("/details", verify, userController.getProfile);
