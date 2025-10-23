@@ -7,6 +7,31 @@ const auth = require("../auth");
 const cloudinary = require('../config/cloudinary');
 const { add } = require('date-fns');
 
+// === [CHECK] CHECK IF EMAIL/MOBILE EXISTS ===
+module.exports.checkUserExists = async (req, res) => {
+    try {
+        const { email, mobileNo } = req.body;
+
+        if (!email && !mobileNo) {
+            return res.status(400).send({ error: "Email or mobile number is required for check." });
+        }
+
+        const query = email ? { email: email.trim().toLowerCase() } : { mobileNo: mobileNo.trim() };
+
+        const user = await User.findOne(query);
+
+        if (user) {
+            return res.status(200).json({ exists: true, message: `${email ? 'Email' : 'Mobile number'} is already in use.` });
+        } else {
+            return res.status(200).json({ exists: false });
+        }
+
+    } catch (error) {
+        console.error("Error in checkUserExists:", error);
+        res.status(500).send({ error: "Internal server error during check." });
+    }
+};
+
 // === [CREATE] REGISTER A NEW USER ===
 module.exports.registerUser = async (req, res) => {
     try {
@@ -16,14 +41,19 @@ module.exports.registerUser = async (req, res) => {
         if (!firstName || !lastName || !email || !password || !mobileNo) {
             return res.status(400).send({ error: "Missing required account fields." });
         }
-        if (password.length < 8) {
-            return res.status(400).send({ error: "Password must be at least 8 characters." });
+
+        // --- Stricter Password Validation ---
+        // Password must be at least 8 characters long, contain one uppercase letter, and one special character.
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).send({ error: "Password must be at least 8 characters long, contain one uppercase letter, and one special character." });
         }
+        
         if (mobileNo.length !== 11) {
             return res.status(400).send({ error: "Mobile number must be 11 digits." });
         }
 
-        // --- THIS IS THE FIX: Check for existing email OR mobile number ---
+        // --- Check for existing email OR mobile number ---
         const existingUser = await User.findOne({ $or: [{ email: email }, { mobileNo: mobileNo }] });
         if (existingUser) {
             if (existingUser.email === email) {
@@ -33,7 +63,7 @@ module.exports.registerUser = async (req, res) => {
                 return res.status(409).send({ error: "Mobile number is already in use." });
             }
         }
-
+        
         // --- Process User Crops ---
         let processedUserCrops = [];
         if (userCrops && userCrops.length > 0) {
@@ -49,7 +79,8 @@ module.exports.registerUser = async (req, res) => {
                     cropId: masterCrop._id,
                     name: masterCrop.name,
                     plantingDate: plantingDate,
-                    estimatedHarvestDate: estimatedHarvestDate
+                    estimatedHarvestDate: estimatedHarvestDate,
+                    status: 'active' // Ensure initial status is set
                 };
             }));
             processedUserCrops = processedUserCrops.filter(crop => crop !== null);
@@ -79,7 +110,6 @@ module.exports.registerUser = async (req, res) => {
         res.status(500).send({ error: "Internal server error." });
     }
 };
-
 
 // === [AUTHENTICATE] LOG IN A USER ===
 module.exports.loginUser = (req, res) => {
@@ -165,7 +195,12 @@ module.exports.changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
         if (!currentPassword || !newPassword) { return res.status(400).send({ error: "Current and new passwords are required." }); }
-        if (newPassword.length < 8) { return res.status(400).send({ error: "New password must be at least 8 characters." }); }
+        
+        // Apply strict validation for change password as well
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).send({ error: "New password must be at least 8 characters long, contain one uppercase letter, and one special character." });
+        }
 
         const user = await User.findById(req.user.id).select('+password');
         if (!user) { return res.status(404).send({ error: "User not found." }); }
@@ -187,11 +222,19 @@ module.exports.changePassword = async (req, res) => {
 module.exports.resetPassword = async (req, res) => {
     try {
         const { newPassword } = req.body;
-        if (newPassword.length < 8) { return res.status(400).send({ error: "Password must be at least 8 characters" }); }
+        
+        // Apply strict validation for reset password as well
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).send({ error: "New password must be at least 8 characters long, contain one uppercase letter, and one special character." });
+        }
+
         const user = await User.findById(req.user.id).select('+password');
         if (!user) { return res.status(404).send({ error: "User not found." }); }
+        
         user.password = bcrypt.hashSync(newPassword, 10);
         await user.save();
+        
         res.status(200).send({ message: 'Password reset successful' });
     } catch (err) {
         console.error("Failed to reset password: ", err);
@@ -207,14 +250,25 @@ module.exports.updateUser = async (req, res) => {
             return res.status(403).send({ error: "Authorization failed. You can only update your own profile." });
         }
 
-        const { firstName, lastName, email } = req.body;
-        const fieldsToUpdate = { firstName, lastName, email };
+        // Filter out fields that shouldn't be updated via this route
+        const allowedUpdates = ['firstName', 'lastName', 'email', 'location', 'dob', 'gender', 'language'];
+        const fieldsToUpdate = {};
+        
+        for (const key of allowedUpdates) {
+            if (req.body[key] !== undefined) {
+                fieldsToUpdate[key] = req.body[key];
+            }
+        }
+        
+        if (Object.keys(fieldsToUpdate).length === 0) {
+            return res.status(400).send({ error: "No valid fields provided for update." });
+        }
 
         const updatedUser = await User.findByIdAndUpdate(
             userIdToUpdate,
             { $set: fieldsToUpdate },
             { new: true, runValidators: true }
-        );
+        ).select('-password');
 
         if (!updatedUser) {
             return res.status(404).send({ message: 'User not found' });
@@ -242,7 +296,8 @@ module.exports.getAllUsers = async (req, res) => {
             $or: [
                 { firstName: { $regex: search, $options: "i" } },
                 { lastName: { $regex: search, $options: "i" } },
-                { email: { $regex: search, $options: "i" } }
+                { email: { $regex: search, $options: "i" } },
+                { location: { $regex: search, $options: "i" } } // Include location in search
             ]
         };
 
@@ -303,7 +358,8 @@ module.exports.addUserCrop = async (req, res) => {
             cropId: masterCrop._id,
             name: masterCrop.name,
             plantingDate: pDate,
-            estimatedHarvestDate: harvestDate
+            estimatedHarvestDate: harvestDate,
+            status: 'active'
         };
 
         const updatedUser = await User.findByIdAndUpdate(
@@ -330,56 +386,51 @@ module.exports.getUserCrops = async (req, res) => {
         if (!user) {
             return res.status(404).send({ error: 'User not found' });
         }
-        res.status(200).send(user.userCrops);
+
+        const activeCrops = user.userCrops.filter(crop => crop.status === 'active');
+        const harvestedCrops = user.userCrops.filter(crop => crop.status === 'harvested');
+
+        res.status(200).send({ activeCrops, harvestedCrops });
     } catch (error) {
         console.error("Error fetching user crops:", error);
         res.status(500).send({ error: 'Internal server error.' });
     }
 };
 
-// === [USER] DELETE USER CROP ===
-module.exports.deleteUserCrop = async (req, res) => {
+// === [USER] HARVEST USER CROP (Update Status) ===
+module.exports.harvestUserCrop = async (req, res) => {
     try {
         const userId = req.user.id;
         const { userCropId } = req.params;
 
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { $pull: { userCrops: { _id: userCropId } } },
-            { new: true }
-        ).select('-password');
+        // Find the user and update the specific sub-document in the userCrops array
+        const result = await User.updateOne(
+            { "_id": userId, "userCrops._id": userCropId, "userCrops.status": "active" }, // Only update if status is active
+            {
+                "$set": {
+                    "userCrops.$.status": "harvested",
+                    "userCrops.$.harvestDate": new Date()
+                }
+            }
+        );
 
-        if (!updatedUser) {
-            return res.status(404).send({ error: "User not found." });
+        if (result.matchedCount === 0) {
+            // Check if it failed because the user/crop wasn't found (matchedCount=0)
+            return res.status(404).send({ error: "Active crop not found for this user." });
         }
-        res.status(200).send({ message: 'Crop removed from your farm successfully!', user: updatedUser });
-
-    } catch (error) {
-        console.error("Error deleting user crop:", error);
-        res.status(500).send({ error: 'Internal server error.' });
-    }
-};
-
-module.exports.checkUserExists = async (req, res) => {
-    try {
-        const { email, mobileNo } = req.body;
-
-        if (!email && !mobileNo) {
-            return res.status(400).send({ error: "Email or mobile number is required for check." });
-        }
-
-        const query = email ? { email: email.trim().toLowerCase() } : { mobileNo: mobileNo.trim() };
         
-        const user = await User.findOne(query);
-
-        if (user) {
-            return res.status(200).json({ exists: true, message: `${email ? 'Email' : 'Mobile number'} is already in use.` });
-        } else {
-            return res.status(200).json({ exists: false });
+        if (result.modifiedCount === 0) {
+            // This case might happen if matchedCount > 0 but the document wasn't modified (e.g., status was already 'harvested')
+            return res.status(400).send({ error: "Crop is already marked as harvested." });
         }
 
+        // Fetch the updated user (optional, but good practice to show the updated data)
+        const updatedUser = await User.findById(userId).select('-password');
+
+        res.status(200).send({ message: 'Crop marked as harvested successfully!', user: updatedUser });
+
     } catch (error) {
-        console.error("Error in checkUserExists:", error);
-        res.status(500).send({ error: "Internal server error during check." });
+        console.error("Error harvesting user crop:", error);
+        res.status(500).send({ error: 'Internal server error.' });
     }
 };

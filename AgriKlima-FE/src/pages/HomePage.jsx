@@ -1,5 +1,5 @@
 // src/pages/HomePage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -10,15 +10,24 @@ import {
   Divider,
   Paper,
   Grid,
+  CardActionArea,
+  CardMedia,
+  Skeleton
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns'; // Added for date formatting
+
+// FIX: Import API service and necessary components
+import * as api from '../services/api';
+import NewsSummaryOverlay from '../components/NewsSummaryOverlay';
+import ViewAllOverlay from '../components/ViewAllOverlay'; // FIX: Retained for View All functionality
 
 // images & icons
 import heroBg from "../assets/images/about-image-1.jpg";
 import videoBg from "../assets/images/about-image-2.jpg";
 import visionImg from "../assets/images/mission-vision.jpg";
 import logo from "../assets/logo.png";
-import mainNewsImage from "../assets/images/about-image-2.jpg"; // placeholder image for main article
 
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AgricultureIcon from "@mui/icons-material/Agriculture";
@@ -43,75 +52,67 @@ const theme = createTheme({
   shape: { borderRadius: 10 },
 });
 
+// Feature data
 const leftFeatures = [
-  {
-    title: "Weather Forecast",
-    description:
-      "Accurate weather predictions tailored to your location and farming needs.",
-    icon: <WbSunnyIcon sx={{ fontSize: 32 }} />,
-  },
-  {
-    title: "Recommended Crops",
-    description:
-      "Personalized crop suggestions based on soil type and climate conditions.",
-    icon: <LocalFloristIcon sx={{ fontSize: 32 }} />,
-  },
-  {
-    title: "Pest Detection and Information",
-    description:
-      "Early identification of potential pest problems with AI recognition.",
-    icon: <PestControlIcon sx={{ fontSize: 32 }} />,
-  },
+    { title: "Weather Forecast", description: "Accurate weather predictions tailored to your location and farming needs.", icon: <WbSunnyIcon sx={{ fontSize: 32 }} /> },
+    { title: "Recommended Crops", description: "Personalized crop suggestions based on local conditions and soil type.", icon: <LocalFloristIcon sx={{ fontSize: 32 }} /> },
+    { title: "Pest Detection and Information", description: "Early identification of potential pest problems with AI recognition.", icon: <PestControlIcon sx={{ fontSize: 32 }} /> },
 ];
-
 const rightFeatures = [
-  {
-    title: "Farming Calendar",
-    description:
-      "Plan and organize farming activities efficiently with a personalized seasonal calendar to guide your schedule.",
-    icon: <CalendarTodayIcon sx={{ fontSize: 32 }} />,
-  },
-  {
-    title: "Task Manager",
-    description:
-      "Manage and monitor your farming activities efficiently from planting to harvest to keep crops healthy and productive.",
-    icon: <ChecklistIcon sx={{ fontSize: 32 }} />,
-  },
-  {
-    title: "AI Farming Assistant",
-    description: "Get AI-powered recommendations for improving farming practices.",
-    icon: <AgricultureIcon sx={{ fontSize: 32 }} />,
-  },
+    { title: "Farming Calendar", description: "Plan and organize farming activities efficiently with a personalized seasonal calendar to guide your schedule.", icon: <CalendarTodayIcon sx={{ fontSize: 32 }} /> },
+    { title: "Task Manager", description: "Manage and monitor your farming activities efficiently from planting to harvest to keep crops healthy and productive.", icon: <ChecklistIcon sx={{ fontSize: 32 }} /> },
+    { title: "AI Farming Assistant", description: "Get AI-powered recommendations for improving farming practices.", icon: <AgricultureIcon sx={{ fontSize: 32 }} /> },
 ];
 
 const HomePage = () => {
-  const [mainArticle] = useState({
-    title:
-      "Sec. Francisco Tiu Laurel Jr.: leading PH agriculture to a new, bold direction",
-    content:
-      "On November 3, 2023, Francisco P Tiu Laurel, Jr. took his oath as Secretary of the Department of Agriculture, officially accepting the role and its challenges. Under his leadership, the Department focuses on empowering Filipino farmers and ensuring food security through innovation and collaboration.",
-    publicationDate: "September 20, 2024",
-    author: "Department of Agriculture",
-    imageUrl: mainNewsImage,
-  });
+  const navigate = useNavigate();
 
-  const moreNews = [
-    {
-      title: "Agri innovations boost rice production nationwide",
-      author: "AgriKlima Team",
-      date: "August 18, 2024",
-    },
-    {
-      title: "Farmers adapt to climate change with smart tools",
-      author: "DA Communications",
-      date: "July 2, 2024",
-    },
-    {
-      title: "New irrigation systems enhance crop yield",
-      author: "Local Agriculture Office",
-      date: "June 15, 2024",
-    },
-  ];
+  // FIX: Add state for news data and both overlays
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [isSummaryOverlayOpen, setIsSummaryOverlayOpen] = useState(false); // Used for single article view
+  const [isViewAllOpen, setIsViewAllOpen] = useState(false); // Used for View All overlay
+
+  // FIX: Fetch news data on component mount
+  useEffect(() => {
+    const fetchLatestNews = async () => {
+      setLoading(true);
+      try {
+        const response = await api.getNews();
+        setArticles(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch news:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLatestNews();
+  }, []);
+
+  // Handlers for the News Summary Overlay
+  const handleOpenSummaryOverlay = (article) => {
+    setSelectedArticle(article);
+    setIsSummaryOverlayOpen(true);
+  };
+
+  const handleCloseSummaryOverlay = () => {
+    setIsSummaryOverlayOpen(false);
+    setSelectedArticle(null);
+  };
+  
+  // Handler for clicking an item within the ViewAllOverlay
+  const handleItemClickFromAllView = (article) => {
+    setIsViewAllOpen(false);
+    // Delay opening the summary to allow the 'View All' overlay to close smoothly
+    setTimeout(() => {
+        handleOpenSummaryOverlay(article);
+    }, 300);
+  };
+
+  // Prepare data for the news section
+  const mainArticle = !loading && articles.length > 0 ? articles[0] : null;
+  const moreNews = !loading && articles.length > 1 ? articles.slice(1, 4) : [];
 
   return (
     <ThemeProvider theme={theme}>
@@ -124,67 +125,45 @@ const HomePage = () => {
           backgroundSize: "cover",
           backgroundAttachment: "fixed",
           backgroundPosition: "center",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          textAlign: "center",
-          color: "white",
-          px: 2,
+          display: "flex", flexDirection: "column",
+          justifyContent: "center", alignItems: "center",
+          textAlign: "center", color: "white", px: 2,
         }}
       >
-        <Typography
-          variant="h5"
-          sx={{
-            mb: 2,
-            fontWeight: 300,
-            letterSpacing: 2,
-            fontFamily: "'Poppins', sans-serif",
-            textTransform: "uppercase",
-            color: "#f1f1f1",
-          }}
-        >
+        <Typography variant="h5" sx={{ mb: 2, fontWeight: 300, letterSpacing: 2, fontFamily: "'Poppins', sans-serif", textTransform: "uppercase", color: "#f1f1f1" }}>
           Welcome to
         </Typography>
 
-        <Box
-          component="img"
-          src={logo}
-          alt="AgriKlima Logo"
-          sx={{
-            width: { xs: "220px", md: "320px" },
-            mb: 4,
-            filter: "drop-shadow(0px 4px 6px rgba(0,0,0,0.6))",
-          }}
-        />
+        <Box component="img" src={logo} alt="AgriKlima Logo" sx={{ width: { xs: "220px", md: "320px" }, mb: 4, filter: "drop-shadow(0px 4px 6px rgba(0,0,0,0.6))" }} />
 
-        <Box display="flex" gap={2} flexWrap="wrap" justifyContent="center">
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
           <Button
             variant="contained"
             sx={{
-              px: 5,
-              py: 1.7,
-              fontSize: "1.05rem",
-              fontWeight: 300,
+              px: 6, py: 1.5, fontSize: "1.1rem", fontWeight: 600,
               textTransform: "uppercase",
-              letterSpacing: 2,
-              fontFamily: "'Poppins', sans-serif",
-              color: "#f1f1f1",
               background: "linear-gradient(90deg, #2e7d32, #fbc02d)",
-              borderRadius: "50px",
-              boxShadow: "0px 4px 10px rgba(0,0,0,0.4)",
-              "&:hover": {
-                background: "linear-gradient(90deg, #1b5e20, #f9a825)",
-              },
+              borderRadius: "50px", boxShadow: "0px 4px 10px rgba(0,0,0,0.4)",
+              "&:hover": { background: "linear-gradient(90deg, #1b5e20, #f9a825)" }
             }}
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => navigate("/login")}
           >
             Get Started
           </Button>
+          <Typography variant="body2" sx={{ color: 'white' }}>
+            Don't have an account?{' '}
+            <Button
+              variant="text"
+              sx={{ color: 'white', fontWeight: 'bold', textDecoration: 'underline', p: 0.5, minWidth: 'auto' }}
+              onClick={() => navigate("/signup")}
+            >
+              Sign Up
+            </Button>
+          </Typography>
         </Box>
       </Box>
 
-      {/* ABOUT SECTION (inserted into HomePage) */}
+      {/* ABOUT SECTION */}
       <Container id="about-section" sx={{ py: { xs: 6, md: 10 } }}>
         <Box sx={{ textAlign: "center", maxWidth: "900px", mx: "auto" }}>
           <Typography
@@ -406,118 +385,65 @@ const HomePage = () => {
       {/* NEWS SECTION */}
       <Box id="news-section" sx={{ py: { xs: 6, md: 10 }, backgroundColor: "#fff" }}>
         <Container>
-          <Typography
-            variant="h3"
-            sx={{ textAlign: "center", mb: 2, fontWeight: 700 }}
-          >
+          <Typography variant="h3" sx={{ textAlign: "center", mb: 2, fontWeight: 700 }}>
             Latest <span style={{ color: theme.palette.primary.main }}>News</span>
           </Typography>
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ textAlign: "center", mb: 6 }}
-          >
-            Stay updated with the most recent developments in Philippine
-            agriculture.
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center", mb: 6 }}>
+            Stay updated with the most recent developments in Philippine agriculture.
           </Typography>
 
           <Grid container spacing={4} justifyContent="center">
             {/* Main Article */}
             <Grid item xs={12} md={8}>
-              <Paper
-                elevation={0}
-                sx={{
-                  borderRadius: 2,
-                  border: "1px solid #e0e0e0",
-                  overflow: "hidden",
-                  backgroundColor: "white",
-                }}
-              >
-                <Box sx={{ p: 3 }}>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontWeight: "bold",
-                      color: theme.palette.primary.dark,
-                      mb: 2,
-                    }}
-                  >
-                    {mainArticle.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    {mainArticle.publicationDate} • By {mainArticle.author}
-                  </Typography>
-                  <Box
-                    sx={{
-                      mb: 3,
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      height: { xs: 200, sm: 300 },
-                    }}
-                  >
-                    <img
-                      src={mainArticle.imageUrl}
-                      alt={mainArticle.title}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
-                      }}
-                    />
-                  </Box>
-                  <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
-                    {mainArticle.content}
-                  </Typography>
-                </Box>
+              <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid #e0e0e0", overflow: "hidden", backgroundColor: "white" }}>
+                {loading || !mainArticle ? (
+                    <Skeleton variant="rectangular" height={500} />
+                ) : (
+                    <CardActionArea onClick={() => handleOpenSummaryOverlay(mainArticle)}>
+                        <Box sx={{ p: 3 }}>
+                            <Typography variant="h5" sx={{ fontWeight: "bold", color: theme.palette.primary.dark, mb: 2 }}>
+                                {mainArticle.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                {format(new Date(mainArticle.publicationDate), 'MMMM d, yyyy')} • By {mainArticle.author}
+                            </Typography>
+                            <Box sx={{ mb: 3, borderRadius: 2, overflow: "hidden", height: { xs: 200, sm: 300 } }}>
+                                <CardMedia component="img" image={mainArticle.imageUrl} alt={mainArticle.title} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            </Box>
+                            <Typography variant="body1" sx={{ lineHeight: 1.7 }}>
+                                {mainArticle.content.substring(0, 200)}...
+                            </Typography>
+                        </Box>
+                    </CardActionArea>
+                )}
               </Paper>
             </Grid>
 
             {/* More News */}
             <Grid item xs={12} md={4}>
-              <Paper
-                elevation={0}
-                sx={{
-                  borderRadius: 2,
-                  border: "1px solid #e0e0e0",
-                  backgroundColor: "white",
-                  p: 2,
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}
-                >
+              <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid #e0e0e0", backgroundColor: "white", p: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}>
                   More Agriculture News
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
-                {moreNews.map((news, index) => (
-                  <Box key={index} sx={{ mb: 2 }}>
-                    <Typography
-                      variant="body1"
-                      sx={{ fontWeight: 600, color: theme.palette.primary.dark }}
-                    >
-                      {news.title}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {news.author} • {news.date}
-                    </Typography>
-                  </Box>
-                ))}
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  sx={{
-                    mt: 2,
-                    color: theme.palette.primary.main,
-                    borderColor: theme.palette.primary.main,
-                    borderRadius: 3,
-                    "&:hover": {
-                      backgroundColor: "rgba(46,125,50,0.05)",
-                      borderColor: theme.palette.primary.dark,
-                    },
-                  }}
-                >
+                {loading ? (
+                    [...Array(3)].map((_, index) => <Skeleton key={index} variant="text" height={60} sx={{ mb: 1 }} />)
+                ) : (
+                    moreNews.map((news, index) => (
+                        <CardActionArea key={index} onClick={() => handleOpenSummaryOverlay(news)} sx={{ display: 'block', p: 1, borderRadius: 1, '&:hover': { bgcolor: 'action.hover' }}}>
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: theme.palette.primary.dark }}>
+                                {news.title}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                {news.author} • {format(new Date(news.publicationDate), 'MMMM d, yyyy')}
+                                </Typography>
+                            </Box>
+                        </CardActionArea>
+                    ))
+                )}
+                {/* FIX: Use the new View All handler */}
+                <Button fullWidth variant="outlined" sx={{ mt: 2 }} onClick={() => setIsViewAllOpen(true)}>
                   View All News
                 </Button>
               </Paper>
@@ -525,6 +451,20 @@ const HomePage = () => {
           </Grid>
         </Container>
       </Box>
+      
+      {/* FIX: Add the Overlay components */}
+      <NewsSummaryOverlay
+        open={isSummaryOverlayOpen}
+        onClose={handleCloseSummaryOverlay}
+        articleData={selectedArticle}
+      />
+      <ViewAllOverlay
+        open={isViewAllOpen}
+        onClose={() => setIsViewAllOpen(false)}
+        title="All News Articles"
+        items={articles}
+        onItemClick={handleItemClickFromAllView}
+      />
     </ThemeProvider>
   );
 };

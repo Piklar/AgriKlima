@@ -76,13 +76,10 @@ const ManageUsers = () => {
     setLoading(true);
     try {
       const response = await api.getAllUsers({ search, page, limit: 10 });
-      if (response.data && response.data.users) {
-        setUsers(response.data.users);
-        setTotalPages(response.data.totalPages);
-      } else {
-        setUsers([]);
-        setTotalPages(0);
-      }
+      // Use nullish coalescing to safely access data
+      setUsers(response.data?.users || []);
+      setTotalPages(response.data?.totalPages || 0);
+
     } catch (error) {
       Swal.fire({
         title: '❌ Error',
@@ -107,7 +104,7 @@ const ManageUsers = () => {
   const handlePageChange = (event, value) => setPage(value);
 
   // 🔄 Promote/Demote Admin
-  const handleSetAdmin = async (id, newIsAdmin) => {
+  const handleSetAdmin = (id, newIsAdmin) => {
     Swal.fire({
       title: `Confirm Role Change`,
       text: `Are you sure you want to ${newIsAdmin ? 'promote' : 'demote'} this user?`,
@@ -133,14 +130,18 @@ const ManageUsers = () => {
             });
             fetchUsers();
           } else {
+            // Placeholder/simulated logic for demotion based on the initial code
             Swal.fire({
               title: 'ℹ️ Info',
-              text: 'Demoting users from admin status is not yet supported.',
+              text: 'Demoting users from admin status is not currently implemented in the API.',
               icon: 'info',
               background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
               color: '#2e7d32',
               didOpen: styleSweetAlert
             });
+            // If the API had a demote function, it would be called here.
+            // await api.demoteFromAdmin(id); 
+            // fetchUsers(); 
           }
         } catch (error) {
           Swal.fire({
@@ -152,8 +153,22 @@ const ManageUsers = () => {
             didOpen: styleSweetAlert
           });
         }
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+          // Revert the switch state visually if the user cancels promotion
+          if (newIsAdmin) {
+            setUsers(prevUsers => prevUsers.map(user => 
+                user._id === id ? { ...user, isAdmin: false } : user
+            ));
+          }
       }
     });
+    
+    // Optimistically update the state for promotion attempt (will be corrected on failure)
+    if (newIsAdmin) {
+        setUsers(prevUsers => prevUsers.map(user => 
+            user._id === id ? { ...user, isAdmin: true } : user
+        ));
+    }
   };
 
   const columns = [
@@ -167,7 +182,9 @@ const ManageUsers = () => {
     },
     { field: 'firstName', headerName: 'First Name', minWidth: 120, flex: 1 },
     { field: 'lastName', headerName: 'Last Name', minWidth: 120, flex: 1 },
-    { field: 'email', headerName: 'Email', minWidth: 150, flex: 1 },
+    { field: 'email', headerName: 'Email', minWidth: 150, flex: 1.5 },
+    // FIX: Added location column
+    { field: 'location', headerName: 'Municipality', minWidth: 150, flex: 1 },
     {
       field: 'isAdmin',
       headerName: 'Admin',
@@ -206,7 +223,7 @@ const ManageUsers = () => {
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
-            setPage(1);
+            setPage(1); // Reset to page 1 on new search
           }}
           InputProps={{
             startAdornment: (
@@ -227,8 +244,8 @@ const ManageUsers = () => {
           getRowId={(row) => row._id}
           rowHeight={isSmall ? 60 : 70}
           paginationMode="server"
-          rowCount={totalPages * 10}
-          hideFooter
+          rowCount={totalPages * 10} // Total count approximation for server-side pagination
+          hideFooter // Hide the built-in footer since we use custom pagination
           sx={{
             '& .MuiDataGrid-cell': { py: 1 },
             '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f0f4f0' },
@@ -243,6 +260,7 @@ const ManageUsers = () => {
           page={page}
           onChange={handlePageChange}
           color="primary"
+          disabled={loading || totalPages <= 1}
         />
       </Box>
     </Box>

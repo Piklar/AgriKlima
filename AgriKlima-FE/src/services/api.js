@@ -28,7 +28,7 @@ export const getAllUsers = () => API.get("/users/all");
 export const setAsAdmin = (userId) => API.patch(`/users/${userId}/setAsAdmin`);
 export const addUserCrop = (data) => API.post('/users/my-crops', data);
 export const getUserCrops = () => API.get('/users/my-crops');
-export const deleteUserCrop = (userCropId) => API.delete(`/users/my-crops/${userCropId}`);
+export const harvestUserCrop = (userCropId) => API.patch(`/users/my-crops/${userCropId}/harvest`);
 
 // ✅ Corrected version: pass `userId` and `data` separately
 export const updateUser = (userId, data) => API.put(`/users/${userId}`, data);
@@ -47,7 +47,7 @@ export const updateProfilePicture = (formData) => {
 };
 
 // ---- CROP ROUTES ----
-export const getCrops = () => API.get("/crops");
+export const getCrops = (params) => API.get("/crops", { params });
 export const getCropById = (id) => API.get(`/crops/${id}`);
 export const addCrop = (data) => API.post("/crops/add", data);
 export const updateCrop = (id, data) => API.put(`/crops/${id}`, data);
@@ -57,7 +57,7 @@ export const uploadCropImage = (id, formData) => API.patch(`/crops/${id}/upload-
 });
 
 // ---- NEWS ROUTES ----
-export const getNews = () => API.get("/news");
+export const getNews = (params) => API.get("/news", { params });
 export const getNewsById = (id) => API.get(`/news/${id}`);
 export const addNews = (data) => API.post("/news/add", data);
 export const updateNews = (id, data) => API.patch(`/news/${id}`, data);
@@ -67,7 +67,7 @@ export const uploadNewsImage = (id, formData) => API.patch(`/news/${id}/upload-i
 });
 
 // ---- PEST ROUTES ----
-export const getPests = () => API.get("/pests");
+export const getPests = (params) => API.get("/pests", { params });
 export const getPestById = (id) => API.get(`/pests/${id}`);
 export const addPest = (data) => API.post("/pests/add", data);
 export const updatePest = (id, data) => API.put(`/pests/${id}`, data);

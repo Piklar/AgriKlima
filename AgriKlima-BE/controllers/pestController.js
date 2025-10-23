@@ -73,10 +73,19 @@ module.exports.updatePestImage = async (req, res) => {
     }
 };
 
-module.exports.getAllPests = (req, res) => {
-    Pest.find({})
-        .then(pests => res.status(200).send(pests))
-        .catch(err => res.status(500).send({ error: "Failed to fetch pests", details: err.message }));
+// --- THIS IS THE FIX: Update getAllPests to handle search ---
+module.exports.getAllPests = async (req, res) => {
+    try {
+        const search = req.query.search || "";
+        const query = {
+            name: { $regex: search, $options: "i" } // Search by name, case-insensitive
+        };
+
+        const pests = await Pest.find(query);
+        res.status(200).send(pests);
+    } catch (err) {
+        res.status(500).send({ error: "Failed to fetch pests", details: err.message });
+    }
 };
 
 module.exports.getPestById = (req, res) => {
