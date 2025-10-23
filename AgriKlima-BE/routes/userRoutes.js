@@ -23,7 +23,7 @@ router.put("/:userId", verify, userController.updateUser);
 // --- USER CROP MANAGEMENT ROUTES ---
 router.post("/my-crops", verify, userController.addUserCrop);
 router.get("/my-crops", verify, userController.getUserCrops);
-router.delete("/my-crops/:userCropId", verify, userController.deleteUserCrop);
+router.patch("/my-crops/:userCropId/harvest", verify, userController.harvestUserCrop);
 
 // --- ADMIN-ONLY ROUTES ---
 // updated to handle query params (search, page, limit)

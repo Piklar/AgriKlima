@@ -61,10 +61,18 @@ module.exports.updateNewsImage = async (req, res) => {
     }
 };
 
-module.exports.getAllNews = (req, res) => {
-    News.find({}).sort({ publicationDate: -1 })
-        .then(articles => res.status(200).send(articles))
-        .catch(err => res.status(500).send({ error: "Failed to fetch news articles", details: err.message }));
+module.exports.getAllNews = async (req, res) => {
+    try {
+        const search = req.query.search || "";
+        const query = {
+            title: { $regex: search, $options: "i" } // Search by title, case-insensitive
+        };
+
+        const articles = await News.find(query).sort({ publicationDate: -1 });
+        res.status(200).send(articles);
+    } catch (err) {
+        res.status(500).send({ error: "Failed to fetch news articles", details: err.message });
+    }
 };
 
 module.exports.getNewsById = (req, res) => {

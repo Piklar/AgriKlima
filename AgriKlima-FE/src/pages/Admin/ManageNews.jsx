@@ -1,11 +1,54 @@
 // src/pages/Admin/ManageNews.jsx
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, Paper, Avatar } from '@mui/material';
+import { Box, Button, Typography, Paper, Avatar, TextField, InputAdornment } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import Swal from 'sweetalert2';
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
+import { format } from 'date-fns';
+
+// 🌿 Reusable SweetAlert2 Style
+const styleSweetAlert = () => {
+  const popup = Swal.getPopup();
+  if (popup) {
+    popup.style.borderRadius = '20px';
+    popup.style.padding = '30px';
+    popup.style.boxShadow = '0 6px 25px rgba(46, 125, 50, 0.4)';
+  }
+
+  const confirmBtn = Swal.getConfirmButton();
+  if (confirmBtn) {
+    confirmBtn.style.backgroundColor = '#66bb6a';
+    confirmBtn.style.color = 'white';
+    confirmBtn.style.fontWeight = '600';
+    confirmBtn.style.padding = '10px 25px';
+    confirmBtn.style.borderRadius = '8px';
+    confirmBtn.style.margin = '5px';
+    confirmBtn.style.border = 'none';
+    confirmBtn.style.cursor = 'pointer';
+    confirmBtn.style.transition = '0.3s';
+    confirmBtn.onmouseover = () => (confirmBtn.style.backgroundColor = '#4caf50');
+    confirmBtn.onmouseout = () => (confirmBtn.style.backgroundColor = '#66bb6a');
+  }
+
+  const cancelBtn = Swal.getCancelButton();
+  if (cancelBtn) {
+    cancelBtn.style.backgroundColor = '#ffffff';
+    cancelBtn.style.color = '#2e7d32';
+    cancelBtn.style.fontWeight = '600';
+    cancelBtn.style.padding = '10px 25px';
+    cancelBtn.style.borderRadius = '8px';
+    cancelBtn.style.margin = '5px';
+    cancelBtn.style.border = '1px solid #a5d6a7';
+    cancelBtn.style.cursor = 'pointer';
+    cancelBtn.style.transition = '0.3s';
+    cancelBtn.onmouseover = () => (cancelBtn.style.backgroundColor = '#e8f5e9');
+    cancelBtn.onmouseout = () => (cancelBtn.style.backgroundColor = '#ffffff');
+  }
+};
 
 const ManageNews = () => {
   const [news, setNews] = useState([]);
@@ -14,49 +57,15 @@ const ManageNews = () => {
   const [modalMode, setModalMode] = useState('add');
   const [currentNews, setCurrentNews] = useState(null);
 
-  // 🌿 Reusable SweetAlert2 Style
-  const styleSweetAlert = () => {
-    const popup = Swal.getPopup();
-    popup.style.borderRadius = '20px';
-    popup.style.padding = '30px';
-    popup.style.boxShadow = '0 6px 25px rgba(46, 125, 50, 0.4)';
-
-    const confirmBtn = Swal.getConfirmButton();
-    if (confirmBtn) {
-      confirmBtn.style.backgroundColor = '#66bb6a';
-      confirmBtn.style.color = 'white';
-      confirmBtn.style.fontWeight = '600';
-      confirmBtn.style.padding = '10px 25px';
-      confirmBtn.style.borderRadius = '8px';
-      confirmBtn.style.margin = '5px';
-      confirmBtn.style.border = 'none';
-      confirmBtn.style.cursor = 'pointer';
-      confirmBtn.style.transition = '0.3s';
-      confirmBtn.onmouseover = () => (confirmBtn.style.backgroundColor = '#4caf50');
-      confirmBtn.onmouseout = () => (confirmBtn.style.backgroundColor = '#66bb6a');
-    }
-
-    const cancelBtn = Swal.getCancelButton();
-    if (cancelBtn) {
-      cancelBtn.style.backgroundColor = '#ffffff';
-      cancelBtn.style.color = '#2e7d32';
-      cancelBtn.style.fontWeight = '600';
-      cancelBtn.style.padding = '10px 25px';
-      cancelBtn.style.borderRadius = '8px';
-      cancelBtn.style.margin = '5px';
-      cancelBtn.style.border = '1px solid #a5d6a7';
-      cancelBtn.style.cursor = 'pointer';
-      cancelBtn.style.transition = '0.3s';
-      cancelBtn.onmouseover = () => (cancelBtn.style.backgroundColor = '#e8f5e9');
-      cancelBtn.onmouseout = () => (cancelBtn.style.backgroundColor = '#ffffff');
-    }
-  };
+  // FIX: Add search state
+  const [search, setSearch] = useState('');
 
   // 📥 Fetch News
   const fetchNews = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.getNews();
+      // FIX: Pass search param to the API call
+      const response = await api.getNews({ search });
       setNews(response.data || []);
     } catch (error) {
       console.error('Failed to fetch news:', error);
@@ -72,10 +81,12 @@ const ManageNews = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [search]); // Add search to dependency array
 
   useEffect(() => {
-    fetchNews();
+    // Debounce the fetch call
+    const handler = setTimeout(() => { fetchNews(); }, 500); 
+    return () => clearTimeout(handler);
   }, [fetchNews]);
 
   // ➕ Add
@@ -256,14 +267,16 @@ const ManageNews = () => {
       field: 'publicationDate',
       headerName: 'Publication Date',
       width: 200,
-      valueGetter: (value, row) =>
-        row.publicationDate ? new Date(row.publicationDate).toLocaleDateString() : 'N/A',
+      // Use format utility for consistent date display
+      valueGetter: (value, row) => 
+        row.publicationDate ? format(new Date(row.publicationDate), 'MMM d, yyyy') : 'N/A',
     },
     {
       field: 'actions',
       headerName: 'Actions',
       width: 180,
       sortable: false,
+      filterable: false,
       renderCell: (params) => (
         <Box>
           <Button
@@ -316,6 +329,17 @@ const ManageNews = () => {
           Add New Article
         </Button>
       </Box>
+
+      {/* FIX: Add search bar */}
+      <Paper sx={{ mb: 2, p: 2 }}>
+        <TextField
+          fullWidth variant="outlined" placeholder="Search by article title..."
+          value={search}
+          // The useEffect hook handles the debouncing
+          onChange={(e) => setSearch(e.target.value)}
+          InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>), }}
+        />
+      </Paper>
 
       <Paper sx={{ height: '75vh', width: '100%' }}>
         <DataGrid
