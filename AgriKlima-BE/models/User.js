@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 
 // --- NEW Sub-schema for user's planted crops ---
 const userCropSchema = new mongoose.Schema({
-    // We use an ObjectId from the main Crop collection for reference
     cropId: { type: mongoose.Schema.Types.ObjectId, ref: 'Crop', required: true },
     name: { type: String, required: true },
     plantingDate: { type: Date, required: true },
@@ -17,7 +16,7 @@ const userSchema = new mongoose.Schema({
     email: { 
         type: String, 
         required: [true, 'Email is Required'],
-        unique: true // <<< ENSURE THIS IS TRUE
+        unique: true 
     },
     password: { type: String, required: [true, 'Password is Required'], select: false },
     isAdmin: { type: Boolean, default: false },
@@ -25,7 +24,7 @@ const userSchema = new mongoose.Schema({
     mobileNo: { 
         type: String, 
         required: [true, 'Mobile Number is Required'],
-        unique: true // <<< ADD THIS UNIQUE CONSTRAINT
+        unique: true // <<< THIS IS THE FIX
     },
     location: { type: String, required: [true, 'Location is Required'] },
     dob: { type: String, required: [true, 'Date of Birth is Required'] },
@@ -33,10 +32,7 @@ const userSchema = new mongoose.Schema({
     language: { type: String, default: 'Filipino' },
     profilePictureUrl: { type: String, default: '' },
     
-    // Kept for initial signup info if desired, but not primary
     crops: [{ type: String }],
-
-    // The new, dynamic field for tracking planted crops
     userCrops: [userCropSchema]
 });
 

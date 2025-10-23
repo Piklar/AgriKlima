@@ -249,7 +249,7 @@ const CalendarPage = () => {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Box sx={{ mb: 3 }}>
           <Typography variant="h3" component="h1" gutterBottom>
-            Farming Calendar
+            Planting Calendar
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Track your crops and plan your farming activities

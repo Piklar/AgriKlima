@@ -18,6 +18,7 @@ API.interceptors.request.use((config) => {
 export default API;
 
 // ---- USER ROUTES ----
+export const checkUserExists = (data) => API.post("/users/check-exists", data);
 export const registerUser = (data) => API.post("/users/register", data);
 export const loginUser = (data) => API.post("/users/login", data);
 export const getProfile = () => API.get("/users/details");
@@ -95,5 +96,3 @@ export const getWeatherRules = () => axios.get(`${API_URL}/weather-rules`);
 export const updateWeatherRules = (rules) => axios.put(`${API_URL}/weather-rules`, rules);
 export const resetWeatherRules = () => axios.post(`${API_URL}/weather-rules/reset`);
 
-// ---- CHATBOT ROUTE ----
-export const sendMessageToBot = (data) => API.post("/chat/send", data);
