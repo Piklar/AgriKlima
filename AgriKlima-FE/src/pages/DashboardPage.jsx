@@ -1,5 +1,3 @@
-// src/pages/DashboardPage.jsx
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
@@ -7,6 +5,7 @@ import { Box, Container, Typography, Grid, Stack, createTheme, ThemeProvider } f
 import PageDataLoader from '../components/PageDataLoader';
 import TaskManagementModal from '../components/TaskManagementModal';
 import { isToday } from 'date-fns';
+import Swal from 'sweetalert2';
 
 import MyCropsCard from '../components/MyCropsCard';
 import WeatherTodayCard from '../components/WeatherTodayCard';
@@ -32,13 +31,12 @@ const theme = createTheme({
 const DashboardPage = () => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState({
-    weather: null, tasks: [], userCrops: [], pests: []
+    weather: null, tasks: [], userCrops: { activeCrops: [], harvestedCrops: [] }, pests: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
-  // --- UPDATED: The data fetching function ---
   const fetchDashboardData = useCallback(async () => {
     if (!user || !user.location) {
       setLoading(false);
@@ -47,12 +45,10 @@ const DashboardPage = () => {
     setLoading(true);
     setError(null);
     
-    // --- FIX: Extract the city from the user's location string ---
     const locationCity = user.location.split(',')[0].trim();
     
     try {
       const [weatherResponse, tasksResponse, cropsResponse, pestsResponse] = await Promise.all([
-        // Use the cleaned city name for the API call
         api.getWeather(locationCity),
         api.getMyTasks(),
         api.getUserCrops(),
@@ -61,7 +57,7 @@ const DashboardPage = () => {
       setDashboardData({
         weather: weatherResponse.data || null,
         tasks: tasksResponse.data || [],
-        userCrops: cropsResponse.data || [],
+        userCrops: cropsResponse.data || { activeCrops: [], harvestedCrops: [] },
         pests: pestsResponse.data || []
       });
     } catch (err) {
@@ -76,12 +72,41 @@ const DashboardPage = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  // --- THIS IS THE FIX: Optimistic UI update for tasks ---
   const handleTaskToggle = async (taskId) => {
+    const originalTasks = dashboardData.tasks;
+    
+    // Optimistically update the UI
+    const updatedTasks = originalTasks.map(task => 
+      task._id === taskId
+        ? { ...task, status: task.status === 'completed' ? 'pending' : 'completed' }
+        : task
+    );
+    
+    setDashboardData(prevData => ({
+      ...prevData,
+      tasks: updatedTasks,
+    }));
+
+    // Perform the API call in the background
     try {
       await api.toggleTaskStatus(taskId);
-      fetchDashboardData();
     } catch (err) {
       console.error('Failed to toggle task:', err);
+      // If the API call fails, revert the change and notify the user
+      setDashboardData(prevData => ({
+        ...prevData,
+        tasks: originalTasks,
+      }));
+      Swal.fire({
+        icon: 'error',
+        title: 'Update Failed',
+        text: 'Could not sync task status. Please try again.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000
+      });
     }
   };
 
@@ -121,7 +146,6 @@ const DashboardPage = () => {
             </Box>
 
             <Grid container spacing={4} justifyContent="center" alignItems="stretch">
-              {/* Left Column */}
               <Grid item xs={12} md={4}>
                 <Stack spacing={3} sx={{ height: '100%' }}>
                   <WeatherTodayCard weather={dashboardData.weather} loading={loading} />
@@ -129,12 +153,10 @@ const DashboardPage = () => {
                 </Stack>
               </Grid>
 
-              {/* Middle Column */}
               <Grid item xs={12} md={4}>
-                <MyCropsCard userCrops={dashboardData.userCrops} loading={loading} />
+                <MyCropsCard userCrops={dashboardData.userCrops.activeCrops} loading={loading} />
               </Grid>
 
-              {/* Right Column */}
               <Grid item xs={12} md={4}>
                 <Stack spacing={3} sx={{ height: '100%' }}>
                   <TodayTasksCard

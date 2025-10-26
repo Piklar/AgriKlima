@@ -5,11 +5,12 @@ const pestSchema = new mongoose.Schema({
     name: { type: String, required: true },
     type: { type: String, enum: ['Insect Pest', 'Disease', 'Weed'], required: true },
     riskLevel: { type: String, enum: ['Low', 'Medium', 'High'], required: true },
-    // --- THIS IS THE FIX ---
-    imageUrl: { type: String, required: false }, // Changed from true to false
+    imageUrl: { type: String, required: false },
+    // --- THIS IS THE FIX: Add a reference to the Crop model ---
+    affectedCrops: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Crop' }],
     overview: {
         description: String,
-        commonlyAffects: [String],
+        commonlyAffects: [String], // You can keep this for legacy data or simple text entry
         seasonalActivity: String
     },
     identification: {

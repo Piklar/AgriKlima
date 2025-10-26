@@ -12,344 +12,374 @@ import { useAuth } from '../../context/AuthContext';
 
 // ✨ Style function for SweetAlert2
 const styleSweetAlert = () => {
-  const popup = Swal.getPopup();
-  if (popup) {
-    popup.style.borderRadius = '20px';
-    popup.style.padding = '30px';
-    popup.style.boxShadow = '0 6px 25px rgba(46, 125, 50, 0.4)';
-  }
+    const popup = Swal.getPopup();
+    if (popup) {
+        popup.style.borderRadius = '20px';
+        popup.style.padding = '30px';
+        popup.style.boxShadow = '0 6px 25px rgba(46, 125, 50, 0.4)';
+    }
 
-  const confirmBtn = Swal.getConfirmButton();
-  if (confirmBtn) {
-    confirmBtn.style.backgroundColor = '#66bb6a';
-    confirmBtn.style.color = 'white';
-    confirmBtn.style.fontWeight = '600';
-    confirmBtn.style.padding = '10px 25px';
-    confirmBtn.style.borderRadius = '8px';
-    confirmBtn.style.margin = '5px';
-    confirmBtn.style.border = 'none';
-    confirmBtn.style.cursor = 'pointer';
-    confirmBtn.style.transition = '0.3s';
-    confirmBtn.onmouseover = () => (confirmBtn.style.backgroundColor = '#4caf50');
-    confirmBtn.onmouseout = () => (confirmBtn.style.backgroundColor = '#66bb6a');
-  }
+    const confirmBtn = Swal.getConfirmButton();
+    if (confirmBtn) {
+        confirmBtn.style.backgroundColor = '#66bb6a';
+        confirmBtn.style.color = 'white';
+        confirmBtn.style.fontWeight = '600';
+        confirmBtn.style.padding = '10px 25px';
+        confirmBtn.style.borderRadius = '8px';
+        confirmBtn.style.margin = '5px';
+        confirmBtn.style.border = 'none';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.style.transition = '0.3s';
+        confirmBtn.onmouseover = () => (confirmBtn.style.backgroundColor = '#4caf50');
+        confirmBtn.onmouseout = () => (confirmBtn.style.backgroundColor = '#66bb6a');
+    }
 
-  const cancelBtn = Swal.getCancelButton();
-  if (cancelBtn) {
-    cancelBtn.style.backgroundColor = '#ffffff';
-    cancelBtn.style.color = '#2e7d32';
-    cancelBtn.style.fontWeight = '600';
-    cancelBtn.style.padding = '10px 25px';
-    cancelBtn.style.borderRadius = '8px';
-    cancelBtn.style.margin = '5px';
-    cancelBtn.style.border = '1px solid #a5d6a7';
-    cancelBtn.style.cursor = 'pointer';
-    cancelBtn.style.transition = '0.3s';
-    cancelBtn.onmouseover = () => (cancelBtn.style.backgroundColor = '#e8f5e9');
-    cancelBtn.onmouseout = () => (cancelBtn.style.backgroundColor = '#ffffff');
-  }
+    const cancelBtn = Swal.getCancelButton();
+    if (cancelBtn) {
+        cancelBtn.style.backgroundColor = '#ffffff';
+        cancelBtn.style.color = '#2e7d32';
+        cancelBtn.style.fontWeight = '600';
+        cancelBtn.style.padding = '10px 25px';
+        cancelBtn.style.borderRadius = '8px';
+        cancelBtn.style.margin = '5px';
+        cancelBtn.style.border = '1px solid #a5d6a7';
+        cancelBtn.style.cursor = 'pointer';
+        cancelBtn.style.transition = '0.3s';
+        cancelBtn.onmouseover = () => (cancelBtn.style.backgroundColor = '#e8f5e9');
+        cancelBtn.onmouseout = () => (cancelBtn.style.backgroundColor = '#ffffff');
+    }
 };
 
 const ManagePests = () => {
-  const { token } = useAuth();
-  const [pests, setPests] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('add');
-  const [currentPest, setCurrentPest] = useState(null);
-  
-  // FIX: Add search state
-  const [search, setSearch] = useState('');
+    const { token } = useAuth();
+    const [pests, setPests] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState('add');
+    const [currentPest, setCurrentPest] = useState(null);
+    const [search, setSearch] = useState('');
+    
+    // State to hold all crops for the form dropdown
+    const [allCrops, setAllCrops] = useState([]);
 
-  // 📥 Fetch pests
-  const fetchPests = useCallback(async () => {
-    setLoading(true);
-    try {
-      // FIX: Pass search param to the API call
-      const response = await api.getPests({ search });
-      setPests(response.data);
-    } catch (error) {
-      console.error('Failed to fetch pests:', error);
-      Swal.fire('Error', 'Could not fetch pests from the server.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [search]); // Add search to dependency array
-
-  useEffect(() => {
-    const handler = setTimeout(() => { fetchPests(); }, 500); // Debounce
-    return () => clearTimeout(handler);
-  }, [fetchPests]);
-
-  // ➕ Add
-  const handleOpenAddModal = () => {
-    setModalMode('add');
-    setCurrentPest(null);
-    setIsModalOpen(true);
-  };
-
-  // ✏️ Edit
-  const handleOpenEditModal = (pest) => {
-    setModalMode('edit');
-    setCurrentPest(pest);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setCurrentPest(null);
-  };
-
-  // 📝 Save or Update Pest
-  const handleFormSubmit = async (formData, imageFile) => {
-    if (!token) {
-      Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
-      return;
-    }
-    try {
-      let savedItem;
-      if (modalMode === 'add') {
-        const response = await api.addPest(formData, token);
-        savedItem = response.data;
-        if (imageFile) {
-          Swal.fire({
-            title: 'Step 1/2 Complete',
-            text: 'Pest details saved. Now uploading image...',
-            icon: 'info',
-            timer: 1500,
-            showConfirmButton: false,
-          });
-        }
-      } else {
-        const response = await api.updatePest(currentPest._id, formData, token);
-        savedItem = response.data.pest;
-      }
-
-      if (imageFile && savedItem?._id) {
-        const uploadFormData = new FormData();
-        uploadFormData.append('image', imageFile);
-        await api.uploadPestImage(savedItem._id, uploadFormData);
-      }
-
-      Swal.fire({
-        title: '🌿 Success!',
-        text: `Pest ${modalMode === 'add' ? 'created' : 'updated'} successfully.`,
-        icon: 'success',
-        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
-        color: '#2e7d32',
-        confirmButtonText: 'OK',
-        didOpen: styleSweetAlert
-      });
-      handleCloseModal();
-      fetchPests();
-    } catch (error) {
-      console.error('Failed to save pest:', error);
-      const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
-      Swal.fire({
-        title: '❌ Error',
-        text: `Failed to save the pest: ${errorMessage}`,
-        icon: 'error',
-        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
-        color: '#2e7d32',
-        confirmButtonText: 'OK',
-        didOpen: styleSweetAlert
-      });
-    }
-  };
-
-  // 🗑️ Delete Pest
-  const handleDelete = (id) => {
-    if (!token) {
-      Swal.fire({
-        title: '❌ Error',
-        text: 'You must be logged in to perform this action.',
-        icon: 'error',
-        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
-        color: '#2e7d32',
-        confirmButtonText: 'OK',
-        didOpen: styleSweetAlert
-      });
-      return;
-    }
-
-    Swal.fire({
-      title: '🚜 Are you sure?',
-      html: `
-        <div style="font-family: 'Poppins', sans-serif; font-size: 16px; color: #2e4d2c;">
-          <p>This pest record will be permanently removed.</p>
-        </div>
-      `,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, delete it!',
-      cancelButtonText: 'Cancel',
-      background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
-      color: '#2e7d32',
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      didOpen: styleSweetAlert
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+    // 📥 Fetch pests (Updated to include search)
+    const fetchPests = useCallback(async () => {
+        setLoading(true);
         try {
-          await api.deletePest(id, token);
-          Swal.fire({
-            title: '🌿 Deleted!',
-            text: 'The pest record has been successfully deleted.',
-            icon: 'success',
-            background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
-            color: '#2e7d32',
-            confirmButtonText: 'OK',
-            didOpen: styleSweetAlert
-          });
-          fetchPests();
+            const response = await api.getPests({ search });
+            setPests(response.data);
         } catch (error) {
-          console.error('Failed to delete pest:', error);
-          const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
-          Swal.fire({
-            title: '❌ Error',
-            text: `Failed to delete the pest: ${errorMessage}`,
-            icon: 'error',
+            console.error('Failed to fetch pests:', error);
+            Swal.fire('Error', 'Could not fetch pests from the server.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    }, [search]); // Add search to dependency array
+
+    // 🌾 Fetch all crops when the component mounts
+    useEffect(() => {
+        const fetchAllCrops = async () => {
+            try {
+                const response = await api.getCrops({ limit: 1000 }); // Fetch all crops
+                setAllCrops(response.data.crops || []);
+            } catch (error) {
+                console.error("Failed to fetch crops for the form:", error);
+            }
+        };
+        fetchAllCrops();
+    }, []);
+
+    // Debounce effect for search
+    useEffect(() => {
+        const handler = setTimeout(() => { fetchPests(); }, 500);
+        return () => clearTimeout(handler);
+    }, [fetchPests]);
+
+    // ➕ Add
+    const handleOpenAddModal = () => {
+        setModalMode('add');
+        setCurrentPest(null);
+        setIsModalOpen(true);
+    };
+
+    // ✏️ Edit (Updated to prepare affectedCrops array)
+    const handleOpenEditModal = (pest) => {
+        setModalMode('edit');
+        // Ensure affectedCrops is an array of IDs for the modal
+        const preparedPest = {
+            ...pest,
+            // Map the populated objects back to an array of IDs for the multiselect component
+            affectedCrops: pest.affectedCrops ? pest.affectedCrops.map(c => c._id) : [],
+        };
+        setCurrentPest(preparedPest);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setCurrentPest(null);
+    };
+
+    // 📝 Save or Update Pest
+    const handleFormSubmit = async (formData, imageFile) => {
+        if (!token) {
+            Swal.fire('Error', 'You must be logged in to perform this action.', 'error');
+            return;
+        }
+        try {
+            let savedItem;
+            if (modalMode === 'add') {
+                const response = await api.addPest(formData, token);
+                savedItem = response.data;
+                if (imageFile) {
+                    Swal.fire({
+                        title: 'Step 1/2 Complete',
+                        text: 'Pest details saved. Now uploading image...',
+                        icon: 'info',
+                        timer: 1500,
+                        showConfirmButton: false,
+                    });
+                }
+            } else {
+                const response = await api.updatePest(currentPest._id, formData, token);
+                savedItem = response.data.pest;
+            }
+
+            if (imageFile && savedItem?._id) {
+                const uploadFormData = new FormData();
+                uploadFormData.append('image', imageFile);
+                await api.uploadPestImage(savedItem._id, uploadFormData);
+            }
+
+            Swal.fire({
+                title: '🌿 Success!',
+                text: `Pest ${modalMode === 'add' ? 'created' : 'updated'} successfully.`,
+                icon: 'success',
+                background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+                color: '#2e7d32',
+                confirmButtonText: 'OK',
+                didOpen: styleSweetAlert
+            });
+            handleCloseModal();
+            fetchPests();
+        } catch (error) {
+            console.error('Failed to save pest:', error);
+            const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
+            Swal.fire({
+                title: '❌ Error',
+                text: `Failed to save the pest: ${errorMessage}`,
+                icon: 'error',
+                background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+                color: '#2e7d32',
+                confirmButtonText: 'OK',
+                didOpen: styleSweetAlert
+            });
+        }
+    };
+
+    // 🗑️ Delete Pest
+    const handleDelete = (id) => {
+        if (!token) {
+            Swal.fire({
+                title: '❌ Error',
+                text: 'You must be logged in to perform this action.',
+                icon: 'error',
+                background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+                color: '#2e7d32',
+                confirmButtonText: 'OK',
+                didOpen: styleSweetAlert
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: '🚜 Are you sure?',
+            html: `
+                <div style="font-family: 'Poppins', sans-serif; font-size: 16px; color: #2e4d2c;">
+                    <p>This pest record will be permanently removed.</p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel',
             background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
             color: '#2e7d32',
-            confirmButtonText: 'OK',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
             didOpen: styleSweetAlert
-          });
-        }
-      }
-    });
-  };
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await api.deletePest(id, token);
+                    Swal.fire({
+                        title: '🌿 Deleted!',
+                        text: 'The pest record has been successfully deleted.',
+                        icon: 'success',
+                        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+                        color: '#2e7d32',
+                        confirmButtonText: 'OK',
+                        didOpen: styleSweetAlert
+                    });
+                    fetchPests();
+                } catch (error) {
+                    console.error('Failed to delete pest:', error);
+                    const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
+                    Swal.fire({
+                        title: '❌ Error',
+                        text: `Failed to delete the pest: ${errorMessage}`,
+                        icon: 'error',
+                        background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+                        color: '#2e7d32',
+                        confirmButtonText: 'OK',
+                        didOpen: styleSweetAlert
+                    });
+                }
+            }
+        });
+    };
 
-  const pestFields = [
-    { name: 'name', label: 'Pest Name', required: true, group: 'Basic Information' },
-    { name: 'imageUrl', label: 'Image URL', group: 'Basic Information' },
-    { name: 'type', label: 'Type', type: 'select', options: ['Insect Pest', 'Disease', 'Weed'], required: true, group: 'Basic Information' },
-    { name: 'riskLevel', label: 'Risk Level', type: 'select', options: ['Low', 'Medium', 'High'], required: true, group: 'Basic Information' },
-    { name: 'overview.description', label: 'Description', type: 'textarea', rows: 3, group: 'Basic Information' },
-    { name: 'overview.seasonalActivity', label: 'Seasonal Activity', group: 'Basic Information' },
-    { name: 'identification.size', label: 'Size', group: 'Identification' },
-    { name: 'identification.color', label: 'Color', group: 'Identification' },
-    { name: 'identification.shape', label: 'Shape', group: 'Identification' },
-    { name: 'identification.behavior', label: 'Behavior', group: 'Identification' },
-    { name: 'overview.commonlyAffects', label: 'Commonly Affects (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Control Methods' },
-    { name: 'prevention', label: 'Prevention Methods (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Control Methods' },
-    { name: 'treatment', label: 'Treatment Methods (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Control Methods' },
-  ];
+    // Define the fields for the AdminFormModal
+    const pestFields = [
+        { name: 'name', label: 'Pest Name', required: true, group: 'Basic Information' },
+        { name: 'imageUrl', label: 'Image URL', group: 'Basic Information' },
+        { name: 'type', label: 'Type', type: 'select', options: ['Insect Pest', 'Disease', 'Weed'], required: true, group: 'Basic Information' },
+        { name: 'riskLevel', label: 'Risk Level', type: 'select', options: ['Low', 'Medium', 'High'], required: true, group: 'Basic Information' },
+        {
+            name: 'affectedCrops',
+            label: 'Affected Crops',
+            type: 'multiselect', // New type for the multi-select dropdown
+            options: allCrops.map(crop => ({ value: crop._id, label: crop.name })),
+            group: 'Basic Information',
+        },
+        // Note: The 'overview.commonlyAffects' field from the second snippet is replaced 
+        // by the more structured 'affectedCrops' in the first snippet's implementation.
+        { name: 'overview.description', label: 'Description', type: 'textarea', rows: 3, group: 'Overview' },
+        { name: 'overview.seasonalActivity', label: 'Seasonal Activity', group: 'Overview' },
+        { name: 'identification.size', label: 'Size', group: 'Identification' },
+        { name: 'identification.color', label: 'Color', group: 'Identification' },
+        { name: 'identification.shape', label: 'Shape', group: 'Identification' },
+        { name: 'identification.behavior', label: 'Behavior', group: 'Identification' },
+        { name: 'prevention', label: 'Prevention (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Control Methods' },
+        { name: 'treatment', label: 'Treatment (one per line)', type: 'textarea', isArray: true, rows: 4, group: 'Control Methods' },
+    ];
 
-  const columns = [
-    {
-      field: 'imageUrl',
-      headerName: 'Image',
-      width: 100,
-      renderCell: (params) => (
-        <Avatar src={params.value} variant="rounded" sx={{ width: 56, height: 56 }} />
-      ),
-      sortable: false,
-      filterable: false,
-    },
-    { field: 'name', headerName: 'Pest Name', width: 200 },
-    { field: 'type', headerName: 'Type', width: 150 },
-    { field: 'riskLevel', headerName: 'Risk Level', width: 150 },
-    {
-      field: 'overview.description',
-      headerName: 'Description',
-      flex: 1,
-      valueGetter: (value, row) => row.overview?.description || '',
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 180,
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <Box>
-          <Button
-            size="small"
-            variant="outlined"
-            sx={{ mr: 1, borderRadius: 2 }}
-            onClick={() => handleOpenEditModal(params.row)}
-          >
-            Edit
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            color="error"
-            sx={{ borderRadius: 2 }}
-            onClick={() => handleDelete(params.row._id)}
-          >
-            Delete
-          </Button>
+    const columns = [
+        {
+            field: 'imageUrl',
+            headerName: 'Image',
+            width: 100,
+            renderCell: (params) => (
+                <Avatar src={params.value} variant="rounded" sx={{ width: 56, height: 56 }} />
+            ),
+            sortable: false,
+            filterable: false,
+        },
+        { field: 'name', headerName: 'Pest Name', width: 200 },
+        { field: 'type', headerName: 'Type', width: 150 },
+        { field: 'riskLevel', headerName: 'Risk Level', width: 150 },
+        {
+            field: 'affectedCrops',
+            headerName: 'Affected Crops',
+            flex: 1,
+            // Display the names of the affected crops
+            valueGetter: (value) => value ? value.map(c => c.name).join(', ') : '',
+        },
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 180,
+            sortable: false,
+            filterable: false,
+            renderCell: (params) => (
+                <Box>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        sx={{ mr: 1, borderRadius: 2 }}
+                        onClick={() => handleOpenEditModal(params.row)}
+                    >
+                        Edit
+                    </Button>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        sx={{ borderRadius: 2 }}
+                        onClick={() => handleDelete(params.row._id)}
+                    >
+                        Delete
+                    </Button>
+                </Box>
+            ),
+        },
+    ];
+
+    return (
+        <Box sx={{ p: { xs: 1, md: 3 } }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: 2,
+                    mb: 2,
+                }}
+            >
+                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                    Manage Pests
+                </Typography>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    sx={{
+                        bgcolor: '#66bb6a',
+                        '&:hover': { bgcolor: '#4caf50' },
+                        borderRadius: 2,
+                    }}
+                    onClick={handleOpenAddModal}
+                >
+                    Add New Pest
+                </Button>
+            </Box>
+
+            {/* Search bar */}
+            <Paper sx={{ mb: 2, p: 2 }}>
+                <TextField
+                    fullWidth variant="outlined" placeholder="Search by pest name..."
+                    value={search}
+                    // Trigger search on change, which is debounced in useEffect
+                    onChange={(e) => setSearch(e.target.value)}
+                    InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>), }}
+                />
+            </Paper>
+
+            <Paper sx={{ height: '75vh', width: '100%' }}>
+                <DataGrid
+                    rows={pests}
+                    columns={columns}
+                    loading={loading}
+                    getRowId={(row) => row._id}
+                    rowHeight={70}
+                    sx={{
+                        '& .MuiDataGrid-cell': { py: 1 },
+                        '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f0f4f0' },
+                    }}
+                />
+            </Paper>
+
+            <AdminFormModal
+                open={isModalOpen}
+                onClose={handleCloseModal}
+                onSubmit={handleFormSubmit}
+                initialData={currentPest}
+                mode={modalMode}
+                title={modalMode === 'add' ? 'Add New Pest' : 'Edit Pest'}
+                fields={pestFields}
+            />
         </Box>
-      ),
-    },
-  ];
-
-  return (
-    <Box sx={{ p: { xs: 1, md: 3 } }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
-          gap: 2,
-          mb: 2,
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-          Manage Pests
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          sx={{
-            bgcolor: '#66bb6a',
-            '&:hover': { bgcolor: '#4caf50' },
-            borderRadius: 2,
-          }}
-          onClick={handleOpenAddModal}
-        >
-          Add New Pest
-        </Button>
-      </Box>
-
-      {/* FIX: Add search bar */}
-      <Paper sx={{ mb: 2, p: 2 }}>
-        <TextField
-          fullWidth variant="outlined" placeholder="Search by pest name..."
-          value={search}
-          // Trigger search on change, which is debounced in useEffect
-          onChange={(e) => setSearch(e.target.value)}
-          InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>), }}
-        />
-      </Paper>
-
-      <Paper sx={{ height: '75vh', width: '100%' }}>
-        <DataGrid
-          rows={pests}
-          columns={columns}
-          loading={loading}
-          getRowId={(row) => row._id}
-          rowHeight={70}
-          sx={{
-            '& .MuiDataGrid-cell': { py: 1 },
-            '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f0f4f0' },
-          }}
-        />
-      </Paper>
-
-      <AdminFormModal
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        onSubmit={handleFormSubmit}
-        initialData={currentPest}
-        mode={modalMode}
-        title={modalMode === 'add' ? 'Add New Pest' : 'Edit Pest'}
-        fields={pestFields}
-      />
-    </Box>
-  );
+    );
 };
 
 export default ManagePests;

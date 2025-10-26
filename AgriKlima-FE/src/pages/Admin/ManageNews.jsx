@@ -215,6 +215,7 @@ const ManageNews = () => {
   const newsFields = [
     { name: 'title', label: 'Title', required: true, group: 'Article Content' },
     { name: 'author', label: 'Author', required: true, group: 'Article Content' },
+     { name: 'sourceUrl', label: 'Source URL', group: 'Article Content', helperText: 'Link to the original article (optional)' },
     { name: 'imageUrl', label: 'Image URL', group: 'Article Content' },
     {
       name: 'content',

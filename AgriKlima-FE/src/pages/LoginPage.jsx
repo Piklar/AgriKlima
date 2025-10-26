@@ -22,7 +22,6 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, loading } = useAuth();
 
-  // --- MODIFIED STATE ---
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +39,6 @@ const LoginPage = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // --- MODIFIED LOGIN CALL ---
       const user = await login(identifier, password);
 
       Swal.fire({
@@ -82,7 +80,10 @@ const LoginPage = () => {
             </Button>
           </Box>
           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <img src={logo} alt="AgriKlima Logo" style={{ height: '45px' }} />
+            {/* --- THIS IS THE FIX --- */}
+            <RouterLink to="/">
+              <img src={logo} alt="AgriKlima Logo" style={{ height: '45px', cursor: 'pointer' }} />
+            </RouterLink>
           </Box>
           <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
             <MuiLink
@@ -117,7 +118,6 @@ const LoginPage = () => {
                 width: { xs: '100%', md: '480px' }
               }}
             >
-              {/* --- MODIFIED INPUT FIELD --- */}
               <TextField
                 fullWidth
                 required
@@ -138,7 +138,7 @@ const LoginPage = () => {
               <TextField
                 fullWidth
                 required
-                type={showPassword ? 'text' : 'password'} // ADD THIS
+                type={showPassword ? 'text' : 'password'}
                 label="Password"
                 margin="normal"
                 value={password}
@@ -149,7 +149,6 @@ const LoginPage = () => {
                       <LockOutlinedIcon sx={{ color: 'grey.500' }} />
                     </InputAdornment>
                   ),
-                  // ADD THIS END ADORNMENT:
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton

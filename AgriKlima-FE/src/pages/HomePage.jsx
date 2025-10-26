@@ -16,12 +16,11 @@ import {
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns'; // Added for date formatting
+import { format } from 'date-fns';
 
-// FIX: Import API service and necessary components
 import * as api from '../services/api';
 import NewsSummaryOverlay from '../components/NewsSummaryOverlay';
-import ViewAllOverlay from '../components/ViewAllOverlay'; // FIX: Retained for View All functionality
+import ViewAllOverlay from '../components/ViewAllOverlay';
 
 // images & icons
 import heroBg from "../assets/images/about-image-1.jpg";
@@ -52,29 +51,28 @@ const theme = createTheme({
   shape: { borderRadius: 10 },
 });
 
-// Feature data
+// --- THIS IS THE FIX ---
+// Updated feature data
 const leftFeatures = [
     { title: "Weather Forecast", description: "Accurate weather predictions tailored to your location and farming needs.", icon: <WbSunnyIcon sx={{ fontSize: 32 }} /> },
     { title: "Recommended Crops", description: "Personalized crop suggestions based on local conditions and soil type.", icon: <LocalFloristIcon sx={{ fontSize: 32 }} /> },
-    { title: "Pest Detection and Information", description: "Early identification of potential pest problems with AI recognition.", icon: <PestControlIcon sx={{ fontSize: 32 }} /> },
+    { title: "Pest & Disease Library", description: "Identify potential threats with our comprehensive guide to common pests and diseases.", icon: <PestControlIcon sx={{ fontSize: 32 }} /> },
 ];
 const rightFeatures = [
-    { title: "Farming Calendar", description: "Plan and organize farming activities efficiently with a personalized seasonal calendar to guide your schedule.", icon: <CalendarTodayIcon sx={{ fontSize: 32 }} /> },
-    { title: "Task Manager", description: "Manage and monitor your farming activities efficiently from planting to harvest to keep crops healthy and productive.", icon: <ChecklistIcon sx={{ fontSize: 32 }} /> },
-    { title: "AI Farming Assistant", description: "Get AI-powered recommendations for improving farming practices.", icon: <AgricultureIcon sx={{ fontSize: 32 }} /> },
+    { title: "Farming Calendar", description: "Plan and organize farming activities efficiently with a personalized seasonal calendar.", icon: <CalendarTodayIcon sx={{ fontSize: 32 }} /> },
+    { title: "Task Manager", description: "Manage and monitor your farming activities efficiently from planting to harvest.", icon: <ChecklistIcon sx={{ fontSize: 32 }} /> },
+    { title: "My Farm Management", description: "Track your planted crops, monitor their growth progress, and manage your harvest history.", icon: <AgricultureIcon sx={{ fontSize: 32 }} /> },
 ];
 
 const HomePage = () => {
   const navigate = useNavigate();
 
-  // FIX: Add state for news data and both overlays
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState(null);
-  const [isSummaryOverlayOpen, setIsSummaryOverlayOpen] = useState(false); // Used for single article view
-  const [isViewAllOpen, setIsViewAllOpen] = useState(false); // Used for View All overlay
+  const [isSummaryOverlayOpen, setIsSummaryOverlayOpen] = useState(false);
+  const [isViewAllOpen, setIsViewAllOpen] = useState(false);
 
-  // FIX: Fetch news data on component mount
   useEffect(() => {
     const fetchLatestNews = async () => {
       setLoading(true);
@@ -90,7 +88,6 @@ const HomePage = () => {
     fetchLatestNews();
   }, []);
 
-  // Handlers for the News Summary Overlay
   const handleOpenSummaryOverlay = (article) => {
     setSelectedArticle(article);
     setIsSummaryOverlayOpen(true);
@@ -101,16 +98,13 @@ const HomePage = () => {
     setSelectedArticle(null);
   };
   
-  // Handler for clicking an item within the ViewAllOverlay
   const handleItemClickFromAllView = (article) => {
     setIsViewAllOpen(false);
-    // Delay opening the summary to allow the 'View All' overlay to close smoothly
     setTimeout(() => {
         handleOpenSummaryOverlay(article);
     }, 300);
   };
 
-  // Prepare data for the news section
   const mainArticle = !loading && articles.length > 0 ? articles[0] : null;
   const moreNews = !loading && articles.length > 1 ? articles.slice(1, 4) : [];
 
@@ -330,7 +324,6 @@ const HomePage = () => {
             ))}
           </Box>
 
-          {/* Divider for Desktop */}
           <Divider
             orientation="vertical"
             flexItem
@@ -442,7 +435,6 @@ const HomePage = () => {
                         </CardActionArea>
                     ))
                 )}
-                {/* FIX: Use the new View All handler */}
                 <Button fullWidth variant="outlined" sx={{ mt: 2 }} onClick={() => setIsViewAllOpen(true)}>
                   View All News
                 </Button>
@@ -452,7 +444,6 @@ const HomePage = () => {
         </Container>
       </Box>
       
-      {/* FIX: Add the Overlay components */}
       <NewsSummaryOverlay
         open={isSummaryOverlayOpen}
         onClose={handleCloseSummaryOverlay}

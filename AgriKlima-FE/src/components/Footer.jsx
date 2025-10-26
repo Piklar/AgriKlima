@@ -8,8 +8,9 @@ import {
   IconButton,
   Divider,
   useMediaQuery,
+  Link as MuiLink, // Use MuiLink for navigation links
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom'; // Use RouterLink for internal navigation
 import logo from '../assets/logo.png';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
@@ -23,6 +24,14 @@ import Terms from '../components/Terms'; // import your Terms modal
 const Footer = () => {
   const isMobile = useMediaQuery('(max-width:600px)');
   const [isTermsOpen, setIsTermsOpen] = useState(false); // modal state
+
+  const quickLinks = [
+    { name: 'About Us', path: '/about' },
+    { name: 'Weather', path: '/weather' },
+    { name: 'Crops', path: '/crops' },
+    { name: 'Pests', path: '/pests' },
+    { name: 'News', path: '/news' },
+  ];
 
   return (
     <>
@@ -47,7 +56,7 @@ const Footer = () => {
             alignItems="flex-start"
           >
             {/* Column 1: Logo & Tagline */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Box
                 display="flex"
                 flexDirection="column"
@@ -100,9 +109,40 @@ const Footer = () => {
                 </Box>
               </Box>
             </Grid>
+            
+            {/* Column 2: Quick Links */}
+            <Grid item xs={12} sm={6} md={4}>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '1.1rem',
+                  mb: 2,
+                  textAlign: isMobile ? 'center' : 'left',
+                }}
+              >
+                Quick Links
+              </Typography>
+              <Box display="flex" flexDirection="column" alignItems={isMobile ? 'center' : 'flex-start'} gap={1}>
+                {quickLinks.map(link => (
+                  <MuiLink
+                    key={link.name}
+                    component={RouterLink}
+                    to={link.path}
+                    sx={{
+                      color: 'rgba(255,255,255,0.9)',
+                      textDecoration: 'none',
+                      transition: '0.3s',
+                      '&:hover': { color: '#a5d6a7', textDecoration: 'underline' },
+                    }}
+                  >
+                    {link.name}
+                  </MuiLink>
+                ))}
+              </Box>
+            </Grid>
 
-            {/* Column 2: Contact Info */}
-            <Grid item xs={12} md={5}>
+            {/* Column 3: Contact Info */}
+            <Grid item xs={12} sm={6} md={4}>
               <Typography
                 sx={{
                   fontWeight: 700,
@@ -116,19 +156,19 @@ const Footer = () => {
               <Box
                 display="flex"
                 alignItems="center"
-                mb={1}
+                mb={1.5}
                 justifyContent={isMobile ? 'center' : 'flex-start'}
               >
-                <PhoneIcon sx={{ mr: 1, color: '#a5d6a7' }} />
+                <PhoneIcon sx={{ mr: 1.5, color: '#a5d6a7' }} />
                 <Typography sx={{ fontSize: '0.95rem' }}>0915 815 8735</Typography>
               </Box>
               <Box
                 display="flex"
                 alignItems="center"
-                mb={1}
+                mb={1.5}
                 justifyContent={isMobile ? 'center' : 'flex-start'}
               >
-                <EmailIcon sx={{ mr: 1, color: '#a5d6a7' }} />
+                <EmailIcon sx={{ mr: 1.5, color: '#a5d6a7' }} />
                 <Typography sx={{ fontSize: '0.95rem' }}>AgriKlima@gmail.com</Typography>
               </Box>
               <Box
@@ -136,7 +176,7 @@ const Footer = () => {
                 alignItems="center"
                 justifyContent={isMobile ? 'center' : 'flex-start'}
               >
-                <LocationOnIcon sx={{ mr: 1, color: '#a5d6a7' }} />
+                <LocationOnIcon sx={{ mr: 1.5, color: '#a5d6a7' }} />
                 <Typography sx={{ fontSize: '0.95rem' }}>Mexico, Pampanga</Typography>
               </Box>
             </Grid>
@@ -150,15 +190,14 @@ const Footer = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              flexWrap: 'wrap',
+              flexDirection: isMobile ? 'column' : 'row',
               gap: 2,
             }}
           >
-            <Typography sx={{ fontSize: '0.85rem', opacity: 0.85 }}>
+            <Typography sx={{ fontSize: '0.85rem', opacity: 0.85, order: isMobile ? 2 : 1 }}>
               © 2025 AgriKlima. All rights reserved.
             </Typography>
-            <Box>
-              {/* Opens modal instead of navigating */}
+            <Box sx={{ order: isMobile ? 1 : 2 }}>
               <Typography
                 component="button"
                 onClick={() => setIsTermsOpen(true)}
@@ -167,7 +206,6 @@ const Footer = () => {
                   border: 'none',
                   color: 'rgba(255,255,255,0.9)',
                   textDecoration: 'none',
-                  marginRight: '15px',
                   fontSize: '0.85rem',
                   fontWeight: 500,
                   transition: '0.3s',

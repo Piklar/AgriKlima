@@ -3,7 +3,6 @@
 const News = require('../models/News');
 const cloudinary = require('../config/cloudinary');
 
-// --- THIS IS THE FIX ---
 module.exports.addNews = (req, res) => {
     // Destructure the nested summary object and top-level properties from the request body.
     const {
@@ -11,6 +10,7 @@ module.exports.addNews = (req, res) => {
         author,
         imageUrl,
         content,
+        sourceUrl, // <-- ADD THIS
         summary
     } = req.body;
 
@@ -19,10 +19,11 @@ module.exports.addNews = (req, res) => {
         author,
         imageUrl,
         content,
+        sourceUrl, // <-- ADD THIS
         summary: {
-            keyPoints: summary.keyPoints,
-            quotes: summary.quotes,
-            impact: summary.impact
+            keyPoints: summary?.keyPoints,
+            quotes: summary?.quotes,
+            impact: summary?.impact
         }
     });
 

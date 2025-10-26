@@ -1,27 +1,21 @@
-// src/pages/ProfilePage.jsx
-
 import React, { useState } from 'react';
 import {
   Container, Box, Typography, Avatar, Paper, List, ListItem,
   ListItemButton, ListItemIcon, ListItemText, IconButton,
-  Divider, Switch, CircularProgress, Dialog, DialogTitle, DialogActions, Button
+  CircularProgress
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
-import { useThemeContext } from '../context/ThemeContext'; // <-- Import Theme hook
-import { useLanguage } from '../context/LanguageContext'; // <-- Import Language hook
 import Swal from 'sweetalert2';
 
 // Modals
 import ProfilePictureModal from '../components/ProfilePictureModal';
 import EditProfileModal from '../components/EditProfileModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
+import ContactUsModal from '../components/ContactUsModal';
+import Terms from '../components/Terms';
 
 // Icons
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
-import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
-import PaletteOutlinedIcon from '@mui/icons-material/PaletteOutlined';
-import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import ContactSupportOutlinedIcon from '@mui/icons-material/ContactSupportOutlined';
 import PrivacyTipOutlinedIcon from '@mui/icons-material/PrivacyTipOutlined';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
@@ -31,13 +25,12 @@ import LockResetOutlinedIcon from '@mui/icons-material/LockResetOutlined';
 
 const ProfilePage = () => {
   const { user, fetchUserDetails } = useAuth();
-  const { mode, toggleTheme } = useThemeContext(); // Use theme context
-  const { language, changeLanguage, t } = useLanguage(); // Use language context
-
+  
   const [isPictureModalOpen, setIsPictureModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
-  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false); // State for new modal
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   const handleClosePictureModal = (wasUpdateSuccessful) => {
     setIsPictureModalOpen(false);
@@ -56,7 +49,6 @@ const ProfilePage = () => {
   }
 
   const displayName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User';
-  const currentLanguageLabel = language === 'fil' ? 'Filipino' : 'English';
 
   return (
     <>
@@ -85,58 +77,30 @@ const ProfilePage = () => {
           </Box>
         </Paper>
 
-        {/* General Settings */}
+        {/* Account Settings (Edit Profile & Change Password) */}
         <Paper elevation={1} sx={{ borderRadius: '24px', p: 2, mb: 3 }}>
           <List>
             <ListItemButton onClick={() => setEditModalOpen(true)}>
               <ListItemIcon><EditOutlinedIcon color="primary" /></ListItemIcon>
-              <ListItemText primary={t('editProfileInfo')} />
+              <ListItemText primary="Edit Profile Information" />
             </ListItemButton>
-            <ListItemButton onClick={() => setIsLanguageModalOpen(true)}>
-              <ListItemIcon><LanguageOutlinedIcon color="primary" /></ListItemIcon>
-              <ListItemText primary={t('language')} />
-              <Typography color="text.secondary">{currentLanguageLabel}</Typography>
-            </ListItemButton>
-          </List>
-        </Paper>
-
-        {/* Security and Theme */}
-        <Paper elevation={1} sx={{ borderRadius: '24px', p: 2, mb: 3 }}>
-          <List>
-            <ListItem>
-              <ListItemIcon><SecurityOutlinedIcon color="primary" /></ListItemIcon>
-              <ListItemText primary={t('security')} />
-            </ListItem>
             <ListItemButton onClick={() => setPasswordModalOpen(true)}>
-              <ListItemIcon><LockResetOutlinedIcon /></ListItemIcon>
-              <ListItemText primary={t('changePassword')} />
+              <ListItemIcon><LockResetOutlinedIcon color="primary" /></ListItemIcon>
+              <ListItemText primary="Change Password" />
             </ListItemButton>
-            <Divider component="li" sx={{ my: 1 }} />
-            <ListItem>
-              <ListItemIcon><PaletteOutlinedIcon /></ListItemIcon>
-              <ListItemText primary={t('theme')} />
-              <Typography color="text.secondary" sx={{ mr: 1 }}>
-                {mode === 'dark' ? t('darkMode') : t('lightMode')}
-              </Typography>
-              <Switch checked={mode === 'dark'} onChange={toggleTheme} color="primary" />
-            </ListItem>
           </List>
         </Paper>
 
-        {/* Help & Support */}
+        {/* Support & Legal Section */}
         <Paper elevation={1} sx={{ borderRadius: '24px', p: 2 }}>
           <List>
-            <ListItemButton>
-              <ListItemIcon><HelpOutlineOutlinedIcon color="primary" /></ListItemIcon>
-              <ListItemText primary={t('helpAndSupport')} />
+            <ListItemButton onClick={() => setIsContactModalOpen(true)}>
+              <ListItemIcon><ContactSupportOutlinedIcon color="primary" /></ListItemIcon>
+              <ListItemText primary="Contact Us" />
             </ListItemButton>
-            <ListItemButton>
-              <ListItemIcon><ContactSupportOutlinedIcon /></ListItemIcon>
-              <ListItemText primary={t('contactUs')} />
-            </ListItemButton>
-            <ListItemButton>
+            <ListItemButton onClick={() => setIsTermsModalOpen(true)}>
               <ListItemIcon><PrivacyTipOutlinedIcon /></ListItemIcon>
-              <ListItemText primary={t('privacyPolicy')} />
+              <ListItemText primary="Terms of Use & Privacy Policy" />
             </ListItemButton>
           </List>
         </Paper>
@@ -146,26 +110,8 @@ const ProfilePage = () => {
       <ProfilePictureModal open={isPictureModalOpen} onClose={handleClosePictureModal} user={user} />
       <EditProfileModal open={isEditModalOpen} onClose={() => setEditModalOpen(false)} user={user} onUpdate={fetchUserDetails} />
       <ChangePasswordModal open={isPasswordModalOpen} onClose={() => setPasswordModalOpen(false)} />
-
-      {/* NEW Language Selection Modal */}
-      <Dialog open={isLanguageModalOpen} onClose={() => setIsLanguageModalOpen(false)}>
-        <DialogTitle>Select Language</DialogTitle>
-        <List sx={{ pt: 0 }}>
-          <ListItem disableGutters>
-            <ListItemButton onClick={() => { changeLanguage('en'); setIsLanguageModalOpen(false); }}>
-              <ListItemText primary="English" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disableGutters>
-            <ListItemButton onClick={() => { changeLanguage('fil'); setIsLanguageModalOpen(false); }}>
-              <ListItemText primary="Filipino" />
-            </ListItemButton>
-          </ListItem>
-        </List>
-        <DialogActions>
-            <Button onClick={() => setIsLanguageModalOpen(false)}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+      <ContactUsModal open={isContactModalOpen} onClose={() => setIsContactModalOpen(false)} />
+      <Terms open={isTermsModalOpen} onClose={() => setIsTermsModalOpen(false)} />
     </>
   );
 };

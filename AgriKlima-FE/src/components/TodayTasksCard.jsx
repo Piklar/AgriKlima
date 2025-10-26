@@ -1,4 +1,3 @@
-// src/components/TodayTasksCard.jsx
 import React from 'react';
 import {
   Box,
@@ -25,7 +24,7 @@ const TodayTasksCard = ({ tasks, loading, onTaskToggle, onManageTasks }) => {
       elevation={1}
       sx={{
         p: 3,
-        borderRadius: '10px', // unified with other cards
+        borderRadius: '10px',
         boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
         height: '100%',
         display: 'flex',
@@ -81,16 +80,22 @@ const TodayTasksCard = ({ tasks, loading, onTaskToggle, onManageTasks }) => {
                   />
                 }
                 disablePadding
+                // --- THIS IS THE FIX ---
+                sx={{
+                  mb: 1,
+                  p: 1,
+                  borderRadius: '8px',
+                  transition: 'background-color 0.3s ease, opacity 0.3s ease',
+                  backgroundColor: task.status === 'completed' ? 'action.hover' : 'transparent',
+                  opacity: task.status === 'completed' ? 0.6 : 1,
+                }}
               >
                 <ListItemText
                   primary={task.title}
                   sx={{
-                    fontFamily: 'Inter, sans-serif',
+                    transition: 'color 0.3s ease',
                     textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                    color:
-                      task.status === 'completed'
-                        ? (theme) => theme.palette.text.disabled
-                        : (theme) => theme.palette.text.primary,
+                    color: task.status === 'completed' ? 'text.disabled' : 'text.primary',
                   }}
                 />
               </ListItem>
@@ -99,12 +104,8 @@ const TodayTasksCard = ({ tasks, loading, onTaskToggle, onManageTasks }) => {
         ) : (
           <Box
             sx={{
-              textAlign: 'center',
-              py: 6,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
+              textAlign: 'center', py: 6, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
             }}
           >
             <TaskIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />

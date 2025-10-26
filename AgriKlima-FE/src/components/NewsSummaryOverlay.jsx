@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Box, Typography, Button, Paper, List, ListItem, ListItemIcon, Divider } from '@mui/material';
+import { Modal, Box, Typography, Button, Paper, List, ListItem, ListItemIcon, Divider, Link as MuiLink } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import LinkIcon from '@mui/icons-material/Link'; // Import LinkIcon
 
 // Reusable Quote component
 const QuoteItem = ({ text }) => (
@@ -113,10 +114,19 @@ const NewsSummaryOverlay = ({ open, onClose, articleData }) => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
             {articleData.title}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {articleData.publicationDate ? new Date(articleData.publicationDate).toLocaleDateString() : ''}
-            {articleData.author ? ` • ${articleData.author}` : ''}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              {articleData.publicationDate ? new Date(articleData.publicationDate).toLocaleDateString() : ''}
+              {articleData.author ? ` • ${articleData.author}` : ''}
+            </Typography>
+            {/* View Source Link */}
+            {articleData.sourceUrl && (
+              <MuiLink href={articleData.sourceUrl} target="_blank" rel="noopener noreferrer" sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                <LinkIcon fontSize="small" sx={{ mr: 0.5 }} />
+                <Typography variant="body2" color="primary">View Source</Typography>
+              </MuiLink>
+            )}
+          </Box>
         </Box>
 
         <Divider sx={{ mb: 3 }} />
