@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Modal, Box, Paper, Typography, TextField, Button, Divider, 
+import {
+  Modal, Box, Paper, Typography, TextField, Button, Divider,
   Select, MenuItem, InputLabel, FormControl, Grid, IconButton, Stack, Avatar,
-  OutlinedInput, Chip // Imported new components for multi-select
+  OutlinedInput, Chip // Components for multiselect/new design
 } from '@mui/material';
+
+// Corrected Icons imports
 import CloseIcon from '@mui/icons-material/Close';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
@@ -43,21 +45,27 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
   const initializeForm = useCallback(() => {
     let state = {};
     fields.forEach(field => {
-      // Get initial value from initialData or default to empty string/array
-      const initialValue = initialData ? getNestedValue(initialData, field.name) : (field.type === 'multiselect' ? [] : '');
-      
+      // Get initial value from initialData or default
+      const initialValue = initialData
+        ? getNestedValue(initialData, field.name)
+        : (field.type === 'multiselect' ? [] : '');
+
       // Process array fields (e.g., prevention) into newline-separated strings for Textarea
-      const processedValue = field.isArray && Array.isArray(initialValue) ? initialValue.join('\n') : initialValue;
-      
-      // Set the state, defaulting to array for multiselect, otherwise empty string
-      state[field.name] = processedValue || field.defaultValue || (field.type === 'multiselect' ? [] : '');
+      const processedValue = field.isArray && Array.isArray(initialValue)
+        ? initialValue.join('\n')
+        : initialValue;
+
+      // Set the state, defaulting to array for multiselect, otherwise empty string/default value
+      // Use processedValue if it exists, otherwise fall back to initialValue/defaultValue
+      const defaultValue = field.type === 'multiselect' ? [] : (field.defaultValue || '');
+      state[field.name] = processedValue || initialValue || defaultValue;
     });
     setFormData(state);
     setPreviewUrl(initialData?.imageUrl || '');
     setImageFile(null);
   }, [initialData, fields]);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (open) {
       initializeForm();
     }
@@ -82,14 +90,14 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
     for (const key in formData) {
       const fieldDef = fields.find(f => f.name === key);
       let value = formData[key];
-      
-      // Revert array string back to array of strings for non-multiselect arrays
+
+      // Revert array string (from textarea) back to array of strings
       if (fieldDef?.isArray && typeof value === 'string') {
         value = value.split('\n').map(item => item.trim()).filter(Boolean);
       }
-      
-      // For multiselect, value is already an array of IDs/values, no string processing needed
-      
+
+      // Multiselect value is already an array, no string processing needed
+
       finalData = setNestedValue(finalData, key, value);
     }
     onSubmit(finalData, imageFile);
@@ -100,12 +108,12 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
   const imageUrl = previewUrl || formData.imageUrl || '';
 
   return (
-    <Modal 
-      open={open} 
-      onClose={onClose} 
-      sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+    <Modal
+      open={open}
+      onClose={onClose}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
         p: 2
       }}
@@ -115,7 +123,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
         onSubmit={handleSubmit}
         sx={{
           width: '90%',
-          maxWidth: '800px',
+          maxWidth: '800px', // Updated max width
           maxHeight: '95vh',
           borderRadius: '12px',
           display: 'flex',
@@ -125,34 +133,35 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
         }}
       >
         {/* Header */}
-        <Box sx={{ 
-          p: 3, 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
+        <Box sx={{
+          p: 3,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           borderBottom: '1px solid #e0e0e0',
           bgcolor: 'background.paper'
         }}>
           <Typography variant="h5" sx={{ fontWeight: 600, textAlign: 'center', flex: 1 }}>
             {title}
           </Typography>
+          {/* Close Icon added to the header */}
           <IconButton onClick={onClose} size="small" sx={{ position: 'absolute', right: 16 }}>
             <CloseIcon />
           </IconButton>
         </Box>
-        
+
         {/* Content Area */}
-        <Box sx={{ 
-          overflowY: 'auto', 
-          flexGrow: 1, 
+        <Box sx={{
+          overflowY: 'auto',
+          flexGrow: 1,
           p: 4,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center'
         }}>
-          {/* Image Upload Section */}
-          <Box sx={{ 
-            mb: 4, 
+          {/* Image Upload Section - Updated Styling */}
+          <Box sx={{
+            mb: 4,
             textAlign: 'center',
             p: 3,
             border: '1px dashed #e0e0e0',
@@ -167,10 +176,10 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
             <Avatar
               src={imageUrl}
               variant="rounded"
-              sx={{ 
-                width: 120, 
-                height: 120, 
-                margin: '0 auto', 
+              sx={{
+                width: 120,
+                height: 120,
+                margin: '0 auto',
                 border: '2px solid #e0e0e0',
                 mb: 2
               }}
@@ -191,17 +200,17 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
               {imageUrl ? 'Change Image' : 'Upload Image'}
             </Button>
           </Box>
-          
-          {/* Form Fields */}
+
+          {/* Form Fields - Updated Layout to Grid/Stack */}
           <Box sx={{ width: '100%', maxWidth: '700px' }}>
             <Grid container spacing={4} justifyContent="center">
               {Object.entries(groupedFields).map(([groupName, groupFields]) => (
                 <Grid item xs={12} md={6} key={groupName} sx={{ display: 'flex', flexDirection: 'column' }}>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      mb: 3, 
-                      fontWeight: 600, 
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      mb: 3,
+                      fontWeight: 600,
                       color: 'primary.main',
                       pb: 1,
                       borderBottom: '2px solid',
@@ -211,11 +220,11 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
                   >
                     {groupName}
                   </Typography>
-                  <Stack spacing={3}>
+                  <Stack spacing={3}> {/* Use Stack for consistent spacing between fields */}
                     {groupFields.map(field => {
                       if (field.name === 'imageUrl') return null;
 
-                      // Case for 'multiselect' (newly added)
+                      // === Multiselect Case (New) ===
                       if (field.type === 'multiselect') {
                         return (
                           <FormControl key={field.name} fullWidth size="medium" sx={{ maxWidth: '400px', mx: 'auto' }}>
@@ -229,6 +238,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
                               renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                   {selected.map((value) => {
+                                    // Assumes field.options is array of { value, label }
                                     const option = field.options.find(opt => opt.value === value);
                                     return <Chip key={value} label={option ? option.label : value} size="small" />;
                                   })}
@@ -236,6 +246,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
                               )}
                             >
                               {field.options?.map(option => (
+                                // Assumes field.options is array of { value, label }
                                 <MenuItem key={option.value} value={option.value}>
                                   {option.label}
                                 </MenuItem>
@@ -245,7 +256,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
                         );
                       }
 
-                      // Case for standard 'select'
+                      // === Standard Select Case ===
                       return field.type === 'select' ? (
                         <FormControl key={field.name} fullWidth size="medium" sx={{ maxWidth: '400px', mx: 'auto' }}>
                           <InputLabel>{field.label}</InputLabel>
@@ -256,13 +267,14 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
                             onChange={handleChange}
                             required={field.required}
                           >
+                            {/* Assumes standard select options are an array of strings */}
                             {field.options?.map(option => (
                               <MenuItem key={option} value={option}>{option}</MenuItem>
                             ))}
                           </Select>
                         </FormControl>
                       ) : (
-                        // Case for standard 'text', 'textarea', 'number', etc.
+                        // === Standard Text/Textarea/Number Case ===
                         <TextField
                           key={field.name}
                           fullWidth
@@ -286,34 +298,34 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
             </Grid>
           </Box>
         </Box>
-        
+
         {/* Footer */}
-        <Box sx={{ 
-          p: 3, 
-          display: 'flex', 
-          justifyContent: 'center', 
-          gap: 2, 
+        <Box sx={{
+          p: 3,
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 2,
           borderTop: '1px solid #e0e0e0',
           bgcolor: 'grey.50'
         }}>
-          <Button 
-            type="button" 
-            onClick={onClose} 
-            variant="outlined" 
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="outlined"
             color="secondary"
             sx={{ minWidth: 120 }}
           >
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
-            sx={{ 
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{
               minWidth: 120,
-              bgcolor: 'primary.main', 
-              '&:hover': { 
-                bgcolor: 'primary.dark' 
-              } 
+              bgcolor: 'primary.main',
+              '&:hover': {
+                bgcolor: 'primary.dark'
+              }
             }}
           >
             {mode === 'add' ? 'Create' : 'Save Changes'}

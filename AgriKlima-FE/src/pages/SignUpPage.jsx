@@ -19,10 +19,10 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'; // <-- IMPORT ICON
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'; 
 import logo from '../assets/logo.png';
 
-// Import local images
+// Import local images (Assuming these paths are correct in the environment)
 import mexicoImg from '../assets/images/location-mexico.jpg';
 import csfpImg from '../assets/images/location-csfp.jpg';
 import staAnaImg from '../assets/images/location-sta-ana.jpg';
@@ -130,7 +130,7 @@ const SignUpPage = () => {
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
     const [isJustStarting, setIsJustStarting] = useState(false);
     
-    // FIX: Add state for age validation error
+    // State for age validation error
     const [dobError, setDobError] = useState('');
 
     const [formData, setFormData] = useState({
@@ -164,9 +164,11 @@ const SignUpPage = () => {
     }, []);
 
     const handleNext = () => setStep(prev => prev + 1);
+    
+    // Function to go back a step
     const handleBack = () => setStep(prev => prev - 1);
 
-    // FIX: AGE VALIDATION LOGIC
+    // AGE VALIDATION LOGIC
     const handleAgeValidation = (dateString) => {
         if (!dateString) {
             setDobError('');
@@ -224,7 +226,7 @@ const SignUpPage = () => {
             validateField(name, value);
         }
         
-        // FIX: Trigger age validation on DOB change
+        // Trigger age validation on DOB change
         if (name === 'dob') {
             handleAgeValidation(value);
         }
@@ -284,26 +286,26 @@ const SignUpPage = () => {
                 isPasswordValid &&
                 formData.password === formData.confirmPassword
             );
-            // FIX: Add dobError check to step 2 validation
+            // Add dobError check to step 2 validation
             case 2: return (formData.dob && formData.gender && formData.language && !dobError);
             case 3: return (isJustStarting || (formData.userCrops.length > 0 && formData.userCrops.every(c => c.plantingDate)));
             case 4: return !!formData.location;
             case 5: return agreedToTerms;
             default: return false;
         }
-    }, [formData, step, agreedToTerms, isJustStarting, validation.emailError, validation.mobileError, isPasswordValid, dobError]); // <-- dobError dependency added
+    }, [formData, step, agreedToTerms, isJustStarting, validation.emailError, validation.mobileError, isPasswordValid, dobError]); 
 
     const handleSubmit = async () => {
         if (!isStepValid) {
-          Swal.fire('Incomplete Information', 'Please ensure all required fields are filled and you have agreed to the terms.', 'warning');
-          return;
+            Swal.fire('Incomplete Information', 'Please ensure all required fields are filled and you have agreed to the terms.', 'warning');
+            return;
         }
         setIsSubmitting(true);
         const { confirmPassword, ...registrationDataRaw } = formData;
         const registrationData = {
-          ...registrationDataRaw,
-          email: (registrationDataRaw.email || '').trim().toLowerCase(),
-          mobileNo: (registrationDataRaw.mobileNo || '').trim(),
+            ...registrationDataRaw,
+            email: (registrationDataRaw.email || '').trim().toLowerCase(),
+            mobileNo: (registrationDataRaw.mobileNo || '').trim(),
         };
     
         try {
@@ -414,7 +416,7 @@ const SignUpPage = () => {
                             return (
                                 <Box sx={{ maxWidth: 500, mx: 'auto' }}>
                                     <Stack spacing={3}>
-                                        {/* FIX: Integrated Date of Birth Field with Age Validation */}
+                                        {/* Integrated Date of Birth Field with Age Validation */}
                                         <TextField 
                                             name="dob" 
                                             label="Date of Birth" 
@@ -534,10 +536,12 @@ const SignUpPage = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 3 }}>
                         <Button 
                             startIcon={<ArrowBackIcon />} 
-                            onClick={step === 1 ? () => navigate('/login') : handleBack} 
+                            // FIX: Logic to go to Home on Step 1, otherwise go back a step
+                            onClick={step === 1 ? () => navigate('/') : handleBack} 
                             sx={{ color: 'var(--dark-text)', textTransform: 'none' }}
                         >
-                            {step === 1 ? 'Back to Login' : 'Back'}
+                            {/* FIX: Text changes based on current step */}
+                            {step === 1 ? 'Back to Home' : 'Back'}
                         </Button>
                         <RouterLink to="/"><img src={logo} alt="AgriKlima Logo" style={{ height: '40px' }} /></RouterLink>
                         <Box sx={{ width: 100 }} />

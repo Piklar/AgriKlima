@@ -1,18 +1,40 @@
-// src/components/ProtectedRoute.jsx
-
-import React from 'react';
+import React, { useEffect, useRef } from 'react'; // <-- Import useRef
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
+import Swal from 'sweetalert2';
 
 const ProtectedRoute = () => {
-    // We now get all three values from the context.
-    const { isAuthenticated, user, loading } = useAuth();
+    const { isAuthenticated, loading } = useAuth();
+    
+    // --- THIS IS THE FIX ---
+    // We use a ref to track the previous authentication state.
+    // This helps us distinguish between a user who was never logged in
+    // and a user who just logged out.
+    const prevIsAuthenticated = useRef(isAuthenticated);
 
-    console.log('[DEBUG] ProtectedRoute Check -> Loading:', loading, '| Authenticated:', isAuthenticated, '| User:', user);
+    useEffect(() => {
+        // If loading is finished, the user is NOT authenticated now,
+        // AND they were also NOT authenticated in the previous render (e.g., a direct page load),
+        // then we show the notification.
+        if (!loading && !isAuthenticated && !prevIsAuthenticated.current) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: 'Please log in to access this page.',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+            });
+        }
 
-    // 1. If the context is still loading, we MUST show a loading indicator.
-    // This is the most important part of the fix.
+        // After every check, we update the ref to the current state.
+        // This ensures on the next render, it holds the "previous" value.
+        prevIsAuthenticated.current = isAuthenticated;
+
+    }, [isAuthenticated, loading]); // This effect runs whenever auth or loading state changes.
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -21,13 +43,10 @@ const ProtectedRoute = () => {
         );
     }
 
-    // 2. After loading is finished, we check if the user is authenticated.
-    // The `Outlet` renders the child route (e.g., your LoggedInLayout).
     if (isAuthenticated) {
         return <Outlet />;
     }
 
-    // 3. If not loading and not authenticated, redirect to login.
     return <Navigate to="/login" />;
 };
 
