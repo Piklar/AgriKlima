@@ -9,12 +9,9 @@ import CloseIcon from '@mui/icons-material/Close';
 
 // A generic, reusable card for displaying items in the overlay grid.
 const ItemCard = ({ item, onClick }) => {
-  // --- THIS IS THE FIX ---
-  // We make the description smarter.
-  // 1. It first looks for `item.description` (for Crops/Pests).
-  // 2. If that's not found, it looks for `item.content` (for News).
-  // 3. If neither is found, it shows the fallback message.
-  const description = item.description || item.content || 'No description available.';
+  // --- THIS IS FIX #1: Correctly access the nested pest description ---
+  // The logic now checks for the pest's nested description before falling back.
+  const description = item.description || item.overview?.description || item.content || 'No description available.';
 
   return (
     <Card
@@ -23,6 +20,7 @@ const ItemCard = ({ item, onClick }) => {
         display: 'flex',
         flexDirection: 'column',
         transition: 'transform 0.3s, box-shadow 0.3s',
+        borderRadius: 3, // Slightly more rounded corners for a modern look
         '&:hover': {
           transform: 'translateY(-5px)',
           boxShadow: '0 8px 20px rgba(0,0,0,0.12)'
@@ -42,14 +40,16 @@ const ItemCard = ({ item, onClick }) => {
           component="img"
           sx={{ 
             height: 180,
+            // --- THIS IS FIX #2: Ensure all images are uniform ---
+            // 'object-fit: cover' makes the image fill the space without stretching.
             objectFit: 'cover',
           }}
-          image={item.imageUrl}
-          alt={item.name || item.title} // Use name for crops/pests, title for news
+          image={item.imageUrl || 'https://via.placeholder.com/300x180?text=No+Image'} // Added a fallback image
+          alt={item.name || item.title}
         />
         <CardContent sx={{ flexGrow: 1 }}>
           <Typography gutterBottom variant="h6" component="div" sx={{ fontWeight: 600 }}>
-            {item.name || item.title} {/* Display name or title */}
+            {item.name || item.title}
           </Typography>
           <Typography 
             variant="body2" 
