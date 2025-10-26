@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Modal, Box, Paper, Typography, TextField, Button, Divider, 
-  Select, MenuItem, InputLabel, FormControl, Grid, IconButton, Stack, Avatar
+  Select, MenuItem, InputLabel, FormControl, Grid, IconButton, Stack, Avatar,
+  OutlinedInput, Chip // Imported new components for multi-select
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
+// Helper function to safely get nested values
 const getNestedValue = (obj, path, fallback = '') => {
   if (!path || !obj) return fallback;
   return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : fallback), obj);
 };
 
+// Helper function to safely set nested values
 const setNestedValue = (obj, path, value) => {
   const keys = path.split('.');
   let current = obj;
@@ -27,6 +30,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
   const [previewUrl, setPreviewUrl] = useState('');
   const fileInputRef = useRef(null);
 
+  // Group fields by the 'group' property for display organization
   const groupedFields = fields.reduce((acc, field) => {
     const groupName = field.group || 'Details';
     if (!acc[groupName]) {
@@ -39,9 +43,14 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
   const initializeForm = useCallback(() => {
     let state = {};
     fields.forEach(field => {
-      const value = initialData ? getNestedValue(initialData, field.name) : '';
-      const processedValue = field.isArray && Array.isArray(value) ? value.join('\n') : value;
-      state[field.name] = processedValue || field.defaultValue || '';
+      // Get initial value from initialData or default to empty string/array
+      const initialValue = initialData ? getNestedValue(initialData, field.name) : (field.type === 'multiselect' ? [] : '');
+      
+      // Process array fields (e.g., prevention) into newline-separated strings for Textarea
+      const processedValue = field.isArray && Array.isArray(initialValue) ? initialValue.join('\n') : initialValue;
+      
+      // Set the state, defaulting to array for multiselect, otherwise empty string
+      state[field.name] = processedValue || field.defaultValue || (field.type === 'multiselect' ? [] : '');
     });
     setFormData(state);
     setPreviewUrl(initialData?.imageUrl || '');
@@ -73,9 +82,14 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
     for (const key in formData) {
       const fieldDef = fields.find(f => f.name === key);
       let value = formData[key];
+      
+      // Revert array string back to array of strings for non-multiselect arrays
       if (fieldDef?.isArray && typeof value === 'string') {
         value = value.split('\n').map(item => item.trim()).filter(Boolean);
       }
+      
+      // For multiselect, value is already an array of IDs/values, no string processing needed
+      
       finalData = setNestedValue(finalData, key, value);
     }
     onSubmit(finalData, imageFile);
@@ -101,16 +115,16 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
         onSubmit={handleSubmit}
         sx={{
           width: '90%',
-          maxWidth: '800px', // Reduced maxWidth for better centering
+          maxWidth: '800px',
           maxHeight: '95vh',
           borderRadius: '12px',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          mx: 'auto' // Center horizontally
+          mx: 'auto'
         }}
       >
-        {/* Header - Centered */}
+        {/* Header */}
         <Box sx={{ 
           p: 3, 
           display: 'flex', 
@@ -127,7 +141,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
           </IconButton>
         </Box>
         
-        {/* Content Area - Centered */}
+        {/* Content Area */}
         <Box sx={{ 
           overflowY: 'auto', 
           flexGrow: 1, 
@@ -136,7 +150,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
           flexDirection: 'column',
           alignItems: 'center'
         }}>
-          {/* Image Upload Section - Centered */}
+          {/* Image Upload Section */}
           <Box sx={{ 
             mb: 4, 
             textAlign: 'center',
@@ -178,7 +192,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
             </Button>
           </Box>
           
-          {/* Form Fields - Centered */}
+          {/* Form Fields */}
           <Box sx={{ width: '100%', maxWidth: '700px' }}>
             <Grid container spacing={4} justifyContent="center">
               {Object.entries(groupedFields).map(([groupName, groupFields]) => (
@@ -200,40 +214,70 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
                   <Stack spacing={3}>
                     {groupFields.map(field => {
                       if (field.name === 'imageUrl') return null;
-                      return (
-                        <Box key={field.name} sx={{ display: 'flex', justifyContent: 'center' }}>
-                          {field.type === 'select' ? (
-                            <FormControl fullWidth size="medium" sx={{ maxWidth: '400px' }}>
-                              <InputLabel>{field.label}</InputLabel>
-                              <Select
-                                name={field.name}
-                                label={field.label}
-                                value={formData[field.name] || field.defaultValue || ''}
-                                onChange={handleChange}
-                                required={field.required}
-                              >
-                                {field.options?.map(option => (
-                                  <MenuItem key={option} value={option}>{option}</MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          ) : (
-                            <TextField
-                              fullWidth
-                              size="medium"
+
+                      // Case for 'multiselect' (newly added)
+                      if (field.type === 'multiselect') {
+                        return (
+                          <FormControl key={field.name} fullWidth size="medium" sx={{ maxWidth: '400px', mx: 'auto' }}>
+                            <InputLabel>{field.label}</InputLabel>
+                            <Select
+                              multiple
                               name={field.name}
-                              label={field.label}
-                              type={field.type === 'textarea' ? 'text' : field.type || 'text'}
-                              multiline={field.type === 'textarea'}
-                              rows={field.rows || (field.type === 'textarea' ? 4 : 1)}
-                              value={formData[field.name] || ''}
+                              value={formData[field.name] || []}
                               onChange={handleChange}
-                              required={field.required}
-                              helperText={field.helperText}
-                              sx={{ maxWidth: '400px' }}
-                            />
-                          )}
-                        </Box>
+                              input={<OutlinedInput label={field.label} />}
+                              renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                  {selected.map((value) => {
+                                    const option = field.options.find(opt => opt.value === value);
+                                    return <Chip key={value} label={option ? option.label : value} size="small" />;
+                                  })}
+                                </Box>
+                              )}
+                            >
+                              {field.options?.map(option => (
+                                <MenuItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        );
+                      }
+
+                      // Case for standard 'select'
+                      return field.type === 'select' ? (
+                        <FormControl key={field.name} fullWidth size="medium" sx={{ maxWidth: '400px', mx: 'auto' }}>
+                          <InputLabel>{field.label}</InputLabel>
+                          <Select
+                            name={field.name}
+                            label={field.label}
+                            value={formData[field.name] || field.defaultValue || ''}
+                            onChange={handleChange}
+                            required={field.required}
+                          >
+                            {field.options?.map(option => (
+                              <MenuItem key={option} value={option}>{option}</MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : (
+                        // Case for standard 'text', 'textarea', 'number', etc.
+                        <TextField
+                          key={field.name}
+                          fullWidth
+                          size="medium"
+                          name={field.name}
+                          label={field.label}
+                          type={field.type === 'textarea' ? 'text' : field.type || 'text'}
+                          multiline={field.type === 'textarea'}
+                          rows={field.rows || (field.type === 'textarea' ? 4 : 1)}
+                          value={formData[field.name] || ''}
+                          onChange={handleChange}
+                          required={field.required}
+                          helperText={field.helperText}
+                          sx={{ maxWidth: '400px', mx: 'auto' }}
+                        />
                       );
                     })}
                   </Stack>
@@ -243,7 +287,7 @@ const AdminFormModal = ({ open, onClose, onSubmit, initialData, mode, title, fie
           </Box>
         </Box>
         
-        {/* Footer - Centered */}
+        {/* Footer */}
         <Box sx={{ 
           p: 3, 
           display: 'flex', 

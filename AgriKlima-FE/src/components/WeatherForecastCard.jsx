@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import Whatshot from '@mui/icons-material/Whatshot';
 import AcUnit from '@mui/icons-material/AcUnit';
-import { getWeatherIcon } from '../utils/weatherIcons'; // <-- IMPORT THE NEW UTILITY
+import { getWeatherIcon } from '../utils/weatherIcons'; // Import utility function
 
 const WeatherForecastCard = ({ weather, loading, peakHot, peakCold }) => {
   const navigate = useNavigate();
@@ -44,8 +44,8 @@ const WeatherForecastCard = ({ weather, loading, peakHot, peakCold }) => {
         <Typography variant="h6" fontWeight="600" color="primary">7-Day Forecast</Typography>
       </Box>
 
-      {/* --- NEW: Peak Temperature Section --- */}
-      {hasForecast && (
+      {/* Peak Temperature Section (Merged with extra null/undefined check) */}
+      {hasForecast && peakHot && peakCold && (
         <>
           <Grid container spacing={1} sx={{ mb: 2 }}>
             <Grid item xs={6}>
@@ -53,7 +53,7 @@ const WeatherForecastCard = ({ weather, loading, peakHot, peakCold }) => {
                 <Whatshot color="error" />
                 <Box>
                   <Typography variant="caption" color="text.secondary">Hottest</Typography>
-                  <Typography variant="body2" fontWeight="bold">{peakHot?.temp}° on {peakHot?.day}</Typography>
+                  <Typography variant="body2" fontWeight="bold">{peakHot.temp}° on {peakHot.day}</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -62,7 +62,7 @@ const WeatherForecastCard = ({ weather, loading, peakHot, peakCold }) => {
                 <AcUnit color="info" />
                 <Box>
                   <Typography variant="caption" color="text.secondary">Coldest</Typography>
-                  <Typography variant="body2" fontWeight="bold">{peakCold?.temp}° on {peakCold?.day}</Typography>
+                  <Typography variant="body2" fontWeight="bold">{peakCold.temp}° on {peakCold.day}</Typography>
                 </Box>
               </Box>
             </Grid>

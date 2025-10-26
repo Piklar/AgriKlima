@@ -88,24 +88,42 @@ const PestDetailOverlay = ({ open, onClose, pestData }) => {
           </>
         );
       case 'Prevention':
-        return <InfoList items={pestData.prevention} />;
+        return (
+          <>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>Prevention Methods</Typography>
+            <InfoList items={pestData.prevention} />
+          </>
+        );
       case 'Treatment':
-        return <InfoList items={pestData.treatment} />;
+        return (
+          <>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>Treatment Methods</Typography>
+            <InfoList items={pestData.treatment} />
+          </>
+        );
       case 'Overview':
       default:
         return (
           <>
             <InfoItem title="Description" content={pestData.overview?.description || 'N/A'} />
+            
+            {/* Display linked crops from the new affectedCrops field */}
             <Box mb={2}>
               <Typography variant="body1" sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}>Commonly Affects</Typography>
-              {(pestData.overview?.commonlyAffects || []).map(crop => (
-                <Chip
-                  key={crop}
-                  label={crop}
-                  sx={{ mr: 1, mb: 1, bgcolor: '#e0e0e0', borderRadius: '10px' }}
-                />
-              ))}
+              {pestData.affectedCrops && pestData.affectedCrops.length > 0 ? (
+                pestData.affectedCrops.map(crop => (
+                  <Chip
+                    // Use crop._id since it's a populated object from the backend
+                    key={crop._id}
+                    label={crop.name}
+                    sx={{ mr: 1, mb: 1, bgcolor: '#e0e0e0', borderRadius: '10px' }}
+                  />
+                ))
+              ) : (
+                <Typography color="text.secondary">No specific crops listed.</Typography>
+              )}
             </Box>
+
             <InfoItem title="Seasonal Activity" content={pestData.overview?.seasonalActivity || 'N/A'} />
           </>
         );
@@ -125,7 +143,7 @@ const PestDetailOverlay = ({ open, onClose, pestData }) => {
           maxHeight: '90vh',
           borderRadius: '10px',
           overflowY: 'auto',
-          position: 'relative' // enable absolute-positioned close button
+          position: 'relative'
         }}
       >
         {/* Close / Exit Button */}
@@ -137,7 +155,9 @@ const PestDetailOverlay = ({ open, onClose, pestData }) => {
             top: 12,
             right: 12,
             zIndex: 10,
-            '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.25)' }
+            color: 'white', // Ensure icon is visible over the header image
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.5)' }
           }}
         >
           <CloseIcon />
@@ -162,7 +182,7 @@ const PestDetailOverlay = ({ open, onClose, pestData }) => {
             <Chip
               label={`${pestData.riskLevel} Risk`}
               sx={{
-                backgroundColor: pestData.riskLevel === 'High' ? '#f44336' : '#ffc107',
+                backgroundColor: pestData.riskLevel === 'High' ? '#f44336' : (pestData.riskLevel === 'Medium' ? '#ffc107' : '#4caf50'),
                 color: 'white',
                 fontWeight: 600,
                 borderRadius: '10px'

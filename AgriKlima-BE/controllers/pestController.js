@@ -3,36 +3,31 @@
 const Pest = require('../models/Pest');
 const cloudinary = require('../config/cloudinary');
 
-// --- THIS IS THE FIX ---
+// Function to add a new pest (Merged to include affectedCrops)
 module.exports.addPest = (req, res) => {
-    // Destructure the nested objects and top-level properties from the request body.
-    // The incoming JSON should match this structure.
+    // Destructure the new field: affectedCrops
     const { 
-        name, 
-        type, 
-        riskLevel, 
-        imageUrl, 
-        overview, 
-        identification, 
-        prevention, 
-        treatment 
+        name, type, riskLevel, imageUrl, 
+        overview, identification, prevention, treatment,
+        affectedCrops
     } = req.body;
 
     let newPest = new Pest({
-        name,
-        type,
-        riskLevel,
+        name, 
+        type, 
+        riskLevel, 
         imageUrl,
+        affectedCrops, // Add it to the new Pest object
         overview: {
-            description: overview.description,
-            commonlyAffects: overview.commonlyAffects,
-            seasonalActivity: overview.seasonalActivity
+            description: overview?.description,
+            commonlyAffects: overview?.commonlyAffects,
+            seasonalActivity: overview?.seasonalActivity
         },
         identification: {
-            size: identification.size,
-            color: identification.color,
-            shape: identification.shape,
-            behavior: identification.behavior
+            size: identification?.size,
+            color: identification?.color,
+            shape: identification?.shape,
+            behavior: identification?.behavior
         },
         prevention: prevention,
         treatment: treatment
@@ -42,10 +37,12 @@ module.exports.addPest = (req, res) => {
         .then(pest => res.status(201).send(pest))
         .catch(err => {
             console.error("Error adding pest:", err);
+            // Use optional chaining safely in the error details
             res.status(500).send({ error: "Failed to add pest", details: err.message });
         });
 };
 
+// Function to update pest image (Unchanged)
 module.exports.updatePestImage = async (req, res) => {
     try {
         if (!req.file) {
@@ -73,23 +70,25 @@ module.exports.updatePestImage = async (req, res) => {
     }
 };
 
-// --- THIS IS THE FIX: Update getAllPests to handle search ---
+// Function to get all pests (Merged to include search and populate affectedCrops)
 module.exports.getAllPests = async (req, res) => {
     try {
         const search = req.query.search || "";
-        const query = {
-            name: { $regex: search, $options: "i" } // Search by name, case-insensitive
-        };
+        const query = { name: { $regex: search, $options: "i" } };
 
-        const pests = await Pest.find(query);
+        // Populate affectedCrops, only getting the 'name' field
+        const pests = await Pest.find(query).populate('affectedCrops', 'name'); 
         res.status(200).send(pests);
     } catch (err) {
         res.status(500).send({ error: "Failed to fetch pests", details: err.message });
     }
 };
 
+// Function to get pest by ID (Merged to populate affectedCrops)
 module.exports.getPestById = (req, res) => {
+    // Populate affectedCrops, getting 'name' and 'imageUrl' for a detailed view
     Pest.findById(req.params.pestId)
+        .populate('affectedCrops', 'name imageUrl') 
         .then(pest => {
             if (!pest) return res.status(404).send({ error: "Pest not found" });
             return res.status(200).send(pest);
@@ -97,10 +96,11 @@ module.exports.getPestById = (req, res) => {
         .catch(err => res.status(500).send({ error: "Failed to fetch pest", details: err.message }));
 };
 
+// Function to update a pest (Unchanged, handles affectedCrops via req.body spread)
 module.exports.updatePest = (req, res) => {
     Pest.findByIdAndUpdate(
         req.params.pestId,
-        { ...req.body },
+        { ...req.body }, 
         { new: true, runValidators: true }
     )
     .then(pest => {
@@ -110,6 +110,7 @@ module.exports.updatePest = (req, res) => {
     .catch(err => res.status(500).send({ error: "Failed to update pest", details: err.message }));
 };
 
+// Function to delete a pest (Unchanged)
 module.exports.deletePest = (req, res) => {
     Pest.findByIdAndDelete(req.params.pestId)
     .then(pest => {

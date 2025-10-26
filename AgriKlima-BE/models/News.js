@@ -5,9 +5,10 @@ const newsSchema = new mongoose.Schema({
     title: { type: String, required: true },
     author: { type: String, required: true },
     publicationDate: { type: Date, default: Date.now },
-    // --- THIS IS THE FIX ---
-    imageUrl: { type: String, required: false }, // Changed from true to false
+    imageUrl: { type: String, required: false },
     content: { type: String, required: true },
+    // --- THIS IS THE FIX ---
+    sourceUrl: { type: String, required: false }, // Add the new field
     summary: {
         keyPoints: [String],
         quotes: [String],

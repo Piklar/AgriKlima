@@ -70,6 +70,8 @@ const AboutUsPage = () => {
     textAlign: 'center',
   };
 
+  // --- THIS IS THE FIX ---
+  // Updated feature data
   const leftFeatures = [
     {
       title: 'Weather Forecast',
@@ -78,12 +80,12 @@ const AboutUsPage = () => {
     },
     {
       title: 'Recommended Crops',
-      description: 'Personalized crop suggestions based on soil type and climate conditions.',
+      description: 'Personalized crop suggestions based on local conditions and soil type.',
       icon: <LocalFloristIcon sx={{ fontSize: 32 }} />,
     },
     {
-      title: 'Pest Detection and Information',
-      description: 'Early identification of potential pest problems with AI recognition.',
+      title: 'Pest & Disease Library',
+      description: 'Identify potential threats with our comprehensive guide to common pests and diseases.',
       icon: <PestControlIcon sx={{ fontSize: 32 }} />,
     },
   ];
@@ -91,17 +93,17 @@ const AboutUsPage = () => {
   const rightFeatures = [
     {
       title: 'Farming Calendar',
-      description: 'Plan and organize farming activities efficiently with a personalized seasonal calendar to guide your schedule.',
+      description: 'Plan and organize farming activities efficiently with a personalized seasonal calendar.',
       icon: <CalendarTodayIcon sx={{ fontSize: 32 }} />,
     },
     {
       title: 'Task Manager',
-      description: 'Manage and monitor your farming activities efficiently from planting to harvest to keep crops healthy and productive.',
+      description: 'Manage and monitor your farming activities efficiently from planting to harvest.',
       icon: <ChecklistIcon sx={{ fontSize: 32 }} />,
     },
     {
-      title: 'AI Farming Assistant',
-      description: 'Get AI-powered recommendations for improving farming practices.',
+      title: 'My Farm Management',
+      description: 'Track your planted crops, monitor their growth progress, and manage your harvest history.',
       icon: <AgricultureIcon sx={{ fontSize: 32 }} />,
     },
   ];
@@ -298,7 +300,6 @@ const AboutUsPage = () => {
             ))}
           </Box>
 
-          {/* Divider for Desktop */}
           <Divider
             orientation="vertical"
             flexItem

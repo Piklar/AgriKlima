@@ -1,3 +1,4 @@
+// src/pages/SignUpPage.jsx
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -16,9 +17,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
-// FIX: Import icons for password strength
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'; // <-- IMPORT ICON
 import logo from '../assets/logo.png';
 
 // Import local images
@@ -66,7 +67,6 @@ const CropSelectionCard = ({ image, label, isSelected, onToggle, onDateChange, p
     </Card>
 );
 
-// FIX: Create a Password Strength component
 const PasswordStrengthIndicator = ({ password }) => {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasSpecialChar = /[!@#$%^&*]/.test(password);
@@ -128,17 +128,17 @@ const SignUpPage = () => {
 
     const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
-
-    // FIX: Add state for "Just Starting" option
     const [isJustStarting, setIsJustStarting] = useState(false);
     
+    // FIX: Add state for age validation error
+    const [dobError, setDobError] = useState('');
+
     const [formData, setFormData] = useState({
         firstName: '', lastName: '', email: '', mobileNo: '',
         password: '', confirmPassword: '', dob: '', gender: '',
         language: 'Filipino', location: '', userCrops: [],
     });
 
-    // FIX: Add state for real-time validation errors
     const [validation, setValidation] = useState({
         emailError: '',
         mobileError: '',
@@ -166,14 +166,33 @@ const SignUpPage = () => {
     const handleNext = () => setStep(prev => prev + 1);
     const handleBack = () => setStep(prev => prev - 1);
 
-    // FIX: Create a debounced validation function
+    // FIX: AGE VALIDATION LOGIC
+    const handleAgeValidation = (dateString) => {
+        if (!dateString) {
+            setDobError('');
+            return;
+        }
+        const birthDate = new Date(dateString);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDifference = today.getMonth() - birthDate.getMonth();
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        if (age < 14) {
+            setDobError('You must be 14 years or older to register.');
+        } else {
+            setDobError('');
+        }
+    };
+    
     const validateField = useCallback((name, value) => {
         if (debounceTimeout.current) {
             clearTimeout(debounceTimeout.current);
         }
 
         debounceTimeout.current = setTimeout(async () => {
-            // Basic format check before API call
             if ((name === 'email' && !value.includes('@')) || (name === 'mobileNo' && value.length !== 11)) {
                 return;
             }
@@ -192,18 +211,22 @@ const SignUpPage = () => {
             } finally {
                 setValidation(prev => ({ ...prev, [key]: false }));
             }
-        }, 800); // 800ms delay after user stops typing
+        }, 800);
     }, []);
     
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
 
-        // FIX: Trigger real-time validation on change
         if (name === 'email' || name === 'mobileNo') {
             const errorKey = name === 'email' ? 'emailError' : 'mobileError';
-            setValidation(prev => ({ ...prev, [errorKey]: '' })); // Clear previous error
+            setValidation(prev => ({ ...prev, [errorKey]: '' }));
             validateField(name, value);
+        }
+        
+        // FIX: Trigger age validation on DOB change
+        if (name === 'dob') {
+            handleAgeValidation(value);
         }
     };
     
@@ -212,7 +235,7 @@ const SignUpPage = () => {
     };
 
     const handleCropToggle = (crop) => {
-        setIsJustStarting(false); // If a user selects a crop, they are not "just starting"
+        setIsJustStarting(false);
         setFormData(prev => {
             const isSelected = prev.userCrops.some(c => c.cropId === crop._id);
             if (isSelected) {
@@ -223,10 +246,9 @@ const SignUpPage = () => {
         });
     };
 
-    // FIX: Add handler for the "I'm just starting" card
     const handleJustStartingToggle = () => {
         setIsJustStarting(true);
-        setFormData(f => ({ ...f, userCrops: [] })); // Clear any selected crops
+        setFormData(f => ({ ...f, userCrops: [] }));
     };
 
     const handleCropDateChange = (cropId, date) => {
@@ -248,7 +270,6 @@ const SignUpPage = () => {
     };
     const triggerFileInput = () => fileInputRef.current.click();
 
-    // FIX: Updated password validation logic variables
     const passwordHasUpperCase = /[A-Z]/.test(formData.password);
     const passwordHasSpecialChar = /[!@#$%^&*]/.test(formData.password);
     const passwordHasMinLength = formData.password.length >= 8;
@@ -260,17 +281,17 @@ const SignUpPage = () => {
                 formData.firstName && formData.lastName && 
                 formData.email.includes('@') && !validation.emailError &&
                 formData.mobileNo.length === 11 && !validation.mobileError &&
-                isPasswordValid && // <-- Use the new password validation flag
+                isPasswordValid &&
                 formData.password === formData.confirmPassword
             );
-            case 2: return (formData.dob && formData.gender && formData.language);
-            // FIX: Update logic to include "isJustStarting"
+            // FIX: Add dobError check to step 2 validation
+            case 2: return (formData.dob && formData.gender && formData.language && !dobError);
             case 3: return (isJustStarting || (formData.userCrops.length > 0 && formData.userCrops.every(c => c.plantingDate)));
             case 4: return !!formData.location;
             case 5: return agreedToTerms;
             default: return false;
         }
-    }, [formData, step, agreedToTerms, isJustStarting, validation.emailError, validation.mobileError, isPasswordValid]);
+    }, [formData, step, agreedToTerms, isJustStarting, validation.emailError, validation.mobileError, isPasswordValid, dobError]); // <-- dobError dependency added
 
     const handleSubmit = async () => {
         if (!isStepValid) {
@@ -286,7 +307,6 @@ const SignUpPage = () => {
         };
     
         try {
-            // FIX: Pass the cleaned userCrops data, which is an empty array if just starting
             const userCropsToSend = isJustStarting ? [] : registrationData.userCrops;
             await api.registerUser({ ...registrationData, userCrops: userCropsToSend });
 
@@ -306,7 +326,6 @@ const SignUpPage = () => {
                     try {
                         const pictureFormData = new FormData();
                         pictureFormData.append('profilePicture', profilePictureFile);
-                        // Assuming updateProfilePicture handles the token internally or requires it
                         await api.updateProfilePicture(pictureFormData);
                     } catch (pictureError) {
                         console.warn('Profile picture upload failed, continuing:', pictureError);
@@ -375,13 +394,11 @@ const SignUpPage = () => {
                                             error={!!validation.mobileError}
                                             InputProps={{ endAdornment: validation.isMobileLoading && <CircularProgress size={20} /> }}
                                         />
-                                        {/* FIX: Updated Password Field */}
                                         <TextField 
                                             name="password" label="Password" type={showPassword ? 'text' : 'password'} value={formData.password} 
                                             onChange={handleChange} fullWidth required 
                                             InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton onClick={handleClickShowPassword} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>)}}
                                         />
-                                        {/* FIX: Show strength indicator only when user starts typing password */}
                                         {formData.password && <PasswordStrengthIndicator password={formData.password} />}
 
                                         <TextField 
@@ -397,9 +414,28 @@ const SignUpPage = () => {
                             return (
                                 <Box sx={{ maxWidth: 500, mx: 'auto' }}>
                                     <Stack spacing={3}>
-                                        <TextField name="dob" label="Date of Birth" type="date" value={formData.dob} onChange={handleChange} fullWidth required InputLabelProps={{ shrink: true, style: { backgroundColor: 'white', padding: '0 4px' } }} />
+                                        {/* FIX: Integrated Date of Birth Field with Age Validation */}
+                                        <TextField 
+                                            name="dob" 
+                                            label="Date of Birth" 
+                                            type="date" 
+                                            value={formData.dob} 
+                                            onChange={handleChange} 
+                                            fullWidth 
+                                            required 
+                                            error={!!dobError}
+                                            helperText={dobError}
+                                            InputLabelProps={{ shrink: true }} 
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <CalendarMonthIcon />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
                                         <FormControl fullWidth required>
-                                            <InputLabel sx={{ backgroundColor: 'white', padding: '0 4px', marginLeft: '-4px' }}>Gender</InputLabel>
+                                            <InputLabel>Gender</InputLabel>
                                             <Select name="gender" value={formData.gender} onChange={handleChange} label="Gender">
                                                 <MenuItem value="Male">Male</MenuItem>
                                                 <MenuItem value="Female">Female</MenuItem>
@@ -407,7 +443,7 @@ const SignUpPage = () => {
                                             </Select>
                                         </FormControl>
                                         <FormControl fullWidth required>
-                                            <InputLabel sx={{ backgroundColor: 'white', padding: '0 4px', marginLeft: '-4px' }}>Language</InputLabel>
+                                            <InputLabel>Language</InputLabel>
                                             <Select name="language" value={formData.language} onChange={handleChange} label="Language">
                                                 <MenuItem value="English">English</MenuItem>
                                                 <MenuItem value="Filipino">Filipino</MenuItem>
@@ -439,7 +475,7 @@ const SignUpPage = () => {
                                                     </Grid>
                                                 );
                                             })}
-                                            {/* FIX: Re-add the "I'm just starting" card */}
+                                            {/* "I'm just starting" card */}
                                             <Grid item xs={12} sm={6} md={3}>
                                                 <SelectionCard image={startingImg} label="I'm just starting" isSelected={isJustStarting} onClick={handleJustStartingToggle} />
                                             </Grid>

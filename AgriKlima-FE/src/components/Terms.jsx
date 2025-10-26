@@ -8,7 +8,18 @@ import {
   Divider,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import '@fontsource/poppins'; // ✅ Import Poppins font
+import '@fontsource/poppins';
+
+const Section = ({ title, children }) => (
+  <Box sx={{ mb: 3 }}>
+    <Typography variant="h6" sx={{ color: '#1b5e20', fontWeight: 600, mb: 1, fontFamily: 'Poppins, sans-serif' }}>
+      {title}
+    </Typography>
+    <Typography variant="body2" component="div" sx={{ mt: 0.5, fontFamily: 'Poppins, sans-serif', lineHeight: 1.7 }}>
+      {children}
+    </Typography>
+  </Box>
+);
 
 const Terms = ({ open, onClose }) => {
   return (
@@ -20,7 +31,7 @@ const Terms = ({ open, onClose }) => {
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
-        fontFamily: 'Poppins, sans-serif', // ✅ Apply globally inside modal
+        fontFamily: 'Poppins, sans-serif',
       }}
     >
       <Paper
@@ -29,203 +40,118 @@ const Terms = ({ open, onClose }) => {
           width: '90%',
           maxWidth: 900,
           maxHeight: '90vh',
-          overflowY: 'auto',
+          display: 'flex', // Use flexbox for layout
+          flexDirection: 'column', // Stack children vertically
           borderRadius: '16px',
-          position: 'relative',
           boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
           backgroundColor: '#f9fdf9',
           border: '1px solid #c8e6c9',
-          fontFamily: 'Poppins, sans-serif', // ✅ Reinforced here too
+          fontFamily: 'Poppins, sans-serif',
+          overflow: 'hidden', // Hide overflow on the main paper
         }}
       >
-        {/* Close Button */}
-        <IconButton
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            color: '#2e7d32',
-            backgroundColor: 'rgba(255,255,255,0.6)',
-            '&:hover': {
-              backgroundColor: 'rgba(200,230,201,0.9)',
-            },
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-
-        {/* Header */}
+        {/* --- THIS IS THE FIX: Close button is now part of the header flow --- */}
         <Box
           sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             background: 'linear-gradient(135deg, #1b5e20, #4caf50)',
             color: 'white',
             borderTopLeftRadius: '16px',
             borderTopRightRadius: '16px',
-            p: 4,
+            p: { xs: 2, md: 4 },
             fontFamily: 'Poppins, sans-serif',
           }}
         >
-          <Typography variant="h4" fontWeight={700} sx={{ fontFamily: 'Poppins, sans-serif' }}>
-            Terms of Service & Privacy Policy
-          </Typography>
-          <Typography
-            variant="subtitle2"
-            sx={{ mt: 1, opacity: 0.9, fontFamily: 'Poppins, sans-serif' }}
+          <Box>
+            <Typography variant="h4" fontWeight={700} sx={{ fontFamily: 'Poppins, sans-serif' }}>
+              Terms of Service & Privacy Policy
+            </Typography>
+            <Typography
+              variant="subtitle2"
+              sx={{ mt: 1, opacity: 0.9, fontFamily: 'Poppins, sans-serif' }}
+            >
+              Effective Date: October 26, 2025
+            </Typography>
+          </Box>
+          <IconButton
+            onClick={onClose}
+            sx={{
+              color: 'white',
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              '&:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
+            }}
           >
-            Effective Date: October 22, 2025
-          </Typography>
+            <CloseIcon />
+          </IconButton>
         </Box>
 
-        {/* Content */}
-        <Box sx={{ p: 4, fontSize: '0.95rem', lineHeight: 1.8, color: '#333', fontFamily: 'Poppins, sans-serif' }}>
-          {/* Terms of Service Section */}
-          <Typography
-            variant="h5"
-            sx={{ color: '#1b5e20', fontWeight: 700, mb: 2, fontFamily: 'Poppins, sans-serif' }}
-          >
+        {/* --- THIS IS THE FIX: Make the content area scrollable --- */}
+        <Box sx={{ overflowY: 'auto', p: { xs: 3, md: 4 }, color: '#333' }}>
+          <Typography variant="h5" sx={{ color: '#1b5e20', fontWeight: 700, mb: 2, fontFamily: 'Poppins, sans-serif' }}>
             Terms of Service
           </Typography>
-          <Typography paragraph sx={{ fontFamily: 'Poppins, sans-serif' }}>
-            These Terms of Service ("Terms") govern your use of the AgriKlima System ("the Service").
-            By accessing or using the Service, you agree to be bound by these Terms.
-          </Typography>
+          
+          <Section title="1. Acceptance of Terms">
+            <p>By registering for and using the AgriKlima application ("Service"), you agree to be bound by these Terms of Service. If you do not agree, you may not use the Service.</p>
+          </Section>
 
-          <Divider sx={{ my: 2, borderColor: '#c8e6c9' }} />
+          <Section title="2. Description of Service">
+            <p>AgriKlima provides agricultural information services including location-based weather forecasts, crop and pest information libraries, and tools for tracking personal farm activities ("My Farm").</p>
+          </Section>
 
-          {[
-            {
-              title: '1. Eligibility',
-              text: 'You must be at least 13 years old (or the age of digital consent in your country) to use the Service...',
-            },
-            {
-              title: '2. User Responsibilities',
-              text: 'When using the Service, you agree to provide accurate, current, and complete information...',
-            },
-            {
-              title: '3. Agricultural Data Disclaimer',
-              text: 'The AgriKlima System provides climate and agricultural data analysis tools. While we strive for accuracy...',
-            },
-            {
-              title: '4. Intellectual Property',
-              text: 'All content, software, design, algorithms, and branding of the Service are owned by AgriKlima System...',
-            },
-            {
-              title: '5. User-Generated Content',
-              text: 'If you submit data, feedback, or other content to the Service, you grant us a non-exclusive license...',
-            },
-            {
-              title: '6. Account Termination',
-              text: 'We reserve the right to suspend or terminate accounts that violate these Terms...',
-            },
-            {
-              title: '7. Limitation of Liability',
-              text: 'To the fullest extent permitted by law, the Service is provided "as is" without warranties of any kind...',
-            },
-            {
-              title: '8. Service Modifications',
-              text: 'We reserve the right to modify, suspend, or discontinue any feature of the Service...',
-            },
-            {
-              title: '9. Governing Law',
-              text: 'These Terms shall be governed by the laws of your jurisdiction, without regard to conflict of law provisions.',
-            },
-            {
-              title: '10. Changes to Terms',
-              text: 'We may update these Terms periodically and notify users of significant changes...',
-            },
-            {
-              title: '11. Contact Us',
-              text: 'For questions about these Terms, contact us at: [your-email@agriklimasystem.com]',
-            },
-          ].map((section, i) => (
-            <Box key={i} sx={{ mb: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 600, color: '#388e3c', fontFamily: 'Poppins, sans-serif' }}
-              >
-                {section.title}
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'Poppins, sans-serif' }}>
-                {section.text}
-              </Typography>
-            </Box>
-          ))}
+          <Section title="3. Agricultural Data Disclaimer">
+            <p>The information provided by AgriKlima, including weather data, farming advice, and crop recommendations, is intended for informational purposes only. It is not a substitute for professional agricultural advice, diagnosis, or treatment. Weather and farming condition scores are generated based on data from third-party sources and predefined rules, and AgriKlima is not liable for any inaccuracies or for crop outcomes based on this information. Always consult with a local agricultural expert for specific advice.</p>
+          </Section>
 
-          {/* Privacy Policy Section */}
-          <Divider sx={{ my: 3, borderColor: '#a5d6a7' }} />
-          <Typography
-            variant="h5"
-            sx={{ color: '#1b5e20', fontWeight: 700, mb: 2, fontFamily: 'Poppins, sans-serif' }}
-          >
+          <Section title="4. User Responsibilities">
+            <p>You are responsible for the accuracy of the information you provide, such as your location and the planting dates of your crops. You agree not to use the Service for any unlawful purpose or to engage in any activity that disrupts the Service.</p>
+          </Section>
+
+          <Section title="5. Account Termination">
+            <p>We reserve the right to suspend or terminate your account at our discretion if you violate these Terms.</p>
+          </Section>
+          
+          <Divider sx={{ my: 4, borderColor: '#a5d6a7' }} />
+
+          <Typography variant="h5" sx={{ color: '#1b5e20', fontWeight: 700, mb: 2, fontFamily: 'Poppins, sans-serif' }}>
             Privacy Policy
           </Typography>
+          
+          <Section title="1. Information We Collect">
+            <ul>
+              <li><strong>Personal Information:</strong> When you register, we collect your name, email address, mobile number, date of birth, gender, and location. Your location is used to provide tailored weather forecasts and regional recommendations.</li>
+              <li><strong>Agricultural Data:</strong> We collect information about the crops you add to "My Farm," including the type of crop and its planting date. This is used to provide you with growth tracking and task management features.</li>
+              <li><strong>Usage Data:</strong> We may collect anonymous data about how you interact with our Service to help us improve its functionality.</li>
+            </ul>
+          </Section>
 
-          {[
-            {
-              title: '1. Information We Collect',
-              text: 'We collect personal, agricultural, and usage data to improve your experience...',
-            },
-            {
-              title: '2. How We Use Your Information',
-              text: 'We use collected data to provide insights, forecasts, and climate-based recommendations...',
-            },
-            {
-              title: '3. Sharing of Information',
-              text: 'We do not sell your personal data. We may share anonymized or aggregated information...',
-            },
-            {
-              title: '4. Data Security',
-              text: 'We implement encryption, access controls, and audits to secure data. However, no system is 100% secure...',
-            },
-            {
-              title: '5. Data Retention',
-              text: 'We retain your data while your account is active or as required by law...',
-            },
-            {
-              title: '6. Your Rights',
-              text: 'You may request access, correction, or deletion of your data...',
-            },
-            {
-              title: '7. International Data Transfers',
-              text: 'Your data may be processed in other countries with appropriate safeguards...',
-            },
-            {
-              title: '8. Third-Party Services',
-              text: 'We are not responsible for the privacy practices of linked third-party services...',
-            },
-            {
-              title: '9. Children’s Privacy',
-              text: 'The Service is not intended for children under 13 years old...',
-            },
-            {
-              title: '10. Changes to This Privacy Policy',
-              text: 'We may update this policy periodically and inform users of major updates...',
-            },
-            {
-              title: '11. Contact Us',
-              text: 'For privacy concerns, contact: [your-email@agriklimasystem.com]',
-            },
-          ].map((section, i) => (
-            <Box key={i} sx={{ mb: 2 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 600, color: '#388e3c', fontFamily: 'Poppins, sans-serif' }}
-              >
-                {section.title}
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 0.5, fontFamily: 'Poppins, sans-serif' }}>
-                {section.text}
-              </Typography>
-            </Box>
-          ))}
+          <Section title="2. How We Use Your Information">
+            <p>Your data is used to:</p>
+            <ul>
+              <li>Provide, personalize, and improve the Service.</li>
+              <li>Deliver location-specific weather data and farming advice.</li>
+              <li>Enable you to track your crop progress and manage tasks.</li>
+              <li>Communicate with you about your account or our services.</li>
+            </ul>
+          </Section>
+
+          <Section title="3. Data Sharing and Security">
+            <p>We do not sell, rent, or trade your personal information with third parties for marketing purposes. Your password is encrypted and we take reasonable measures to protect your data. We may share anonymized and aggregated agricultural data (e.g., "50% of users in Pampanga plant rice in June") for research purposes to improve local farming insights, but this data will not be personally identifiable.</p>
+          </Section>
+          
+          <Section title="4. Your Rights">
+            <p>You have the right to access and update your personal information through your profile page. You may also request the deletion of your account and associated data by contacting us.</p>
+          </Section>
+
+          <Section title="5. Contact Us">
+            <p>If you have any questions about these Terms or our Privacy Policy, please contact us at <strong>AgriKlima@gmail.com</strong>.</p>
+          </Section>
 
           <Divider sx={{ my: 3, borderColor: '#c8e6c9' }} />
-          <Typography
-            variant="body2"
-            sx={{ textAlign: 'center', color: '#555', mb: 2, fontFamily: 'Poppins, sans-serif' }}
-          >
-            © 2025 AgriKlima System. All rights reserved.
+          <Typography variant="body2" sx={{ textAlign: 'center', color: '#555', mb: 2, fontFamily: 'Poppins, sans-serif' }}>
+            © 2025 AgriKlima. All rights reserved.
           </Typography>
         </Box>
       </Paper>
