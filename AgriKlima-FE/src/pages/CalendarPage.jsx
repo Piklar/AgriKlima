@@ -142,7 +142,7 @@ const CalendarPage = () => {
 
             setTasks(tasksResponse?.data || []);
             
-            // FIX: Correctly extract the activeCrops array from the response object
+            // This is correct, it gets the activeUserCrops
             setUserCrops(userCropsResponse?.data?.activeCrops || []);
 
         } catch (error) {
@@ -212,7 +212,6 @@ const CalendarPage = () => {
 
         dayTasks.forEach(task => {
             if (task.recurrenceId) {
-                // If it's a recurring task, only show the earliest one for a given recurrence group on that day
                 if (!seenRecurrenceIds.has(task.recurrenceId.toString())) {
                     seenRecurrenceIds.add(task.recurrenceId.toString());
                     uniqueTasks.push(task);
@@ -222,7 +221,6 @@ const CalendarPage = () => {
             }
         });
 
-        // Sort tasks by status (incomplete first)
         uniqueTasks.sort((a, b) => (a.status === 'completed') - (b.status === 'completed'));
 
         return uniqueTasks;
@@ -334,7 +332,7 @@ const CalendarPage = () => {
                                             cursor: 'pointer', transition: 'all 0.18s ease',
                                             border: isSameDay(day, selectedDate) 
                                                 ? `2px solid ${theme.palette.secondary.main}` 
-                                                : '1px solid #f0f0f0', // subtle border for separation
+                                                : '1px solid #f0f0f0',
                                             '&:hover': { bgcolor: '#e8f4ff', transform: 'translateY(-2px)', zIndex: 2 },
                                             display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden',
                                             minHeight: { xs: '120px', md: '140px' }
@@ -345,7 +343,6 @@ const CalendarPage = () => {
                                             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', 
                                             width: '28px', height: '28px', borderRadius: '50%', fontWeight: 'bold', 
                                             backgroundColor: isToday(day) ? theme.palette.todayRing : 'transparent', mb: 1,
-                                            // Highlight today's number
                                             color: isToday(day) ? theme.palette.primary.dark : 'inherit',
                                             border: isToday(day) ? `2px solid ${theme.palette.primary.main}` : 'none',
                                             position: 'relative', zIndex: 3
@@ -360,11 +357,15 @@ const CalendarPage = () => {
                                         
                                         {/* Events Container */}
                                         <Box sx={{ flex: 1, overflowY: 'hidden', fontSize: '0.75rem' }}>
+                                            
+                                            {/* --- FIX #1 --- */}
                                             {/* Planted Crops */}
                                             {dayCropsPlanted.slice(0, 1).map(crop => (
                                                 <Box key={`plant-${crop._id}`} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                                                     <LocalFloristIcon sx={{ fontSize: '0.85rem', color: 'success.main' }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Planted: {crop.name}</Typography>
+                                                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                                                        Planted: {crop.varietyId?.parentCrop?.name}
+                                                    </Typography>
                                                 </Box>
                                             ))}
                                             {dayCropsPlanted.length > 1 && <Typography variant="caption" color="text.secondary">+{dayCropsPlanted.length - 1} more planted</Typography>}
@@ -373,36 +374,40 @@ const CalendarPage = () => {
                                             {dayCropsToHarvest.slice(0, 1).map(crop => (
                                                 <Box key={`harvest-${crop._id}`} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                                                     <ContentCutIcon sx={{ fontSize: '0.85rem', color: 'warning.main' }} />
-                                                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Harvest: {crop.name}</Typography>
+                                                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                                                        Harvest: {crop.varietyId?.parentCrop?.name}
+                                                    </Typography>
                                                 </Box>
                                             ))}
                                             {dayCropsToHarvest.length > 1 && <Typography variant="caption" color="text.secondary">+{dayCropsToHarvest.length - 1} more to harvest</Typography>}
 
                                             {/* Tasks with Crop Color Coding */}
-                                            {dayDayTasks.slice(0, 3).map(task => (
-                                                <Tooltip key={task._id} title={task.title} placement="top">
-                                                    <Box 
-                                                        sx={{ 
-                                                            display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5, p: 0.5, borderRadius: 1,
-                                                            backgroundColor: task.cropName 
-                                                                ? `${getCropColor(task.cropName)}20` 
-                                                                : 'rgba(0,0,0,0.05)',
-                                                            borderLeft: `3px solid ${getCropColor(task.cropName)}`,
-                                                            opacity: task.status === 'completed' ? 0.6 : 1
-                                                        }}
-                                                    >
-                                                        <CircleIcon sx={{ 
-                                                            fontSize: '0.5rem', 
-                                                            color: task.status === 'completed' ? 'success.main' : getCropColor(task.cropName)
-                                                        }} />
-                                                        <Typography variant="caption" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: task.status === 'completed' ? 'line-through' : 'none' }}>
-                                                            {task.title}
-                                                        </Typography>
-                                                    </Box>
-                                                </Tooltip>
-                                            ))}
+                                            {dayDayTasks.slice(0, 3).map(task => {
+                                                const cropName = task.cropId?.name; 
+                                                return (
+                                                    <Tooltip key={task._id} title={`${cropName ? `[${cropName}] ` : ''}${task.title}`} placement="top">
+                                                        <Box 
+                                                            sx={{ 
+                                                                display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5, p: 0.5, borderRadius: 1,
+                                                                backgroundColor: cropName 
+                                                                    ? `${getCropColor(cropName)}20` 
+                                                                    : 'rgba(0,0,0,0.05)',
+                                                                borderLeft: `3px solid ${getCropColor(cropName)}`,
+                                                                opacity: task.status === 'completed' ? 0.6 : 1
+                                                            }}
+                                                        >
+                                                            <CircleIcon sx={{ 
+                                                                fontSize: '0.5rem', 
+                                                                color: task.status === 'completed' ? 'success.main' : getCropColor(cropName)
+                                                            }} />
+                                                            <Typography variant="caption" sx={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: task.status === 'completed' ? 'line-through' : 'none' }}>
+                                                                {task.title}
+                                                            </Typography>
+                                                        </Box>
+                                                    </Tooltip>
+                                                );
+                                            })}
                                             {dayDayTasks.length > 3 && <Typography variant="caption" color="text.secondary">+{dayDayTasks.length - 3} more tasks</Typography>}
-
                                         </Box>
                                     </Box>
                                 );
@@ -435,6 +440,7 @@ const CalendarPage = () => {
                                 </Box>
                             )}
 
+                            {/* --- FIX #2 --- */}
                             {/* Planting Events */}
                             {cropsPlanted.length > 0 && (
                                 <Box sx={{ mb: 2 }}>
@@ -446,8 +452,8 @@ const CalendarPage = () => {
                                                     <LocalFloristIcon color="success" />
                                                 </ListItemIcon>
                                                 <ListItemText
-                                                    primary={crop.name}
-                                                    secondary="Planted on this date"
+                                                    primary={crop.varietyId?.parentCrop?.name}
+                                                    secondary={crop.varietyId?.name || "Planted on this date"}
                                                     primaryTypographyProps={{ fontWeight: 'bold' }}
                                                 />
                                             </ListItem>
@@ -467,8 +473,8 @@ const CalendarPage = () => {
                                                     <ContentCutIcon color="warning" />
                                                 </ListItemIcon>
                                                 <ListItemText
-                                                    primary={crop.name}
-                                                    secondary="Estimated harvest date"
+                                                    primary={crop.varietyId?.parentCrop?.name}
+                                                    secondary={crop.varietyId?.name || "Estimated harvest date"}
                                                     primaryTypographyProps={{ fontWeight: 'bold' }}
                                                 />
                                             </ListItem>
@@ -482,54 +488,57 @@ const CalendarPage = () => {
                                 <Box>
                                     <Typography variant="subtitle2" gutterBottom>Tasks Due</Typography>
                                     <List dense disablePadding>
-                                        {tasksForSelectedDay.map((task) => (
-                                            <ListItem 
-                                                key={`sidebar-task-${task._id}`}
-                                                disableGutters
-                                                sx={{
-                                                    borderLeft: task.cropName 
-                                                        ? `4px solid ${getCropColor(task.cropName)}` 
-                                                        : 'none',
-                                                    pl: task.cropName ? 1 : 2,
-                                                    mb: 1,
-                                                    backgroundColor: task.status === 'completed' ? '#f1f8f4' : 'transparent',
-                                                    opacity: task.status === 'completed' ? 0.7 : 1
-                                                }}
-                                            >
-                                                <Checkbox
-                                                    checked={task.status === 'completed'}
-                                                    onChange={() => confirmToggle(task)}
-                                                    edge="start"
-                                                    color="success"
-                                                />
-                                                <ListItemText
-                                                    primary={
-                                                        <Typography 
-                                                            variant="body2" 
-                                                            sx={{ 
-                                                                fontWeight: 'bold', 
-                                                                textDecoration: task.status === 'completed' ? 'line-through' : 'none' 
-                                                            }}
-                                                        >
-                                                            {task.title}
-                                                        </Typography>
-                                                    }
-                                                    secondary={task.cropName ? `[${task.cropName}] ${task.description || ''}` : task.description}
-                                                    secondaryTypographyProps={{ 
-                                                        style: { 
-                                                            whiteSpace: 'nowrap', 
-                                                            overflow: 'hidden', 
-                                                            textOverflow: 'ellipsis' 
-                                                        } 
+                                        {tasksForSelectedDay.map((task) => {
+                                            const cropName = task.cropId?.name;
+                                            return (
+                                                <ListItem 
+                                                    key={`sidebar-task-${task._id}`}
+                                                    disableGutters
+                                                    sx={{
+                                                        borderLeft: cropName 
+                                                            ? `4px solid ${getCropColor(cropName)}` 
+                                                            : 'none',
+                                                        pl: cropName ? 1 : 2,
+                                                        mb: 1,
+                                                        backgroundColor: task.status === 'completed' ? '#f1f8f4' : 'transparent',
+                                                        opacity: task.status === 'completed' ? 0.7 : 1
                                                     }}
-                                                />
-                                                <ListItemSecondaryAction>
-                                                    <Tooltip title={task.frequency}>
-                                                        <CircleIcon sx={{ fontSize: '0.5rem', color: task.cropName ? getCropColor(task.cropName) : 'grey.500' }} />
-                                                    </Tooltip>
-                                                </ListItemSecondaryAction>
-                                            </ListItem>
-                                        ))}
+                                                >
+                                                    <Checkbox
+                                                        checked={task.status === 'completed'}
+                                                        onChange={() => confirmToggle(task)}
+                                                        edge="start"
+                                                        color="success"
+                                                    />
+                                                    <ListItemText
+                                                        primary={
+                                                            <Typography 
+                                                                variant="body2" 
+                                                                sx={{ 
+                                                                    fontWeight: 'bold', 
+                                                                    textDecoration: task.status === 'completed' ? 'line-through' : 'none' 
+                                                                }}
+                                                            >
+                                                                {task.title}
+                                                            </Typography>
+                                                        }
+                                                        secondary={cropName ? `[${cropName}] ${task.description || ''}` : task.description}
+                                                        secondaryTypographyProps={{ 
+                                                            style: { 
+                                                                whiteSpace: 'nowrap', 
+                                                                overflow: 'hidden', 
+                                                                textOverflow: 'ellipsis' 
+                                                            } 
+                                                        }}
+                                                    />
+                                                    <ListItemSecondaryAction>
+                                                        <Tooltip title={task.frequency}>
+                                                            <CircleIcon sx={{ fontSize: '0.5rem', color: cropName ? getCropColor(cropName) : 'grey.500' }} />
+                                                        </Tooltip>
+                                                    </ListItemSecondaryAction>
+                                                </ListItem>
+                                            );
+                                        })}
                                     </List>
                                 </Box>
                             )}

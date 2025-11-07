@@ -1,12 +1,22 @@
 // src/pages/Admin/ManageCrops.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Typography, Paper, Avatar, TextField, InputAdornment, Pagination } from '@mui/material';
+import {
+  Box,
+  Button,
+  Typography,
+  Paper,
+  Avatar,
+  TextField,
+  InputAdornment,
+  Pagination,
+} from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import Swal from 'sweetalert2';
 import * as api from '../../services/api';
 import AdminFormModal from '../../components/AdminFormModal';
+import VarietyManagementModal from '../../components/VarietyManagementModal'; // ✅ NEW IMPORT
 import { useAuth } from '../../context/AuthContext';
 
 // ✨ SweetAlert2 agricultural-themed styling
@@ -60,6 +70,20 @@ const ManageCrops = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
 
+  // ✅ Variety modal states
+  const [isVarietyModalOpen, setIsVarietyModalOpen] = useState(false);
+  const [selectedCropForVarieties, setSelectedCropForVarieties] = useState(null);
+
+  const handleOpenVarietyModal = (crop) => {
+    setSelectedCropForVarieties(crop);
+    setIsVarietyModalOpen(true);
+  };
+
+  const handleCloseVarietyModal = () => {
+    setIsVarietyModalOpen(false);
+    setSelectedCropForVarieties(null);
+  };
+
   // 📥 Fetch crops
   const fetchCrops = useCallback(async () => {
     setLoading(true);
@@ -74,7 +98,7 @@ const ManageCrops = () => {
         icon: 'error',
         background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
         color: '#2e7d32',
-        didOpen: styleSweetAlert
+        didOpen: styleSweetAlert,
       });
     } finally {
       setLoading(false);
@@ -117,7 +141,7 @@ const ManageCrops = () => {
         icon: 'error',
         background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
         color: '#2e7d32',
-        didOpen: styleSweetAlert
+        didOpen: styleSweetAlert,
       });
       return;
     }
@@ -136,7 +160,7 @@ const ManageCrops = () => {
             timer: 1500,
             background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
             color: '#2e7d32',
-            didOpen: styleSweetAlert
+            didOpen: styleSweetAlert,
           });
         }
       } else {
@@ -156,20 +180,21 @@ const ManageCrops = () => {
         icon: 'success',
         background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
         color: '#2e7d32',
-        didOpen: styleSweetAlert
+        didOpen: styleSweetAlert,
       });
 
       handleCloseModal();
       fetchCrops();
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
+      const errorMessage =
+        error.response?.data?.error || 'An unexpected error occurred.';
       Swal.fire({
         title: '❌ Error',
         text: `Failed to save the crop: ${errorMessage}`,
         icon: 'error',
         background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
         color: '#2e7d32',
-        didOpen: styleSweetAlert
+        didOpen: styleSweetAlert,
       });
     }
   };
@@ -183,7 +208,7 @@ const ManageCrops = () => {
         icon: 'error',
         background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
         color: '#2e7d32',
-        didOpen: styleSweetAlert
+        didOpen: styleSweetAlert,
       });
       return;
     }
@@ -197,7 +222,7 @@ const ManageCrops = () => {
       cancelButtonText: 'Cancel',
       background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
       color: '#2e7d32',
-      didOpen: styleSweetAlert
+      didOpen: styleSweetAlert,
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -208,17 +233,19 @@ const ManageCrops = () => {
             icon: 'success',
             background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
             color: '#2e7d32',
-            didOpen: styleSweetAlert
+            didOpen: styleSweetAlert,
           });
           fetchCrops();
         } catch (error) {
           Swal.fire({
             title: '❌ Error',
-            text: `Failed to delete the crop: ${error.response?.data?.error || 'An unexpected error occurred.'}`,
+            text: `Failed to delete the crop: ${
+              error.response?.data?.error || 'An unexpected error occurred.'
+            }`,
             icon: 'error',
             background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
             color: '#2e7d32',
-            didOpen: styleSweetAlert
+            didOpen: styleSweetAlert,
           });
         }
       }
@@ -245,6 +272,7 @@ const ManageCrops = () => {
     { name: 'marketInfo.cookingTips', label: 'Cooking Tips', type: 'textarea', isArray: true, rows: 4, group: 'Health & Market' },
   ];
 
+  // ✅ Updated columns with Varieties button
   const columns = [
     {
       field: 'imageUrl',
@@ -263,14 +291,23 @@ const ManageCrops = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 180,
+      width: 280, // ⬆️ Increased width for new button
       sortable: false,
       renderCell: (params) => (
-        <Box>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            size="small"
+            variant="contained"
+            color="primary"
+            sx={{ borderRadius: 2 }}
+            onClick={() => handleOpenVarietyModal(params.row)}
+          >
+            Varieties
+          </Button>
           <Button
             size="small"
             variant="outlined"
-            sx={{ mr: 1, borderRadius: 2 }}
+            sx={{ borderRadius: 2 }}
             onClick={() => handleOpenEditModal(params.row)}
           >
             Edit
@@ -363,7 +400,7 @@ const ManageCrops = () => {
         <Pagination count={totalPages} page={page} onChange={handlePageChange} color="primary" />
       </Box>
 
-      {/* Modal */}
+      {/* Modals */}
       <AdminFormModal
         open={isModalOpen}
         onClose={handleCloseModal}
@@ -372,6 +409,13 @@ const ManageCrops = () => {
         mode={modalMode}
         title={modalMode === 'add' ? 'Add New Crop' : 'Edit Crop'}
         fields={cropFields}
+      />
+
+      {/* ✅ Variety Management Modal */}
+      <VarietyManagementModal
+        open={isVarietyModalOpen}
+        onClose={handleCloseVarietyModal}
+        crop={selectedCropForVarieties}
       />
     </Box>
   );

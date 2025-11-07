@@ -76,6 +76,12 @@ export const uploadPestImage = (id, formData) => API.patch(`/pests/${id}/upload-
     headers: { 'Content-Type': 'multipart/form-data' }
 });
 
+// ---- VARIETY ROUTES (NEW SECTION) ----
+export const getVarietiesForCrop = (cropId) => API.get(`/varieties/crop/${cropId}`);
+export const addVariety = (data) => API.post("/varieties/add", data);
+export const updateVariety = (id, data) => API.put(`/varieties/${id}`, data);
+export const deleteVariety = (id) => API.delete(`/varieties/${id}`);
+
 // ---- TASK ROUTES ----
 export const getTasks = () => API.get("/tasks"); // For Admin
 export const getMyTasks = (params) => API.get("/tasks/my-tasks", { params }); // For Users
