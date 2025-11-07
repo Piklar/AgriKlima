@@ -160,8 +160,10 @@ const CropsPage = () => {
     fetchPageData();
   }, [fetchPageData]);
 
+  // --- THIS IS THE CORRECT LOGIC ---
   const handleOpenCropOverlay = (crop) => { setSelectedCrop(crop); setIsCropOverlayOpen(true); };
   const handleCloseCropOverlay = () => { setIsCropOverlayOpen(false); setSelectedCrop(null); };
+  
   const handleOpenNewsOverlay = (article) => { setSelectedArticle(article); setIsNewsOverlayOpen(true); };
   const handleCloseNewsOverlay = () => { setIsNewsOverlayOpen(false); setSelectedArticle(null); };
 
@@ -291,7 +293,6 @@ const CropsPage = () => {
             <Container maxWidth="md">
               <Box sx={{ textAlign: 'center', px: { xs: 2, md: 6 } }}>
                 <Box sx={{ display: 'inline-block', textAlign: 'left', position: 'relative', maxWidth: 900, width: '100%' }}>
-                  {/* left accent bar */}
                   <Box sx={{
                     position: 'absolute',
                     left: -20,
@@ -340,28 +341,27 @@ const CropsPage = () => {
               </Typography>
             </Box>
             <Grid 
-  container 
-  spacing={4} 
-  justifyContent={isMobile ? "center" : "flex-start"}
->
-  {loading ? (
-    [...Array(3)].map((_, index) => (
-      <Grid item xs={12} md={4} key={index}>
-        <ArticleCard loading={true} />
-      </Grid>
-    ))
-  ) : (
-    articles.map(article => (
-      <Grid item xs={12} md={4} key={article._id}>
-        <ArticleCard
-          article={article}
-          onClick={handleOpenNewsOverlay}
-        />
-      </Grid>
-    ))
-  )}
-</Grid>
-
+              container 
+              spacing={4} 
+              justifyContent={isMobile ? "center" : "flex-start"}
+            >
+              {loading ? (
+                [...Array(3)].map((_, index) => (
+                  <Grid item xs={12} md={4} key={index}>
+                    <ArticleCard loading={true} />
+                  </Grid>
+                ))
+              ) : (
+                articles.map(article => (
+                  <Grid item xs={12} md={4} key={article._id}>
+                    <ArticleCard
+                      article={article}
+                      onClick={handleOpenNewsOverlay}
+                    />
+                  </Grid>
+                ))
+              )}
+            </Grid>
           </Container>
 
           {/* Overlays */}

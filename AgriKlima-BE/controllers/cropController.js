@@ -1,6 +1,7 @@
 // backend/controllers/cropController.js
 
 const Crop = require('../models/Crop');
+const Variety = require('../models/Variety');
 const cloudinary = require('../config/cloudinary');
 
 // --- [CREATE] Add a new crop ---
@@ -113,14 +114,24 @@ module.exports.getAllCrops = async (req, res) => {
     }
 };
 
-// --- [READ] Get a single crop by ID ---
-module.exports.getCropById = (req, res) => {
-    Crop.findById(req.params.cropId)
-        .then(crop => {
-            if (!crop) return res.status(404).send({ error: "Crop not found" });
-            return res.status(200).send(crop);
-        })
-        .catch(err => res.status(500).send({ error: "Failed to fetch crop", details: err.message }));
+// Get a single crop by ID, AND get its varieties
+module.exports.getCropById = async (req, res) => {
+    try {
+        const crop = await Crop.findById(req.params.cropId).lean(); // Use .lean() for a plain object
+        if (!crop) return res.status(404).send({ error: "Crop not found" });
+
+        const varieties = await Variety.find({ parentCrop: req.params.cropId });
+        
+        // Combine the crop and its varieties into one response
+        const response = {
+            ...crop,
+            varieties: varieties
+        };
+
+        return res.status(200).send(response);
+    } catch(err) {
+        res.status(500).send({ error: "Failed to fetch crop details", details: err.message });
+    }
 };
 
 // --- [UPDATE] Update a crop's information ---

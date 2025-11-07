@@ -1,10 +1,22 @@
+// src/components/CropDetailOverlay.jsx
+
 import React, { useState } from 'react';
-import { Modal, Box, Typography, Button, Grid, Paper, Chip, IconButton } from '@mui/material';
+import {
+  Modal, Box, Typography, Button, Grid, Paper, Chip, IconButton,
+  List, ListItem, Avatar, ListItemText,
+  // --- ADDED FOR NEW MODAL FLOW ---
+  Dialog, DialogTitle, DialogContent, DialogActions, Stack, 
+  CircularProgress, TextField, ListItemButton, ListItemAvatar
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import AddUserCropModal from './AddUserCropModal';
 import { useAuth } from '../context/AuthContext';
 
-// --- Reusable Info Components (aligned with PestDetailOverlay style) ---
+// --- ADDED FOR NEW MODAL FLOW ---
+import { format } from 'date-fns';
+import * as api from '../services/api';
+import Swal from 'sweetalert2';
+
+// --- Reusable Info Components ---
 const InfoItem = ({ title, content }) => (
   <Box mb={2}>
     <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5, color: 'text.secondary' }}>
@@ -72,15 +84,163 @@ const TabButton = ({ label, activeTab, setActiveTab }) => {
   );
 };
 
+// -----------------------------------------------------------------------------
+// --- ADDED: "ADD CROP" MODAL FLOW COMPONENTS ---
+// -----------------------------------------------------------------------------
+
+// STEP 2: Asks if user wants a specific variety or a common one
+const VarietyChoiceModal = ({ open, onClose, onChoice, cropName }) => (
+  <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <DialogTitle fontWeight="bold">Add {cropName}</DialogTitle>
+    <DialogContent>
+      <Typography>Are you planting a specific variety of {cropName}, or a common type?</Typography>
+    </DialogContent>
+    <DialogActions sx={{ p: 2 }}>
+      <Button onClick={() => onChoice('common')} variant="outlined">Add as Common Crop</Button>
+      <Button onClick={() => onChoice('specific')} variant="contained">Select Specific Variety</Button>
+    </DialogActions>
+  </Dialog>
+);
+
+// STEP 3: Shows list of specific varieties for the selected crop
+const VarietySelectionModal = ({ open, onClose, varieties, onSelectVariety, cropName }) => (
+  <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Paper sx={{ width: '80%', maxWidth: 700, maxHeight: '80vh', overflowY: 'auto', p: 3, borderRadius: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5" fontWeight="bold">Select a {cropName} Variety</Typography>
+        <IconButton onClick={onClose}><CloseIcon /></IconButton>
+      </Box>
+      <List>
+        {varieties.map(variety => (
+          <ListItemButton key={variety._id} onClick={() => onSelectVariety(variety)} sx={{ borderRadius: 2, mb: 1, '&:hover': { bgcolor: 'action.hover' } }}>
+            <ListItemAvatar><Avatar src={variety.imageUrl} variant="rounded" sx={{ width: 56, height: 56, mr: 2 }} /></ListItemAvatar>
+            <ListItemText primary={variety.name} secondary={`${variety.growingDuration} days growing duration`} />
+          </ListItemButton>
+        ))}
+      </List>
+    </Paper>
+  </Modal>
+);
+
+// STEP 4: Final modal to set planting date
+const AddPlantingDateModal = ({ open, onClose, varietyData, onCropAdded }) => {
+  const [plantingDate, setPlantingDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => { if (open) setPlantingDate(format(new Date(), 'yyyy-MM-dd')); }, [open]);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      await api.addUserCrop({ varietyId: varietyData._id, plantingDate });
+      Swal.fire('Success', `${varietyData.name} has been added to your farm.`, 'success');
+      onCropAdded();
+      onClose();
+    } catch (err) {
+      Swal.fire('Error', 'Could not add crop to farm.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!varietyData) return null;
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle fontWeight="bold">Add {varietyData.name}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          <Typography>Please confirm the planting date for this variety.</Typography>
+          <TextField 
+            label="Planting Date" 
+            type="date" 
+            value={plantingDate} 
+            onChange={(e) => setPlantingDate(e.target.value)} 
+            InputLabelProps={{ shrink: true }} 
+            fullWidth 
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained" disabled={loading}>
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Add to Farm'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+
 // --- Main Overlay Component ---
 const CropDetailOverlay = ({ open, onClose, cropData }) => {
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('Overview');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // --- ADDED: State for the "Add Crop" modal flow ---
+  const [varietiesForCrop, setVarietiesForCrop] = useState([]);
+  const [loadingVarieties, setLoadingVarieties] = useState(false);
+  const [isVarietyChoiceOpen, setIsVarietyChoiceOpen] = useState(false);
+  const [isVarietyListOpen, setIsVarietyListOpen] = useState(false);
+  const [isAddPlantingDateOpen, setIsAddPlantingDateOpen] = useState(false);
+  const [varietyToAdd, setVarietyToAdd] = useState(null);
+
+  // Reset tab when modal opens
+  React.useEffect(() => {
+    if (open) {
+      setActiveTab('Overview');
+    }
+  }, [open]);
 
   if (!cropData) return null;
 
-  const handleCropAdded = () => setIsAddModalOpen(false);
+  
+  // --- ADDED: Handlers for the "Add Crop" modal flow ---
+
+  // STEP 2: User chooses "Common" or "Specific"
+  const handleVarietyChoice = async (choice) => {
+    setIsVarietyChoiceOpen(false);
+    setLoadingVarieties(true);
+
+    try {
+      // Use the cropData from props to fetch its varieties
+      const response = await api.getVarietiesForCrop(cropData._id);
+      const varieties = response.data || [];
+
+      if (varieties.length === 0) {
+        Swal.fire('No Varieties Found', `There are no varieties listed for ${cropData.name}. Please add one via the admin panel.`, 'info');
+        setLoadingVarieties(false);
+        return;
+      }
+
+      if (choice === 'specific') {
+        setVarietiesForCrop(varieties);
+        setTimeout(() => setIsVarietyListOpen(true), 300);
+      } else { // 'common' choice
+        let defaultVariety = varieties.find(v => v.name.toLowerCase().includes('common') || v.name.toLowerCase().includes('generic')) || varieties[0];
+        setVarietyToAdd(defaultVariety);
+        setTimeout(() => setIsAddPlantingDateOpen(true), 300);
+      }
+    } catch (error) {
+       Swal.fire('Error', 'Could not fetch crop varieties.', 'error');
+    } finally {
+        setLoadingVarieties(false);
+    }
+  };
+  
+  // STEP 3: User picks a specific variety from the list
+  const handleVarietySelected = (variety) => {
+    setVarietyToAdd(variety);
+    setIsVarietyListOpen(false);
+    setTimeout(() => setIsAddPlantingDateOpen(true), 300);
+  };
+
+  // STEP 4: User confirms planting date, flow is complete
+  const handleFinalCropAdd = () => {
+    setIsAddPlantingDateOpen(false);
+    setVarietyToAdd(null);
+    onClose(); // Close the main CropDetailOverlay
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -136,6 +296,13 @@ const CropDetailOverlay = ({ open, onClose, cropData }) => {
                 <InfoItem title="Harvest Time" content={cropData.overview?.harvestTime || 'N/A'} />
               </Grid>
             </Grid>
+
+            {/* --- MODIFIED: This section is now removed as per the new flow --- */}
+            {/* <Box mt={4}>
+              <Typography variant="h6" ...>Available Varieties</Typography>
+              <List> ... </List>
+            </Box>
+            */}
           </>
         );
     }
@@ -183,30 +350,33 @@ const CropDetailOverlay = ({ open, onClose, cropData }) => {
               p: 4
             }}
           >
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <Typography variant="h3" sx={{ fontWeight: 'bold' }}>
-                {cropData.name}
-              </Typography>
-              <Chip
-                label={cropData.season || 'Crop'}
-                sx={{ backgroundColor: 'rgba(255,255,255,0.18)', color: 'white', mt: 1 }}
-              />
-
-              {isAuthenticated && (
-                <Button
-                  variant="contained"
-                  onClick={() => setIsAddModalOpen(true)}
-                  sx={{
-                    bgcolor: 'var(--light-green)',
-                    color: 'black',
-                    mt: 2,
-                    '&:hover': { bgcolor: 'white' }
-                  }}
-                >
-                  Add to My Farm
-                </Button>
-              )}
-            </Box>
+            <Typography variant="h3" sx={{ fontWeight: 'bold' }}>
+              {cropData.name}
+            </Typography>
+            <Chip
+              label={cropData.season || 'Crop'}
+              sx={{ backgroundColor: 'rgba(255,255,255,0.18)', color: 'white', mt: 1, alignSelf: 'flex-start' }}
+            />
+            
+            {/* --- THIS IS THE "ADD" BUTTON --- */}
+            {isAuthenticated && (
+              <Button 
+                variant="contained" 
+                size="medium"
+                // STEP 1: This button starts the flow
+                onClick={() => setIsVarietyChoiceOpen(true)} 
+                sx={{ 
+                  mt: 2, 
+                  bgcolor: 'white', 
+                  color: 'primary.dark', 
+                  '&:hover': { bgcolor: '#f0f0f0' },
+                  alignSelf: 'flex-start'
+                }}
+              >
+                Add to My Farm
+              </Button>
+            )}
+            
           </Box>
 
           {/* Tabs & Content */}
@@ -222,12 +392,25 @@ const CropDetailOverlay = ({ open, onClose, cropData }) => {
         </Paper>
       </Modal>
 
-      {/* Add Crop Modal */}
-      <AddUserCropModal
-        open={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        cropData={cropData}
-        onCropAdded={handleCropAdded}
+      {/* --- ADDED: Modals for the "Add Crop" flow --- */}
+      <VarietyChoiceModal 
+        open={isVarietyChoiceOpen} 
+        onClose={() => setIsVarietyChoiceOpen(false)} 
+        onChoice={handleVarietyChoice} 
+        cropName={cropData?.name} 
+      />
+      <VarietySelectionModal 
+        open={isVarietyListOpen || loadingVarieties} 
+        onClose={() => setIsVarietyListOpen(false)} 
+        varieties={varietiesForCrop} 
+        onSelectVariety={handleVarietySelected} 
+        cropName={cropData?.name} 
+      />
+      <AddPlantingDateModal 
+        open={isAddPlantingDateOpen} 
+        onClose={() => setIsAddPlantingDateOpen(false)} 
+        varietyData={varietyToAdd} 
+        onCropAdded={handleFinalCropAdd} 
       />
     </>
   );

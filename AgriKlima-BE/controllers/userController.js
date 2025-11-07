@@ -1,6 +1,7 @@
 // backend/controllers/userController.js
 
 const User = require("../models/User");
+const Variety = require("../models/Variety");
 const Crop = require("../models/Crop");
 const bcrypt = require("bcryptjs");
 const auth = require("../auth");
@@ -336,27 +337,26 @@ module.exports.deleteUser = (req, res) => {
         .catch(err => res.status(500).send({ error: "Failed to delete user" }));
 };
 
-// === [USER] ADD USER CROP ===
+// === [USER] ADD USER CROP (NOW ADDS A VARIETY) ===
 module.exports.addUserCrop = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { cropId, plantingDate } = req.body;
+        const { varietyId, plantingDate } = req.body; // <-- Changed from cropId to varietyId
 
-        if (!cropId || !plantingDate) {
-            return res.status(400).send({ error: 'Crop ID and planting date are required.' });
+        if (!varietyId || !plantingDate) {
+            return res.status(400).send({ error: 'Variety ID and planting date are required.' });
         }
 
-        const masterCrop = await Crop.findById(cropId);
-        if (!masterCrop || typeof masterCrop.growingDuration !== 'number') {
-            return res.status(404).send({ error: 'Crop not found or is missing a valid growing duration.' });
+        const variety = await Variety.findById(varietyId);
+        if (!variety || typeof variety.growingDuration !== 'number') {
+            return res.status(404).send({ error: 'Variety not found or is missing a valid growing duration.' });
         }
 
         const pDate = new Date(plantingDate);
-        const harvestDate = add(pDate, { days: masterCrop.growingDuration });
+        const harvestDate = add(pDate, { days: variety.growingDuration });
 
         const newUserCrop = {
-            cropId: masterCrop._id,
-            name: masterCrop.name,
+            varietyId: variety._id,
             plantingDate: pDate,
             estimatedHarvestDate: harvestDate,
             status: 'active'
@@ -368,7 +368,7 @@ module.exports.addUserCrop = async (req, res) => {
             { new: true }
         ).select('-password');
 
-        res.status(200).send({ message: 'Crop added to your farm successfully!', user: updatedUser });
+        res.status(200).send({ message: 'Crop variety added to your farm successfully!', user: updatedUser });
 
     } catch (error) {
         console.error("Error adding user crop:", error);
@@ -376,12 +376,20 @@ module.exports.addUserCrop = async (req, res) => {
     }
 };
 
-// === [USER] GET USER CROPS ===
+// === [USER] GET USER CROPS (NOW POPULATES VARIETY AND ITS PARENT) ===
 module.exports.getUserCrops = async (req, res) => {
     try {
         const user = await User.findById(req.user.id)
             .select('userCrops')
-            .populate('userCrops.cropId', 'imageUrl');
+            .populate({
+                path: 'userCrops.varietyId',
+                model: 'Variety',
+                populate: {
+                    path: 'parentCrop',
+                    model: 'Crop',
+                    select: 'name' // We only need the parent's name
+                }
+            });
 
         if (!user) {
             return res.status(404).send({ error: 'User not found' });

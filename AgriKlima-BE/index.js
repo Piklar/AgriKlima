@@ -14,6 +14,7 @@ const newsRoutes = require("./routes/newsRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
 const weatherRulesRoutes = require('./routes/weatherRulesRoutes');
 const taskRoutes = require("./routes/taskRoutes");
+const varietyRoutes = require("./routes/varietyRoutes");
 
 const PORT = process.env.PORT || 4000;
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -36,7 +37,8 @@ app.use("/pests", pestRoutes);
 app.use("/news", newsRoutes);
 app.use("/weather", weatherRoutes);
 app.use("/tasks", taskRoutes); 
-app.use('/api/weather-rules', weatherRulesRoutes);
+app.use("/varieties", varietyRoutes);
+app.use('/weather-rules', weatherRulesRoutes);
 
 app.use(cors({
   origin: [vercelFrontendURL, "http://localhost:5173"] // Allow both deployed and local frontends
