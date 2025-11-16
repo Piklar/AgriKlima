@@ -81,6 +81,11 @@ export const getVarietiesForCrop = (cropId) => API.get(`/varieties/crop/${cropId
 export const addVariety = (data) => API.post("/varieties/add", data);
 export const updateVariety = (id, data) => API.put(`/varieties/${id}`, data);
 export const deleteVariety = (id) => API.delete(`/varieties/${id}`);
+export const uploadVarietyImage = (id, formData) => {
+  return API.patch(`/varieties/${id}/upload-image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
 
 // ---- TASK ROUTES ----
 export const getTasks = () => API.get("/tasks"); // For Admin

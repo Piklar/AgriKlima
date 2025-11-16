@@ -1,6 +1,7 @@
 // backend/controllers/varietyController.js
 
 const Variety = require('../models/Variety');
+const cloudinary = require('../config/cloudinary'); // Import cloudinary config
 
 // Get all varieties for a specific parent crop
 exports.getVarietiesForCrop = async (req, res) => {
@@ -36,6 +37,46 @@ exports.updateVariety = async (req, res) => {
         res.status(200).json(updatedVariety);
     } catch (error) {
         res.status(500).json({ error: "Failed to update variety", details: error.message });
+    }
+};
+
+// Update variety image
+exports.updateVarietyImage = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).send({ error: 'No file uploaded.' });
+        }
+        
+        // Convert buffer to base64 URI
+        const fileBase64 = req.file.buffer.toString('base64');
+        const fileUri = `data:${req.file.mimetype};base64,${fileBase64}`;
+
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(fileUri, {
+            folder: "agriklima_varieties", // Use a separate folder for varieties
+            public_id: req.params.varietyId, // Use variety ID as public_id
+            overwrite: true,
+        });
+
+        // Update the variety in the database
+        const updatedVariety = await Variety.findByIdAndUpdate(
+            req.params.varietyId,
+            { $set: { imageUrl: result.secure_url } },
+            { new: true }
+        );
+
+        if (!updatedVariety) {
+            return res.status(404).send({ error: 'Variety not found' });
+        }
+        
+        res.status(200).send({ 
+          message: 'Variety image updated successfully.', 
+          variety: updatedVariety 
+        });
+
+    } catch (error) {
+        console.error('Error updating variety image:', error);
+        res.status(500).send({ error: 'Internal server error.' });
     }
 };
 
