@@ -145,7 +145,7 @@ const CropsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const [cropsResponse, newsResponse] = await Promise.all([api.getCrops(), api.getNews()]);
+      const [cropsResponse, newsResponse] = await Promise.all([api.getCrops({ limit: 1000 }), api.getNews({ limit: 1000 })]);
       setCrops(cropsResponse.data.crops || []);
       setNews(newsResponse.data || []);
     } catch (err) {
