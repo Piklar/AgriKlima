@@ -165,7 +165,7 @@ const PestsPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const [pestsResponse, newsResponse] = await Promise.all([api.getPests(), api.getNews()]);
+      const [pestsResponse, newsResponse] = await Promise.all([api.getPests({ limit: 1000 }), api.getNews({ limit: 1000 })]);
         setPests(pestsResponse.data || []);
         setNews(newsResponse.data || []);
       } catch (error) {
