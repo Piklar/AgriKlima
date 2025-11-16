@@ -10,6 +10,9 @@ router.get("/crop/:cropId", varietyController.getVarietiesForCrop);
 // Add a new variety (Admin only)
 router.post("/add", verify, verifyAdmin, varietyController.addVariety);
 
+// Add multiple varieties in bulk (Admin only)
+router.post("/add-bulk", verify, verifyAdmin, varietyController.addBulkVarieties);
+
 // Update a variety (Admin only)
 router.put("/:varietyId", verify, verifyAdmin, varietyController.updateVariety);
 

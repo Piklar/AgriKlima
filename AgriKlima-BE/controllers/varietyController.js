@@ -49,3 +49,23 @@ exports.deleteVariety = async (req, res) => {
         res.status(500).json({ error: "Failed to delete variety", details: error.message });
     }
 };
+
+// Add multiple varieties in bulk
+exports.addBulkVarieties = async (req, res) => {
+    try {
+        const varietiesData = req.body;
+
+        // Check if the body is an array and not empty
+        if (!Array.isArray(varietiesData) || varietiesData.length === 0) {
+            return res.status(400).send({ error: "Request body must be a non-empty array of varieties." });
+        }
+
+        // Insert all varieties at once
+        const createdVarieties = await Variety.insertMany(varietiesData);
+        
+        res.status(201).json(createdVarieties);
+    } catch (error) {
+        console.error("Error adding bulk varieties:", error);
+        res.status(500).json({ error: "Failed to add bulk varieties", details: error.message });
+    }
+};
