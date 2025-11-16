@@ -157,3 +157,23 @@ module.exports.deleteCrop = (req, res) => {
     })
     .catch(err => res.status(500).send({ error: "Failed to delete crop", details: err.message }));
 };
+
+// --- [CREATE] Add multiple crops in bulk ---
+module.exports.addBulkCrops = async (req, res) => {
+    try {
+        const cropsData = req.body;
+
+        // Check if the body is an array and not empty
+        if (!Array.isArray(cropsData) || cropsData.length === 0) {
+            return res.status(400).send({ error: "Request body must be a non-empty array of crops." });
+        }
+
+        // Insert all crops at once
+        const createdCrops = await Crop.insertMany(cropsData);
+        
+        res.status(201).send(createdCrops);
+    } catch (err) {
+        console.error("Error adding bulk crops:", err);
+        res.status(500).send({ error: "Failed to add bulk crops", details: err.message });
+    }
+};

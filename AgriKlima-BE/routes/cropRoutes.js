@@ -11,6 +11,9 @@ const upload = multer({ storage: storage });
 // Add a new crop (Admin only)
 router.post("/add", verify, verifyAdmin, cropController.addCrop);
 
+// Add multiple new crops in bulk (Admin only)
+router.post("/add-bulk", verify, verifyAdmin, cropController.addBulkCrops);
+
 // ✅ Get all crops (Public, supports query params for search/pagination)
 router.get("/", cropController.getAllCrops);
 

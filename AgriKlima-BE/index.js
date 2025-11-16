@@ -31,15 +31,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect all routes   
-app.use("/users", userRoutes);
-app.use("/crops", cropRoutes);
-app.use("/pests", pestRoutes);
-app.use("/news", newsRoutes);
-app.use("/weather", weatherRoutes);
-app.use("/tasks", taskRoutes); 
-app.use("/varieties", varietyRoutes);
-app.use('/weather-rules', weatherRulesRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/crops", cropRoutes);
+app.use("/api/pests", pestRoutes);
+app.use("/api/news", newsRoutes);
+app.use("/api/weather", weatherRoutes);
+app.use("/api/tasks", taskRoutes); 
+app.use("/api/varieties", varietyRoutes);
+app.use('/api/weather-rules', weatherRulesRoutes);
 
+// This cors setup is good, but it should be placed *before* the routes
 app.use(cors({
   origin: [vercelFrontendURL, "http://localhost:5173"] // Allow both deployed and local frontends
 }));
