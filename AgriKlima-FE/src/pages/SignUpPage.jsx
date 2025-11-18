@@ -4,13 +4,15 @@ import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import * as api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { format } from 'date-fns'; // Added for PlantingDateModal
 
 import {
     Container, Box, Typography, Button, Grid, Card, CardMedia, CardContent,
     TextField, Stepper, Step, StepLabel, Paper, Stack,
     CircularProgress, MenuItem, FormControl, InputLabel, Select,
-    InputAdornment, IconButton, Fade, Avatar, Collapse, Link as MuiLink,
-    FormControlLabel, Checkbox, List, ListItem, ListItemIcon, ListItemText
+    InputAdornment, IconButton, Fade, Avatar, Link as MuiLink,
+    FormControlLabel, Checkbox, List, ListItem, ListItemIcon, ListItemText,
+    Modal, ListItemButton, ListItemAvatar, Dialog, DialogTitle, DialogContent, DialogActions, Collapse
 } from '@mui/material';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -20,6 +22,9 @@ import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'; 
+import CloseIcon from '@mui/icons-material/Close';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
 import logo from '../assets/logo.png';
 
 // Import local images (Assuming these paths are correct in the environment)
@@ -34,6 +39,10 @@ import othersImg from '../assets/images/crop-others.jpg';
 import Terms from '../components/Terms';
 
 // --- Reusable Component Definitions ---
+
+// Helper function used by list item in Step 3
+const AvatarWrapper = ({ children }) => <ListItemAvatar>{children}</ListItemAvatar>;
+
 const SelectionCard = ({ image, label, isSelected, onClick }) => (
     <Card
         onClick={onClick}
@@ -46,24 +55,6 @@ const SelectionCard = ({ image, label, isSelected, onClick }) => (
     >
         <CardMedia component="img" image={image} alt={label} sx={{ height: 160, objectFit: 'cover' }} />
         <CardContent sx={{ p: 2 }}><Typography variant="subtitle1" align="center" sx={{ fontWeight: 600 }}>{label}</Typography></CardContent>
-    </Card>
-);
-
-const CropSelectionCard = ({ image, label, isSelected, onToggle, onDateChange, plantingDate }) => (
-    <Card
-        sx={{
-            borderRadius: '20px', boxShadow: isSelected ? '0 0 0 4px #2e7d32' : '0 4px 12px rgba(0,0,0,0.08)',
-            transform: isSelected ? 'scale(1.03)' : 'scale(1)',
-            transition: 'all 0.2s ease-in-out', border: '1px solid #eee', height: '100%',
-        }}
-    >
-        <CardMedia component="img" image={image || othersImg} alt={label} sx={{ height: 140, cursor: 'pointer', objectFit: 'cover' }} onClick={onToggle} />
-        <CardContent sx={{ p: 2, pt: 1 }}>
-            <Typography variant="subtitle1" align="center" sx={{ fontWeight: 600, cursor: 'pointer' }} onClick={onToggle}>{label}</Typography>
-            <Collapse in={isSelected}>
-                <TextField label="Planting Date" type="date" fullWidth value={plantingDate} onChange={(e) => onDateChange(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ mt: 2 }} required={isSelected} />
-            </Collapse>
-        </CardContent>
     </Card>
 );
 
@@ -102,6 +93,76 @@ const PasswordStrengthIndicator = ({ password }) => {
     );
 };
 
+// --- MODAL COMPONENTS ---
+
+// Step 1: Modal to select a master crop type
+const MasterCropSelectionModal = ({ open, onClose, items, onItemClick }) => (
+    <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Paper sx={{ width: '80%', maxWidth: 700, maxHeight: '80vh', p: 3, borderRadius: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" fontWeight="bold">Select a Crop Type</Typography>
+                <IconButton onClick={onClose}><CloseIcon /></IconButton>
+            </Box>
+            <Box sx={{ overflowY: 'auto', maxHeight: 'calc(80vh - 120px)' }}>
+                <List>
+                    {items.map(item => (
+                        <ListItemButton key={item._id} onClick={() => onItemClick(item)} sx={{ borderRadius: 2, mb: 1 }}>
+                            <AvatarWrapper><Avatar src={item.imageUrl} variant="rounded" /></AvatarWrapper>
+                            <ListItemText primary={item.name} secondary={item.description.substring(0, 80) + '...'} />
+                        </ListItemButton>
+                    ))}
+                </List>
+            </Box>
+        </Paper>
+    </Modal>
+);
+
+// Step 2: Modal to select a specific variety
+const VarietySelectionModal = ({ open, onClose, varieties, onSelectVariety, cropName }) => (
+    <Modal open={open} onClose={onClose} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Paper sx={{ width: '80%', maxWidth: 700, maxHeight: '80vh', p: 3, borderRadius: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5" fontWeight="bold">Select a {cropName} Variety</Typography>
+                <IconButton onClick={onClose}><CloseIcon /></IconButton>
+            </Box>
+            <Box sx={{ overflowY: 'auto', maxHeight: 'calc(80vh - 120px)' }}>
+                <List>
+                    {varieties.map(variety => (
+                        <ListItemButton key={variety._id} onClick={() => onSelectVariety(variety)} sx={{ borderRadius: 2, mb: 1 }}>
+                            <AvatarWrapper><Avatar src={variety.imageUrl || othersImg} variant="rounded" /></AvatarWrapper>
+                            <ListItemText primary={variety.name} secondary={`${variety.growingDuration} days to harvest`} />
+                        </ListItemButton>
+                    ))}
+                </List>
+            </Box>
+        </Paper>
+    </Modal>
+);
+
+// Step 3: Final modal for planting date
+const PlantingDateModal = ({ open, onClose, variety, onAdd }) => {
+    const [plantingDate, setPlantingDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+    useEffect(() => { if (open) setPlantingDate(format(new Date(), 'yyyy-MM-dd')); }, [open]);
+
+    if (!variety) return null;
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+            <DialogTitle fontWeight="bold">Add {variety.name}</DialogTitle>
+            <DialogContent>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                    <Typography>Enter the date you planted this variety.</Typography>
+                    <TextField label="Planting Date" type="date" value={plantingDate} onChange={(e) => setPlantingDate(e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
+                </Stack>
+            </DialogContent>
+            <DialogActions sx={{ p: 2 }}>
+                <Button onClick={onClose}>Cancel</Button>
+                <Button onClick={() => onAdd(variety, plantingDate)} variant="contained">Add to My List</Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
+
+
 const STEPS = ['Account Info', 'Personal Details', 'Your Crops', 'Location', 'Finalize'];
 const LOCATION_OPTIONS = [
     { label: 'Mexico, Pampanga', img: mexicoImg, value: 'Mexico, Pampanga' },
@@ -119,7 +180,14 @@ const SignUpPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const [dbCrops, setDbCrops] = useState([]);
+    // --- CROP SELECTION STATES (NEW FLOW) ---
+    const [masterCrops, setMasterCrops] = useState([]);
+    const [varietiesForCrop, setVarietiesForCrop] = useState([]);
+    const [isMasterCropModalOpen, setIsMasterCropModalOpen] = useState(false);
+    const [isVarietyModalOpen, setIsVarietyModalOpen] = useState(false);
+    const [isPlantingDateModalOpen, setIsPlantingDateModalOpen] = useState(false);
+    const [selectedMasterCrop, setSelectedMasterCrop] = useState(null);
+    const [selectedVariety, setSelectedVariety] = useState(null);
     const [loadingCrops, setLoadingCrops] = useState(true);
 
     const [profilePictureFile, setProfilePictureFile] = useState(null);
@@ -136,7 +204,7 @@ const SignUpPage = () => {
     const [formData, setFormData] = useState({
         firstName: '', lastName: '', email: '', mobileNo: '',
         password: '', confirmPassword: '', dob: '', gender: '',
-        language: 'Filipino', location: '', userCrops: [],
+        language: 'Filipino', location: '', userCrops: [], // userCrops now stores { varietyId, plantingDate, display: {...} }
     });
 
     const [validation, setValidation] = useState({
@@ -148,19 +216,20 @@ const SignUpPage = () => {
     const debounceTimeout = useRef(null);
 
     useEffect(() => {
-        const fetchCropsForSignup = async () => {
+        const fetchMasterCrops = async () => {
             setLoadingCrops(true);
             try {
-                const response = await api.getCrops({ page: 1, limit: 100 });
-                setDbCrops(response.data?.crops || []);
+                // Fetch all master crops to populate the first modal list
+                const response = await api.getCrops({ limit: 1000 });
+                setMasterCrops(response.data?.crops || []);
             } catch (error) {
-                console.error("Failed to load crops for signup:", error);
+                console.error("Failed to load master crops:", error);
                 Swal.fire('Error', 'Could not load crop options. Please try refreshing.', 'error');
             } finally {
                 setLoadingCrops(false);
             }
         };
-        fetchCropsForSignup();
+        fetchMasterCrops();
     }, []);
 
     const handleNext = () => setStep(prev => prev + 1);
@@ -236,28 +305,77 @@ const SignUpPage = () => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleCropToggle = (crop) => {
-        setIsJustStarting(false);
-        setFormData(prev => {
-            const isSelected = prev.userCrops.some(c => c.cropId === crop._id);
-            if (isSelected) {
-                return { ...prev, userCrops: prev.userCrops.filter(c => c.cropId !== crop._id) };
-            } else {
-                return { ...prev, userCrops: [...prev.userCrops, { cropId: crop._id, name: crop.name, plantingDate: '' }] };
+    // --- NEW CROP ADDITION HANDLERS ---
+    const handleOpenMasterCropModal = () => setIsMasterCropModalOpen(true);
+
+    const handleMasterCropSelect = async (crop) => {
+        setSelectedMasterCrop(crop);
+        setIsMasterCropModalOpen(false);
+        try {
+            // Fetch varieties for the selected crop
+            const response = await api.getVarietiesForCrop(crop._id);
+            const varieties = response.data || [];
+            
+            if (varieties.length === 0) {
+                Swal.fire('Info', `No varieties found for ${crop.name}.`, 'info');
+                return;
             }
-        });
+            setVarietiesForCrop(varieties);
+            setIsVarietyModalOpen(true);
+        } catch (error) {
+            Swal.fire('Error', 'Could not fetch varieties.', 'error');
+        }
     };
+
+    const handleVarietySelect = (variety) => {
+        setSelectedVariety(variety);
+        setIsVarietyModalOpen(false);
+        setIsPlantingDateModalOpen(true);
+    };
+
+    const handleAddCropToList = (variety, plantingDate) => {
+        // Prevent duplicates
+        if (formData.userCrops.some(c => c.varietyId === variety._id)) {
+            Swal.fire('Info', `${variety.name} is already in your list.`, 'info');
+            setIsPlantingDateModalOpen(false);
+            return;
+        }
+        
+        const newUserCrop = {
+            varietyId: variety._id,
+            plantingDate,
+            // Add display names for easy rendering in the Step 3 list
+            display: {
+                varietyName: variety.name,
+                parentCropName: selectedMasterCrop.name,
+                imageUrl: variety.imageUrl || selectedMasterCrop.imageUrl
+            }
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            userCrops: [...prev.userCrops, newUserCrop]
+        }));
+        
+        // Reset and close modals
+        setIsPlantingDateModalOpen(false);
+        setSelectedMasterCrop(null);
+        setSelectedVariety(null);
+        setIsJustStarting(false); // If a crop is added, user is not "just starting"
+    };
+
+    const handleRemoveCropFromList = (varietyIdToRemove) => {
+        setFormData(prev => ({
+            ...prev,
+            userCrops: prev.userCrops.filter(c => c.varietyId !== varietyIdToRemove)
+        }));
+    };
+    // --- END NEW CROP ADDITION HANDLERS ---
+
 
     const handleJustStartingToggle = () => {
         setIsJustStarting(true);
         setFormData(f => ({ ...f, userCrops: [] }));
-    };
-
-    const handleCropDateChange = (cropId, date) => {
-        setFormData(prev => ({
-            ...prev,
-            userCrops: prev.userCrops.map(c => c.cropId === cropId ? { ...c, plantingDate: date } : c)
-        }));
     };
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
@@ -288,14 +406,16 @@ const SignUpPage = () => {
             );
             // Add dobError check to step 2 validation
             case 2: return (formData.dob && formData.gender && formData.language && !dobError);
-            case 3: return (isJustStarting || (formData.userCrops.length > 0 && formData.userCrops.every(c => c.plantingDate)));
+            // Validation for Step 3: Must either be 'just starting' OR have at least one crop. 
+            // The frontend list contains necessary plantingDate data, so we don't need to check here.
+            case 3: return (isJustStarting || formData.userCrops.length > 0);
             case 4: return !!formData.location;
             case 5: return agreedToTerms;
             default: return false;
         }
     }, [formData, step, agreedToTerms, isJustStarting, validation.emailError, validation.mobileError, isPasswordValid, dobError]); 
 
-    const handleSubmit = async () => {
+    const handleSubmit = async () => { 
         if (!isStepValid) {
             Swal.fire('Incomplete Information', 'Please ensure all required fields are filled and you have agreed to the terms.', 'warning');
             return;
@@ -309,7 +429,9 @@ const SignUpPage = () => {
         };
     
         try {
-            const userCropsToSend = isJustStarting ? [] : registrationData.userCrops;
+            // CRITICAL: The userCropsToSend array only includes fields expected by the backend (varietyId, plantingDate)
+            const userCropsToSend = isJustStarting ? [] : registrationData.userCrops.map(({ varietyId, plantingDate }) => ({ varietyId, plantingDate }));
+            
             await api.registerUser({ ...registrationData, userCrops: userCropsToSend });
 
             await Swal.fire({
@@ -383,28 +505,30 @@ const SignUpPage = () => {
                             return (
                                 <Box sx={{ maxWidth: 500, mx: 'auto' }}>
                                     <Stack spacing={3}>
-                                        <TextField name="firstName" label="First Name" value={formData.firstName} onChange={handleChange} fullWidth required />
-                                        <TextField name="lastName" label="Last Name" value={formData.lastName} onChange={handleChange} fullWidth required />
-                                        <TextField 
-                                            name="email" label="Email Address" type="email" value={formData.email} onChange={handleChange} fullWidth required 
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={12} sm={6}>
+                                                <TextField name="firstName" label="First Name" value={formData.firstName} onChange={handleChange} fullWidth required />
+                                            </Grid>
+                                            <Grid item xs={12} sm={6}>
+                                                <TextField name="lastName" label="Last Name" value={formData.lastName} onChange={handleChange} fullWidth required />
+                                            </Grid>
+                                        </Grid>
+                                        <TextField name="email" label="Email Address" type="email" value={formData.email} onChange={handleChange} fullWidth required 
                                             error={!!validation.emailError} helperText={validation.emailError}
                                             InputProps={{ endAdornment: validation.isEmailLoading && <CircularProgress size={20} /> }}
                                         />
-                                        <TextField 
-                                            name="mobileNo" label="Mobile Number" type="tel" value={formData.mobileNo} onChange={handleChange} fullWidth required 
+                                        <TextField name="mobileNo" label="Mobile Number" type="tel" value={formData.mobileNo} onChange={handleChange} fullWidth required 
                                             inputProps={{ maxLength: 11 }} helperText={validation.mobileError || "Format: 09123456789"}
                                             error={!!validation.mobileError}
                                             InputProps={{ endAdornment: validation.isMobileLoading && <CircularProgress size={20} /> }}
                                         />
-                                        <TextField 
-                                            name="password" label="Password" type={showPassword ? 'text' : 'password'} value={formData.password} 
+                                        <TextField name="password" label="Password" type={showPassword ? 'text' : 'password'} value={formData.password} 
                                             onChange={handleChange} fullWidth required 
                                             InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton onClick={handleClickShowPassword} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>)}}
                                         />
                                         {formData.password && <PasswordStrengthIndicator password={formData.password} />}
 
-                                        <TextField 
-                                            name="confirmPassword" label="Confirm Password" type={showConfirmPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange} fullWidth required 
+                                        <TextField name="confirmPassword" label="Confirm Password" type={showConfirmPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange} fullWidth required 
                                             error={formData.password !== formData.confirmPassword && formData.confirmPassword !== ''} 
                                             helperText={formData.password !== formData.confirmPassword && formData.confirmPassword !== '' ? 'Passwords do not match' : ''} 
                                             InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton onClick={handleClickShowConfirmPassword} edge="end">{showConfirmPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>),}} 
@@ -416,24 +540,18 @@ const SignUpPage = () => {
                             return (
                                 <Box sx={{ maxWidth: 500, mx: 'auto' }}>
                                     <Stack spacing={3}>
-                                        {/* Integrated Date of Birth Field with Age Validation */}
                                         <TextField 
                                             name="dob" 
                                             label="Date of Birth" 
                                             type="date" 
                                             value={formData.dob} 
-                                            onChange={handleChange} 
-                                            fullWidth 
-                                            required 
+                                            onChange={(e) => { handleChange(e); handleAgeValidation(e.target.value); }} 
+                                            fullWidth required 
                                             error={!!dobError}
                                             helperText={dobError}
                                             InputLabelProps={{ shrink: true }} 
                                             InputProps={{
-                                                startAdornment: (
-                                                    <InputAdornment position="start">
-                                                        <CalendarMonthIcon />
-                                                    </InputAdornment>
-                                                ),
+                                                startAdornment: (<InputAdornment position="start"><CalendarMonthIcon /></InputAdornment>),
                                             }}
                                         />
                                         <FormControl fullWidth required>
@@ -458,31 +576,37 @@ const SignUpPage = () => {
                         case 3:
                             return (
                                 <Box>
-                                    {loadingCrops ? (
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
-                                    ) : (
-                                        <Grid container spacing={3} justifyContent="center">
-                                            {dbCrops.map((crop) => {
-                                                const selectedCrop = formData.userCrops.find((c) => c.cropId === crop._id);
-                                                return (
-                                                    <Grid item xs={12} sm={6} md={3} key={crop._id}>
-                                                        <CropSelectionCard 
-                                                            image={crop.imageUrl} 
-                                                            label={crop.name} 
-                                                            isSelected={!!selectedCrop}
-                                                            onToggle={() => handleCropToggle(crop)}
-                                                            onDateChange={(date) => handleCropDateChange(crop._id, date)}
-                                                            plantingDate={selectedCrop ? selectedCrop.plantingDate : ''}
-                                                        />
-                                                    </Grid>
-                                                );
-                                            })}
-                                            {/* "I'm just starting" card */}
-                                            <Grid item xs={12} sm={6} md={3}>
-                                                <SelectionCard image={startingImg} label="I'm just starting" isSelected={isJustStarting} onClick={handleJustStartingToggle} />
-                                            </Grid>
+                                    <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mb: 3 }}>
+                                        What crops are you currently planting? Select from our list, or mark "I'm just starting" for general recommendations.
+                                    </Typography>
+                                    <Grid container spacing={3} justifyContent="center">
+                                        <Grid item xs={12} md={8}>
+                                            <Paper variant="outlined" sx={{ p: 2, minHeight: 200 }}>
+                                                <Typography variant="h6" gutterBottom>My Crop List</Typography>
+                                                {formData.userCrops.length > 0 ? (
+                                                    <List sx={{ maxHeight: 250, overflowY: 'auto' }}>
+                                                        {formData.userCrops.map(crop => (
+                                                            <ListItem key={crop.varietyId} secondaryAction={<IconButton edge="end" onClick={() => handleRemoveCropFromList(crop.varietyId)}><DeleteIcon /></IconButton>}>
+                                                                <ListItemAvatar><Avatar src={crop.display.imageUrl || othersImg} variant="rounded" /></ListItemAvatar>
+                                                                <ListItemText primary={`${crop.display.parentCropName} (${crop.display.varietyName})`} secondary={`Planted on: ${format(new Date(crop.plantingDate), 'MM/dd/yyyy')}`} />
+                                                            </ListItem>
+                                                        ))}
+                                                    </List>
+                                                ) : !isJustStarting && (
+                                                    <Box sx={{ textAlign: 'center', p: 3 }}><Typography color="text.secondary">Your list is empty. Add a crop to get started.</Typography></Box>
+                                                )}
+                                                {isJustStarting && (
+                                                    <Box sx={{ textAlign: 'center', p: 3 }}><Typography color="primary.main" fontWeight="bold">Great! We'll provide general recommendations to help you start.</Typography></Box>
+                                                )}
+                                            </Paper>
+                                            <Button fullWidth variant="contained" startIcon={loadingCrops ? <CircularProgress size={20} color="inherit" /> : <AddCircleOutlineIcon />} onClick={handleOpenMasterCropModal} sx={{ mt: 2 }} disabled={loadingCrops}>
+                                                Add a Crop to My List
+                                            </Button>
                                         </Grid>
-                                    )}
+                                        <Grid item xs={12} md={4}>
+                                            <SelectionCard image={startingImg} label="I'm just starting" isSelected={isJustStarting} onClick={handleJustStartingToggle} />
+                                        </Grid>
+                                    </Grid>
                                 </Box>
                             );
                         case 4:
@@ -500,24 +624,14 @@ const SignUpPage = () => {
                                 <Box sx={{ maxWidth: 500, mx: 'auto', textAlign: 'center' }}>
                                     <Stack spacing={3} alignItems="center">
                                         <Typography variant="h6">Profile Picture (Optional)</Typography>
-                                        <Avatar src={previewUrl} sx={{ width: 150, height: 150, mb: 2, bgcolor: 'grey.300', border: '2px solid #ccc' }}>
-                                            <AddAPhotoIcon sx={{ fontSize: 60, color: 'grey.500' }} />
-                                        </Avatar>
-                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/png, image/jpeg" />
-                                        <Button variant="outlined" startIcon={<AddAPhotoIcon />} onClick={triggerFileInput}>Choose Picture</Button>
+                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*" />
+                                        <Avatar src={previewUrl} sx={{ width: 120, height: 120, mb: 2, border: '3px solid #2e7d32' }} />
+                                        <Button variant="outlined" startIcon={<AddAPhotoIcon />} onClick={triggerFileInput} size="small">Upload Profile Picture</Button>
+                                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>Optional: Max file size 5MB</Typography>
                                         
-                                        <FormControlLabel
-                                            control={<Checkbox checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} name="agreedToTerms" color="primary" />}
-                                            label={
-                                                <Typography variant="body2">
-                                                    I agree to the{' '}
-                                                    <MuiLink component="button" type="button" onClick={() => setIsTermsModalOpen(true)} variant="body2" sx={{ verticalAlign: 'baseline' }}>
-                                                        Terms of Service & Privacy Policy
-                                                    </MuiLink>
-                                                    .
-                                                </Typography>
-                                            }
-                                        />
+                                        <FormControlLabel control={<Checkbox checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} name="agreedToTerms" color="primary" />} label={
+                                            <Typography variant="body2">I agree to the <MuiLink component="button" type="button" onClick={() => setIsTermsModalOpen(true)} variant="body2" sx={{ verticalAlign: 'baseline', fontWeight: 600 }}>Terms of Service & Privacy Policy</MuiLink>.</Typography>
+                                        } />
                                     </Stack>
                                 </Box>
                             );
@@ -536,11 +650,9 @@ const SignUpPage = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 3 }}>
                         <Button 
                             startIcon={<ArrowBackIcon />} 
-                            // FIX: Logic to go to Home on Step 1, otherwise go back a step
                             onClick={step === 1 ? () => navigate('/') : handleBack} 
                             sx={{ color: 'var(--dark-text)', textTransform: 'none' }}
                         >
-                            {/* FIX: Text changes based on current step */}
                             {step === 1 ? 'Back to Home' : 'Back'}
                         </Button>
                         <RouterLink to="/"><img src={logo} alt="AgriKlima Logo" style={{ height: '40px' }} /></RouterLink>
@@ -576,6 +688,11 @@ const SignUpPage = () => {
             </Box>
 
             <Terms open={isTermsModalOpen} onClose={() => setIsTermsModalOpen(false)} />
+            
+            {/* --- RENDER NEW MODALS FOR CROP SELECTION --- */}
+            <MasterCropSelectionModal open={isMasterCropModalOpen} onClose={() => setIsMasterCropModalOpen(false)} items={masterCrops} onItemClick={handleMasterCropSelect} />
+            <VarietySelectionModal open={isVarietyModalOpen} onClose={() => setIsVarietyModalOpen(false)} varieties={varietiesForCrop} onSelectVariety={handleVarietySelect} cropName={selectedMasterCrop?.name} />
+            <PlantingDateModal open={isPlantingDateModalOpen} onClose={() => setIsPlantingDateModalOpen(false)} variety={selectedVariety} onAdd={handleAddCropToList} />
         </>
     );
 };

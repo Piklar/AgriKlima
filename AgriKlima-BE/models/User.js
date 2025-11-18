@@ -2,9 +2,10 @@
 
 const mongoose = require('mongoose');
 
+// --- THIS IS THE FIX: The sub-schema now references a Variety ---
 const userCropSchema = new mongoose.Schema({
-    // --- THIS IS THE FIX: We now reference a 'Variety' instead of a 'Crop' ---
     varietyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Variety', required: true },
+    // We remove the 'name' field as it will be populated from the variety
     plantingDate: { type: Date, required: true },
     estimatedHarvestDate: { type: Date, required: true },
     status: { type: String, enum: ['active', 'harvested'], default: 'active' },
@@ -32,7 +33,7 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, required: [true, 'Gender is Required'] },
     language: { type: String, default: 'Filipino' },
     profilePictureUrl: { type: String, default: '' },   
-    userCrops: [userCropSchema] // This now uses the updated schema above
+    userCrops: [userCropSchema] // This now uses the updated schema
 });
 
 module.exports = mongoose.model('User', userSchema);

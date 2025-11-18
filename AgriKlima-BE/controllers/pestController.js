@@ -42,6 +42,26 @@ module.exports.addPest = (req, res) => {
         });
 };
 
+// --- [CREATE] Add multiple pests in bulk ---
+module.exports.addBulkPests = async (req, res) => {
+    try {
+        const pestsData = req.body;
+
+        // Check if the body is an array and not empty
+        if (!Array.isArray(pestsData) || pestsData.length === 0) {
+            return res.status(400).send({ error: "Request body must be a non-empty array of pests." });
+        }
+
+        // Insert all pest documents at once
+        const createdPests = await Pest.insertMany(pestsData);
+        
+        res.status(201).send(createdPests);
+    } catch (err) {
+        console.error("Error adding bulk pests:", err);
+        res.status(500).send({ error: "Failed to add bulk pests", details: err.message });
+    }
+};
+
 // Function to update pest image (Unchanged)
 module.exports.updatePestImage = async (req, res) => {
     try {

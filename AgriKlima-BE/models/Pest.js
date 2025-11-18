@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 const pestSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    type: { type: String, enum: ['Insect Pest', 'Disease', 'Weed'], required: true },
+    type: { type: String, enum: ['Insect Pest', 'Disease', 'Weed', 'Viral Disease', 'Fungal Disease', 'Bacterial Disease'], required: true },
     riskLevel: { type: String, enum: ['Low', 'Medium', 'High'], required: true },
     imageUrl: { type: String, required: false },
     // --- THIS IS THE FIX: Add a reference to the Crop model ---
