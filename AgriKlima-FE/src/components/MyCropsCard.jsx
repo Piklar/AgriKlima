@@ -24,7 +24,7 @@ const MyCropsCard = ({ userCrops, loading }) => {
       elevation={1}
       sx={{
         p: 3,
-        borderRadius: '10px', // ← custom radius
+        borderRadius: '10px',
         boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
         height: '100%',
         display: 'flex',
@@ -78,7 +78,8 @@ const MyCropsCard = ({ userCrops, loading }) => {
                   }}
                 >
                   <Avatar
-                    src={crop.cropId?.imageUrl}
+                    // FIX: Use the variety's image URL
+                    src={crop.varietyId?.imageUrl}
                     variant="rounded"
                     sx={{
                       width: 56,
@@ -91,10 +92,16 @@ const MyCropsCard = ({ userCrops, loading }) => {
                     <GrassIcon />
                   </Avatar>
                   <Box sx={{ width: '100%' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {crop.name}
-                      </Typography>
+                    {/* FIX: Nested Display for Parent and Variety Name */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
+                          {crop.varietyId?.parentCrop?.name || 'Unknown Crop'}
+                        </Typography>
+                        <Typography variant="caption" color="text.hint" sx={{ lineHeight: 1.2 }}>
+                          {crop.varietyId?.name || 'Variety Unknown'}
+                        </Typography>
+                      </Box>
                       <Typography variant="body2" color="text.secondary">
                         {Math.round(progress)}%
                       </Typography>

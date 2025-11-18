@@ -29,6 +29,7 @@ export const setAsAdmin = (userId) => API.patch(`/users/${userId}/setAsAdmin`);
 export const addUserCrop = (data) => API.post('/users/my-crops', data);
 export const getUserCrops = () => API.get('/users/my-crops');
 export const harvestUserCrop = (userCropId) => API.patch(`/users/my-crops/${userCropId}/harvest`);
+export const getUserDetailsForAdmin = (userId) => API.get(`/users/${userId}/details`);
 
 // ✅ Corrected version: pass `userId` and `data` separately
 export const updateUser = (userId, data) => API.put(`/users/${userId}`, data);

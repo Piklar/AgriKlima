@@ -29,6 +29,9 @@ router.patch("/my-crops/:userCropId/harvest", verify, userController.harvestUser
 // updated to handle query params (search, page, limit)
 router.get("/all", verify, verifyAdmin, userController.getAllUsers);
 
+// Get full details for a specific user (for admin overview)
+router.get("/:userId/details", verify, verifyAdmin, userController.getUserDetailsForAdmin);
+
 // --- DYNAMIC ROUTES ---
 router.patch("/:id/setAsAdmin", verify, verifyAdmin, userController.setAsAdmin);
 router.put("/:userId/update", verify, verifyAdmin, userController.updateUser);

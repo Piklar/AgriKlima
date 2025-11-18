@@ -13,6 +13,9 @@ const upload = multer({ storage: storage });
 // Add a new pest (Admin only)
 router.post("/add", verify, verifyAdmin, pestController.addPest);
 
+// Add multiple new pests in bulk (Admin only)
+router.post("/add-bulk", verify, verifyAdmin, pestController.addBulkPests);
+
 // Get all pests (Public)
 router.get("/", pestController.getAllPests);
 

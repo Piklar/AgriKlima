@@ -1,12 +1,13 @@
 // backend/controllers/userController.js
 
 const User = require("../models/User");
-const Variety = require("../models/Variety");
+const Variety = require("../models/Variety"); // <-- CORRECTED: Imported Variety model
+const Task = require("../models/Task");
 const Crop = require("../models/Crop");
 const bcrypt = require("bcryptjs");
 const auth = require("../auth");
 const cloudinary = require('../config/cloudinary');
-const { add } = require('date-fns');
+const { add } = require('date-fns'); // <-- CORRECTED: Imported date-fns add
 
 // === [CHECK] CHECK IF EMAIL/MOBILE EXISTS ===
 module.exports.checkUserExists = async (req, res) => {
@@ -44,7 +45,6 @@ module.exports.registerUser = async (req, res) => {
         }
 
         // --- Stricter Password Validation ---
-        // Password must be at least 8 characters long, contain one uppercase letter, and one special character.
         const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,})/;
         if (!passwordRegex.test(password)) {
             return res.status(400).send({ error: "Password must be at least 8 characters long, contain one uppercase letter, and one special character." });
@@ -65,23 +65,23 @@ module.exports.registerUser = async (req, res) => {
             }
         }
         
-        // --- Process User Crops ---
+        // --- FIX: Process userCrops with varietyId ---
         let processedUserCrops = [];
         if (userCrops && userCrops.length > 0) {
             processedUserCrops = await Promise.all(userCrops.map(async (userCrop) => {
-                const masterCrop = await Crop.findById(userCrop.cropId);
-                if (!masterCrop || typeof masterCrop.growingDuration !== 'number') {
-                    console.warn(`Skipping invalid crop during registration. ID: ${userCrop.cropId}`);
+                // Find the specific variety instead of the general crop
+                const variety = await Variety.findById(userCrop.varietyId);
+                if (!variety || typeof variety.growingDuration !== 'number') {
+                    console.warn(`Skipping invalid variety during registration. ID: ${userCrop.varietyId}`);
                     return null;
                 }
                 const plantingDate = new Date(userCrop.plantingDate);
-                const estimatedHarvestDate = add(plantingDate, { days: masterCrop.growingDuration });
+                const estimatedHarvestDate = add(plantingDate, { days: variety.growingDuration });
                 return {
-                    cropId: masterCrop._id,
-                    name: masterCrop.name,
+                    varietyId: variety._id, // Store the varietyId
                     plantingDate: plantingDate,
                     estimatedHarvestDate: estimatedHarvestDate,
-                    status: 'active' // Ensure initial status is set
+                    status: 'active'
                 };
             }));
             processedUserCrops = processedUserCrops.filter(crop => crop !== null);
@@ -92,7 +92,7 @@ module.exports.registerUser = async (req, res) => {
             firstName, lastName, email,
             password: bcrypt.hashSync(password, 10),
             mobileNo, location, dob, gender, language,
-            userCrops: processedUserCrops,
+            userCrops: processedUserCrops, // Use the newly processed array
             profilePictureUrl: ''
         });
 
@@ -287,6 +287,7 @@ module.exports.updateUser = async (req, res) => {
 };
 
 // === [ADMIN] GET ALL USERS (with pagination & search) ===
+// --- POPULATE FIX ---
 module.exports.getAllUsers = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -298,7 +299,7 @@ module.exports.getAllUsers = async (req, res) => {
                 { firstName: { $regex: search, $options: "i" } },
                 { lastName: { $regex: search, $options: "i" } },
                 { email: { $regex: search, $options: "i" } },
-                { location: { $regex: search, $options: "i" } } // Include location in search
+                { location: { $regex: search, $options: "i" } }
             ]
         };
 
@@ -307,6 +308,18 @@ module.exports.getAllUsers = async (req, res) => {
 
         const users = await User.find(query)
             .select('-password')
+            // This .populate() block tells Mongoose to fetch the full
+            // document for `varietyId` and then, within that, fetch the
+            // full document for `parentCrop`.
+            .populate({
+                path: 'userCrops.varietyId',
+                model: 'Variety',
+                populate: {
+                    path: 'parentCrop',
+                    model: 'Crop',
+                    select: 'name' // We only need the parent crop's name
+                }
+            })
             .skip((page - 1) * limit)
             .limit(limit);
 
@@ -320,6 +333,48 @@ module.exports.getAllUsers = async (req, res) => {
     } catch (err) {
         console.error("Error in getAllUsers:", err);
         return res.status(500).send({ error: 'Failed to fetch users' });
+    }
+};
+
+// === [ADMIN] GET FULL DETAILS FOR A SINGLE USER ===
+module.exports.getUserDetailsForAdmin = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+
+        const [user, tasks] = await Promise.all([
+            User.findById(userId)
+                .select('-password')
+                .populate({
+                    path: 'userCrops.varietyId',
+                    model: 'Variety',
+                    populate: {
+                        path: 'parentCrop',
+                        model: 'Crop',
+                        select: 'name'
+                    }
+                }),
+            Task.find({ assignedTo: userId })
+                .populate('cropId', 'name')
+                .sort({ dueDate: -1 })
+        ]);
+
+        if (!user) {
+            return res.status(404).send({ error: 'User not found' });
+        }
+        
+        const activeCrops = user.userCrops.filter(crop => crop.status === 'active');
+        const harvestedCrops = user.userCrops.filter(crop => crop.status === 'harvested');
+
+        res.status(200).send({
+            user,
+            activeCrops,
+            harvestedCrops,
+            tasks
+        });
+
+    } catch (error) {
+        console.error("Error fetching user details for admin:", error);
+        res.status(500).send({ error: 'Internal server error.' });
     }
 };
 
