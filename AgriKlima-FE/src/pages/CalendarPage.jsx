@@ -27,11 +27,51 @@ import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
 import AgricultureIcon from '@mui/icons-material/Agriculture';
 
+// --- Updated Philippine Holidays ---
 const holidays = [
-    { date: '2024-01-01', name: "New Year's Day" },
-    { date: '2024-07-04', name: 'Independence Day' },
+    { date: '2024-11-01', name: "All Saints’ Day" },
+    { date: '2024-11-30', name: 'Bonifacio Day' },
+    { date: '2024-12-08', name: 'Feast of the Immaculate Conception' },
+    { date: '2024-12-24', name: 'Christmas Eve' },
     { date: '2024-12-25', name: 'Christmas Day' },
-    // Add other relevant Philippine holidays
+    { date: '2024-12-30', name: 'Rizal Day' },
+    { date: '2024-12-31', name: 'Last Day of the Year' },
+    { date: '2025-01-01', name: "New Year’s Day" },
+    { date: '2025-02-17', name: 'Chinese New Year' },
+    { date: '2025-04-02', name: 'Maundy Thursday' },
+    { date: '2025-04-03', name: 'Good Friday' },
+    { date: '2025-04-04', name: 'Black Saturday' },
+    { date: '2025-04-09', name: 'Araw ng Kagitingan' },
+    { date: '2025-05-01', name: 'Labor Day' },
+    { date: '2025-06-12', name: 'Independence Day' },
+    { date: '2025-08-21', name: 'Ninoy Aquino Day' },
+    { date: '2025-08-31', name: 'National Heroes Day' },
+    { date: '2025-11-01', name: "All Saints’ Day" },
+    { date: '2025-11-02', name: 'All Souls’ Day' },
+    { date: '2025-11-30', name: 'Bonifacio Day' },
+    { date: '2025-12-08', name: 'Feast of the Immaculate Conception' },
+    { date: '2025-12-24', name: 'Christmas Eve' },
+    { date: '2025-12-25', name: 'Christmas Day' },
+    { date: '2025-12-30', name: 'Rizal Day' },
+    { date: '2025-12-31', name: 'Last Day of the Year' },
+    { date: '2026-01-01', name: "New Year’s Day" },
+    { date: '2026-02-17', name: 'Chinese New Year' },
+    { date: '2026-04-02', name: 'Maundy Thursday' },
+    { date: '2026-04-03', name: 'Good Friday' },
+    { date: '2026-04-04', name: 'Black Saturday' },
+    { date: '2026-04-09', name: 'Araw ng Kagitingan' },
+    { date: '2026-05-01', name: 'Labor Day' },
+    { date: '2026-06-12', name: 'Independence Day' },
+    { date: '2026-08-21', name: 'Ninoy Aquino Day' },
+    { date: '2026-08-31', name: 'National Heroes Day' },
+    { date: '2026-11-01', name: "All Saints’ Day" },
+    { date: '2026-11-02', name: 'All Souls’ Day' },
+    { date: '2026-11-30', name: 'Bonifacio Day' },
+    { date: '2026-12-08', name: 'Feast of the Immaculate Conception' },
+    { date: '2026-12-24', name: 'Christmas Eve' },
+    { date: '2026-12-25', name: 'Christmas Day' },
+    { date: '2026-12-30', name: 'Rizal Day' },
+    { date: '2026-12-31', name: 'Last Day of the Year' }
 ];
 
 // Crop color palette for tasks
@@ -127,23 +167,24 @@ const CalendarPage = () => {
     const [userCrops, setUserCrops] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
 
+    // Removed weather state and loadingWeather state
+
     const fetchData = useCallback(async () => {
         try {
             const monthStart = startOfWeek(startOfMonth(currentMonth));
             const monthEnd = add(monthStart, { days: 41 });
 
-            const [tasksResponse, userCropsResponse] = await Promise.all([
+            // Removed api.getWeather call
+            const [tasksResponse, cropsResponse] = await Promise.all([
                 api.getMyTasks({
                     startDate: format(monthStart, 'yyyy-MM-dd'),
                     endDate: format(monthEnd, 'yyyy-MM-dd')
                 }),
-                api.getUserCrops()
+                api.getUserCrops(),
             ]);
 
             setTasks(tasksResponse?.data || []);
-            
-            // This is correct, it gets the activeUserCrops
-            setUserCrops(userCropsResponse?.data?.activeCrops || []);
+            setUserCrops(cropsResponse?.data?.activeCrops || []);
 
         } catch (error) {
             console.error('Failed to fetch calendar data:', error);
@@ -153,7 +194,7 @@ const CalendarPage = () => {
                 text: 'Failed to load calendar data. Please reload.'
             });
         }
-    }, [currentMonth]);
+    }, [currentMonth, user]); // Removed weatherData from dependencies
 
     useEffect(() => {
         fetchData();
@@ -241,6 +282,18 @@ const CalendarPage = () => {
             return isWithinInterval(day, { start, end });
         });
     };
+    
+    // --- NEW FUNCTION: Filters crops currently in growth phase for the selected date ---
+    const getCropsInGrowth = (day) => {
+        return userCrops.filter(crop => {
+            const start = new Date(crop.plantingDate);
+            const end = new Date(crop.estimatedHarvestDate);
+            // Include only crops actively growing on the day
+            return isWithinInterval(day, { start, end });
+        });
+    };
+
+    // Removed getWeatherForSelectedDay function
 
     const handleDateClick = (day) => {
         setSelectedDate(day);
@@ -252,6 +305,11 @@ const CalendarPage = () => {
         dayTasks: tasksForSelectedDay,
         holiday: holidayForSelectedDay
     } = getEventsForDay(selectedDate);
+    
+    // Get the list of crops currently in their growth interval for the sidebar
+    const cropsInGrowth = getCropsInGrowth(selectedDate);
+    // Removed selectedDayWeather variable
+
 
     return (
         <ThemeProvider theme={theme}>
@@ -314,7 +372,7 @@ const CalendarPage = () => {
                                     dayTasks: dayDayTasks, 
                                     holiday 
                                 } = getEventsForDay(day);
-                                const isGrowing = isDuringGrowingPeriod(day);
+                                const isGrowing = getCropsInGrowth(day).length > 0;
                                 const sunday = isSunday(day);
 
                                 return (
@@ -358,7 +416,6 @@ const CalendarPage = () => {
                                         {/* Events Container */}
                                         <Box sx={{ flex: 1, overflowY: 'hidden', fontSize: '0.75rem' }}>
                                             
-                                            {/* --- FIX #1 --- */}
                                             {/* Planted Crops */}
                                             {dayCropsPlanted.slice(0, 1).map(crop => (
                                                 <Box key={`plant-${crop._id}`} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
@@ -421,17 +478,8 @@ const CalendarPage = () => {
                             title={format(selectedDate, 'MMMM d, yyyy')} 
                             onManageTasks={() => setIsTaskModalOpen(true)}
                         >
-                            {/* Weather Alert */}
-                            <Box sx={{ mb: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'info.main' }}>
-                                    <WbSunnyOutlinedIcon />
-                                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>Local Weather Forecast</Typography>
-                                </Box>
-                                <Typography variant="body1" sx={{ ml: 3, color: 'text.secondary' }}>
-                                    High of 32°C. Clear skies.
-                                </Typography>
-                            </Box>
-
+                            {/* Removed Weather Alert / Today's Weather for Selected Date */}
+                            
                             {/* Holiday */}
                             {holidayForSelectedDay && (
                                 <Box sx={{ mb: 2 }}>
@@ -440,7 +488,6 @@ const CalendarPage = () => {
                                 </Box>
                             )}
 
-                            {/* --- FIX #2 --- */}
                             {/* Planting Events */}
                             {cropsPlanted.length > 0 && (
                                 <Box sx={{ mb: 2 }}>
@@ -553,13 +600,29 @@ const CalendarPage = () => {
                             )}
                         </SidebarCard>
 
+                        {/* --- FIXED GROWING PROGRESS CARD --- */}
                         <SidebarCard title="Growing Progress">
                             <Box sx={{ p: 1, textAlign: 'center' }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    {isDuringGrowingPeriod(selectedDate) 
-                                        ? "This day falls within the growing period of at least one crop."
-                                        : "No crops are actively growing during this day."}
-                                </Typography>
+                                {cropsInGrowth.length > 0 ? (
+                                    <List dense disablePadding>
+                                        {cropsInGrowth.map(crop => (
+                                            <ListItem key={`growth-${crop._id}`} disableGutters sx={{ py: 0.5 }}>
+                                                <ListItemIcon sx={{ minWidth: 32 }}>
+                                                    <AgricultureIcon color="primary" />
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={crop.varietyId?.parentCrop?.name}
+                                                    secondary={crop.varietyId?.name || "Active Period"}
+                                                    primaryTypographyProps={{ fontWeight: 'bold' }}
+                                                />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                ) : (
+                                    <Typography variant="body2" color="text.secondary">
+                                        No crops are actively growing during this day.
+                                    </Typography>
+                                )}
                                 <Button 
                                     size="small" 
                                     sx={{ mt: 1, borderRadius: 2, fontSize: '0.9rem' }}
@@ -569,6 +632,9 @@ const CalendarPage = () => {
                                 </Button>
                             </Box>
                         </SidebarCard>
+                        
+                        {/* --- REMOVED STATIC 7-DAY WEATHER FORECAST CARD --- */}
+                        
                     </Box>
                 </Box>
 
